@@ -8,10 +8,9 @@ import {
   normalizeCode,
   showToast,
   vibrate,
-  playSuccessJingle,
-  playTrapAlarm,
   playEndChime,
 } from "./utils.js";
+import { playSuccessSound, playTrapSound, playVictorySound, initSoundToggle, startBackgroundMusic } from "./sound.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -216,7 +215,7 @@ function renderEpreuveView() {
 }
 
 function onCodeCorrect(ep) {
-  playSuccessJingle();
+  playSuccessSound();
   vibrate(120);
   $("#code-feedback").textContent = "";
   $("#code-form").style.display = "none";
@@ -293,7 +292,7 @@ function finishGame() {
   persist();
   renderFinalView();
   show("view-final");
-  playEndChime();
+  playVictorySound();
   vibrate([150, 80, 150, 80, 300]);
 }
 
@@ -309,7 +308,7 @@ function triggerTrap(ep) {
 }
 
 function showTrapOverlay(ep) {
-  playTrapAlarm();
+  playTrapSound();
   vibrate([300, 100, 300, 100, 300]);
   $("#trap-text").textContent = ep.piege?.texte || "Piège déclenché !";
   $("#trap-overlay").style.display = "flex";
@@ -324,7 +323,7 @@ function showTrapOverlay(ep) {
       persist();
       renderEpreuveView();
       showToast("✅ Pénalité terminée, vous pouvez continuer !");
-      playSuccessJingle();
+      playSuccessSound();
       vibrate(150);
     } else {
       $("#trap-time").textContent = formatMinSec(remain);
@@ -386,9 +385,6 @@ function openMap(finalOnly = false) {
     ? "Itinéraire vers le rassemblement"
     : currentEpreuve().lieu?.titre || "Carte";
 
-  // Forcer un recalcul de mise en page avant d'initialiser Leaflet, pour que
-  // le conteneur ait déjà sa taille finale (la modale vient de passer à
-  // display:flex). Lire une propriété géométrique déclenche ce recalcul.
   void document.getElementById("leaflet-map").offsetHeight;
 
   if (map) {
@@ -540,6 +536,8 @@ function initListeners() {
 
 async function boot() {
   initListeners();
+  initSoundToggle();
+  startBackgroundMusic();
   updateSyncBadge();
   CONTENT = await loadContent();
   if (!CONTENT) {
