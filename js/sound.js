@@ -10,7 +10,7 @@ const SFX_URLS = {
   trap: "./assets/audio/piege.mp3",
   victory: "./assets/audio/victoire.mp3",
 };
-const MUSIC_URL = "./assets/audio/musique.mp3";
+const MUSIC_URL = "./assets/audio/deversoir.mp3";
 const MUSIC_VOLUME = 0.28;
 
 let musicEl = null;
