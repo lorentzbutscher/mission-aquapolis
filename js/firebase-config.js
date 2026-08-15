@@ -2,7 +2,7 @@
 // CONFIGURATION FIREBASE
 // ============================================================================
 export const firebaseConfig = {
-  apiKey: "AIzaSyBi•••••••••••••••••••••••••••••••",
+  apiKey: "AIzaSyBic9g9EyvQModcXoKkb-ncDvLAsM3PbgY",
   authDomain: "mission-aquapolis.firebaseapp.com",
   projectId: "mission-aquapolis",
   storageBucket: "mission-aquapolis.firebasestorage.app",
