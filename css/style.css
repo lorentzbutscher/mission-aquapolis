@@ -123,40 +123,47 @@ p { line-height: 1.5; margin: 0; }
   gap: 8px;
   min-height: var(--tap-min);
   padding: 14px 20px;
-  border-radius: var(--radius-md);
-  border: none;
+  border-radius: 18px;
+  border: 3px solid rgba(255,255,255,.85);
   font-family: var(--font-display);
   font-size: 19px;
   font-weight: 400;
   letter-spacing: .01em;
   cursor: pointer;
   text-align: center;
-  transition: transform .08s ease, filter .15s ease;
+  box-shadow: 4px 4px 0 rgba(0,0,0,.4);
+  transform: translate(0, 0);
+  transition: transform .08s ease, box-shadow .08s ease, filter .15s ease;
   -webkit-user-select: none; user-select: none;
 }
-.btn:active { transform: scale(.97); }
-.btn-primary { background: var(--team-color); color: var(--ink); box-shadow: var(--shadow); }
-.btn-gold { background: var(--gold); color: var(--ink); box-shadow: var(--shadow); }
-.btn-outline { background: transparent; color: var(--white); border: 2px solid rgba(255,255,255,.4); }
+.btn:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 rgba(0,0,0,.4); }
+.btn-primary { background: var(--team-color); color: var(--ink); }
+.btn-gold { background: var(--gold); color: var(--ink); }
+.btn-outline { background: transparent; color: var(--white); }
 .btn-danger { background: var(--rouge); color: var(--white); }
-.btn-ghost { background: rgba(255,255,255,.08); color: var(--white); }
+.btn-ghost { background: rgba(255,255,255,.1); color: var(--white); }
 .btn-block { width: 100%; }
 .btn[disabled] { opacity: .5; pointer-events: none; }
-.btn-sm { min-height: 44px; font-size: 15px; padding: 10px 14px; }
+.btn-sm { min-height: 44px; font-size: 15px; padding: 10px 14px; border-radius: 14px; border-width: 2px; box-shadow: 3px 3px 0 rgba(0,0,0,.4); }
+.btn-sm:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 rgba(0,0,0,.4); }
 
 /* Team select grid */
 .team-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .team-btn {
-  border-radius: var(--radius-lg);
+  border-radius: 20px;
   padding: 18px 10px;
-  border: 3px solid transparent;
+  border: 3px solid rgba(255,255,255,.85);
   display: flex; flex-direction: column; align-items: center; gap: 8px;
   font-family: var(--font-display);
   font-weight: 400; font-size: 18px;
   min-height: 108px;
-  box-shadow: var(--shadow);
+  box-shadow: 4px 4px 0 rgba(0,0,0,.4);
   color: var(--white);
+  cursor: pointer;
+  transform: translate(0, 0);
+  transition: transform .08s ease, box-shadow .08s ease;
 }
+.team-btn:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 rgba(0,0,0,.4); }
 .team-btn img { width: 52px; height: 52px; border-radius: 50%; background: rgba(255,255,255,.15); }
 .team-btn.bleu { background: linear-gradient(160deg, var(--bleu), #1d4ed8); }
 .team-btn.rouge { background: linear-gradient(160deg, var(--rouge), #b91c1c); }
@@ -356,3 +363,43 @@ p { line-height: 1.5; margin: 0; }
 }
 .confirm-box p { font-size: 17px; font-weight: 700; text-align: center; }
 .confirm-actions { display: flex; flex-direction: column; gap: 10px; }
+
+/* Bouton son (musique + effets), fixe en bas à droite sur tout l'app */
+.sound-toggle {
+  position: fixed;
+  right: 16px;
+  bottom: calc(16px + env(safe-area-inset-bottom));
+  z-index: 45;
+  width: 52px; height: 52px;
+  border-radius: 50%;
+  border: 3px solid rgba(255,255,255,.85);
+  background: rgba(11,18,32,.88);
+  color: white;
+  font-size: 22px;
+  box-shadow: 3px 3px 0 rgba(0,0,0,.4);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transform: translate(0, 0);
+  transition: transform .08s ease, box-shadow .08s ease;
+}
+.sound-toggle:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 rgba(0,0,0,.4); }
+
+/* Illustration du super-méchant sur l'écran de briefing */
+.villain-img {
+  width: 100%;
+  max-width: 280px;
+  margin: 0 auto;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  border: 3px solid rgba(255,255,255,.85);
+}
+
+/* Visuel de couverture sur l'écran de sélection d'équipe */
+.cover-img {
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  border: 3px solid rgba(255,255,255,.85);
+}
