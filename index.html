@@ -139,6 +139,17 @@
   <p id="trap-text" style="max-width:320px;"></p>
   <div class="trap-time" id="trap-time">02:00</div>
   <p class="muted">Pénalité en cours… patientez.</p>
+  <button class="small-link" id="btn-stop-game-trap" style="color:rgba(255,255,255,.55);">🛑 Arrêter la partie</button>
+</div>
+
+<div class="confirm-overlay" id="stop-confirm-overlay" style="display:none;">
+  <div class="confirm-box">
+    <p>Voulez-vous vraiment arrêter la partie en cours ?</p>
+    <div class="confirm-actions">
+      <button class="btn btn-outline btn-block" id="btn-stop-cancel">Non, continuer</button>
+      <button class="btn btn-danger btn-block" id="btn-stop-confirm">Oui, arrêter</button>
+    </div>
+  </div>
 </div>
 
 <div class="map-modal" id="map-modal" style="display:none;">
