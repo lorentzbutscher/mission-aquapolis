@@ -11,6 +11,7 @@ Dépose ici tes visuels exportés depuis Canva (PNG, fond transparent) :
   assets/pictos/objet.png          → picto carte Objet (optionnel)
   assets/pictos/piege.png          → picto carte Piège (optionnel)
   assets/pictos/revelation.png     → picto carte Révélation (optionnel)
+assets/deversoir.mp3               → musique de fond
 
 Tant que ces fichiers n'existent pas, l'application affiche des émojis à la
 place (aucune erreur, aucun blocage) — tu peux donc tester dès maintenant et
