@@ -102,6 +102,9 @@ function renderStartView() {
   badge.src = `./assets/badges/${TEAM}.png`;
   badge.onerror = () => (badge.style.visibility = "hidden");
   badge.style.visibility = "visible";
+
+  const startBtn = $("#btn-start-mission");
+  startBtn.textContent = STATE.status === "not_started" ? "🚀 Démarrer la mission" : "↩️ Reprendre la mission en cours";
 }
 
 // ---- Chronomètre général ----------------------------------------------------
@@ -119,8 +122,7 @@ function renderChronoTick() {
     STATE &&
     STATE.status !== "not_started" &&
     activeView !== "view-team-select" &&
-    activeView !== "view-loading" &&
-    activeView !== "view-start";
+    activeView !== "view-loading";
   if (!visible || !STATE.startedAt) {
     wrap.innerHTML = "";
     return;
@@ -246,6 +248,9 @@ function onCodeWrong(ep) {
   }
   persist();
 }
+
+// ---- Arrêter la partie ---------------------------------------------------------
+
 function openStopConfirm() {
   $("#stop-confirm-overlay").style.display = "flex";
 }
@@ -451,13 +456,25 @@ function updateSyncBadge() {
 
 function initListeners() {
   $("#btn-start-mission").addEventListener("click", () => {
-    STATE.status = "in_progress";
-    STATE.startedAt = Date.now();
-    persist();
+    if (STATE.status === "not_started") {
+      STATE.status = "in_progress";
+      STATE.startedAt = Date.now();
+      persist();
+    }
     renderEpreuveView();
     show("view-epreuve");
     startChrono();
   });
+
+  $("#btn-back-to-start").addEventListener("click", () => {
+    renderStartView();
+    show("view-start");
+  });
+
+  $("#btn-stop-game").addEventListener("click", openStopConfirm);
+  $("#btn-stop-game-trap").addEventListener("click", openStopConfirm);
+  $("#btn-stop-cancel").addEventListener("click", closeStopConfirm);
+  $("#btn-stop-confirm").addEventListener("click", abandonGame);
 
   $("#btn-change-team").addEventListener("click", () => {
     gameStore.clearSelectedTeam();
