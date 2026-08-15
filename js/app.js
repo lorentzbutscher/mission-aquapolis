@@ -33,6 +33,7 @@ function show(viewId) {
   document.getElementById(viewId).classList.add("active");
   renderChronoTick();
   $("#btn-stop-game").style.display = STATE && STATE.status !== "not_started" ? "flex" : "none";
+  document.body.classList.toggle("on-landing", viewId === "view-team-select");
 }
 
 function persist() {
