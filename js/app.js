@@ -33,6 +33,7 @@ function show(viewId) {
   document.querySelectorAll(".view").forEach((v) => v.classList.remove("active"));
   document.getElementById(viewId).classList.add("active");
   renderChronoTick();
+  $("#btn-stop-game").style.display = STATE && STATE.status !== "not_started" ? "flex" : "none";
 }
 
 function persist() {
