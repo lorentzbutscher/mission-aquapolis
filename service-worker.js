@@ -4,7 +4,7 @@
 // appels Firebase/Firestore ne sont JAMAIS interceptés (on laisse le réseau
 // natif gérer, sync.js gère déjà les échecs proprement).
 
-const CACHE_VERSION = "aquapolis-v5";
+const CACHE_VERSION = "aquapolis-v6";
 
 const APP_SHELL = [
   "./",
@@ -26,6 +26,13 @@ const APP_SHELL = [
   "./assets/logo.png",
   "./assets/fonts/Sketcomic.otf",
   "./assets/background.webp",
+  "./assets/villain.png",
+  "./assets/cover.png",
+  "./assets/audio/musique.mp3",
+  "./assets/audio/succes.mp3",
+  "./assets/audio/piege.mp3",
+  "./assets/audio/victoire.mp3",
+  "./js/sound.js",
   "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css",
   "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js",
 ];
@@ -70,7 +77,7 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  if (BYPASS_HOSTS.some((h) => url.hostname.endsWith(h))) return; // laisser passer nativement
+  if (BYPASS_HOSTS.some((h) => url.hostname.endsWith(h))) return;
 
   if (TILE_HOSTS.some((h) => url.hostname.endsWith(h))) {
     event.respondWith(cacheFirst(req));
