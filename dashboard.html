@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Mission Aquapolis — Suivi coordinateur</title>
+<link rel="icon" href="./icons/icon-192.png" />
+<link rel="stylesheet" href="./css/style.css" />
+</head>
+<body class="admin-body">
+<div class="admin-wrap">
+  <div class="header" style="margin-bottom:8px;">
+    <h1 style="font-size:20px;">📡 Suivi en direct — Mission Aquapolis</h1>
+    <span class="sync-badge offline" id="sync-badge"><span class="sync-dot"></span><span id="sync-label">Connexion…</span></span>
+  </div>
+  <p class="muted" style="margin-bottom:18px;">Ce lien est personnel : ne le transmets pas aux équipes, il ne sert qu'à ton suivi.</p>
+  <p class="muted" id="status-msg" style="margin-bottom:16px; color:#f59e0b;"></p>
+  <div class="dash-grid" id="dash-grid"></div>
+</div>
+<script type="module" src="./js/dashboard.js"></script>
+</body>
+</html>

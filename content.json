@@ -1,0 +1,182 @@
+{
+  "config": {
+    "eventName": "Mission Aquapolis",
+    "eventDate": "2026-09-17",
+    "durationMinutes": 120,
+    "maxDurationMinutes": 150,
+    "convergence": {
+      "name": "Place Benjamin Zix",
+      "detail": "Secteur Ponts Couverts / Maison des Tanneurs",
+      "lat": 48.5798,
+      "lng": 7.7422,
+      "time": "16:30"
+    }
+  },
+  "teams": {
+    "bleu": {
+      "label": "Équipe Bleue",
+      "heroName": "Capitaine Aqua",
+      "epreuves": [
+        {
+          "titre": "Épreuve 1",
+          "lieu": { "titre": "Lieu de test A1", "description": "Rendez-vous sur la place et cherchez l'indice près de la fontaine.", "adresse": "Place Kléber, Strasbourg", "lat": 48.5839, "lng": 7.7455 },
+          "objet": { "titre": "Objet mystère", "description": "Cherchez un objet bleu caché à proximité du banc." },
+          "indice": "Indice bonus : comptez les lampadaires entre vous et la statue.",
+          "code": { "valeur": "1234", "essaisAvantPiege": 2 },
+          "piege": { "texte": "Piège ! Fausse piste : vous avez suivi la mauvaise ruelle.", "dureeMinutes": 2 },
+          "revelation": { "texte": "Révélation (test) : le prochain lieu se trouve près de la Place Broglie." }
+        },
+        {
+          "titre": "Épreuve 2",
+          "lieu": { "titre": "Lieu de test A2", "description": "Cherchez le second indice près du kiosque à musique.", "adresse": "Place Broglie, Strasbourg", "lat": 48.5852, "lng": 7.7481 },
+          "objet": { "titre": "Objet mystère", "description": "Un objet est caché sous le troisième banc en partant de la gauche." },
+          "indice": "Indice bonus : le code correspond à une date.",
+          "code": { "valeur": "0917", "essaisAvantPiege": 2 },
+          "piege": { "texte": "Piège ! Un faux QR code vous a fait perdre du temps.", "dureeMinutes": 2 },
+          "revelation": { "texte": "Révélation (test) : direction la Place du Marché Gayot." }
+        },
+        {
+          "titre": "Épreuve 3",
+          "lieu": { "titre": "Lieu de test A3", "description": "Dernière étape avant le rassemblement final.", "adresse": "Place du Marché Gayot, Strasbourg", "lat": 48.5807, "lng": 7.7464 },
+          "objet": { "titre": "Objet mystère", "description": "Cherchez l'objet violet posé sur une table de terrasse." },
+          "indice": "Indice bonus : additionnez le nombre de terrasses visibles.",
+          "code": { "valeur": "7777", "essaisAvantPiege": 2 },
+          "piege": { "texte": "Piège ! Une fausse carte vous a égarés.", "dureeMinutes": 2 },
+          "revelation": { "texte": "Révélation (test) : Mission accomplie, direction la Place Benjamin Zix !" }
+        }
+      ]
+    },
+    "rouge": {
+      "label": "Équipe Rouge",
+      "heroName": "Vulcania",
+      "epreuves": [
+        {
+          "titre": "Épreuve 1",
+          "lieu": { "titre": "Lieu de test B1", "description": "Rendez-vous devant le grand portail.", "adresse": "Cathédrale de Strasbourg", "lat": 48.5819, "lng": 7.7507 },
+          "objet": { "titre": "Objet mystère", "description": "Cherchez un objet rouge caché près du parvis." },
+          "indice": "Indice bonus : comptez les statues sur la façade.",
+          "code": { "valeur": "1608", "essaisAvantPiege": 2 },
+          "piege": { "texte": "Piège ! Une fausse consigne vous a fait perdre du temps.", "dureeMinutes": 2 },
+          "revelation": { "texte": "Révélation (test) : direction le Palais Rohan." }
+        },
+        {
+          "titre": "Épreuve 2",
+          "lieu": { "titre": "Lieu de test B2", "description": "Cherchez l'indice près de l'entrée du musée.", "adresse": "Palais Rohan, Strasbourg", "lat": 48.5806, "lng": 7.7517 },
+          "objet": { "titre": "Objet mystère", "description": "Un objet est caché près de la grille d'entrée." },
+          "indice": "Indice bonus : le code est le nombre de fenêtres du rez-de-chaussée.",
+          "code": { "valeur": "2468", "essaisAvantPiege": 2 },
+          "piege": { "texte": "Piège ! Un faux plan vous a égarés.", "dureeMinutes": 2 },
+          "revelation": { "texte": "Révélation (test) : direction le Quai des Bateliers." }
+        },
+        {
+          "titre": "Épreuve 3",
+          "lieu": { "titre": "Lieu de test B3", "description": "Dernière étape avant le rassemblement final.", "adresse": "Quai des Bateliers, Strasbourg", "lat": 48.5817, "lng": 7.7477 },
+          "objet": { "titre": "Objet mystère", "description": "Cherchez l'objet caché près d'un point d'amarrage." },
+          "indice": "Indice bonus : observez le niveau de l'eau.",
+          "code": { "valeur": "3333", "essaisAvantPiege": 2 },
+          "piege": { "texte": "Piège ! Une fausse indication vous a ralentis.", "dureeMinutes": 2 },
+          "revelation": { "texte": "Révélation (test) : Mission accomplie, direction la Place Benjamin Zix !" }
+        }
+      ]
+    },
+    "jaune": {
+      "label": "Équipe Jaune",
+      "heroName": "Solaris",
+      "epreuves": [
+        {
+          "titre": "Épreuve 1",
+          "lieu": { "titre": "Lieu de test C1", "description": "Rendez-vous à l'entrée du quartier historique.", "adresse": "Petite France, Strasbourg", "lat": 48.5793, "lng": 7.7398 },
+          "objet": { "titre": "Objet mystère", "description": "Cherchez un objet jaune caché près d'un pont." },
+          "indice": "Indice bonus : comptez les maisons à colombages visibles.",
+          "code": { "valeur": "4141", "essaisAvantPiege": 2 },
+          "piege": { "texte": "Piège ! Une fausse ruelle vous a fait tourner en rond.", "dureeMinutes": 2 },
+          "revelation": { "texte": "Révélation (test) : direction le Barrage Vauban." }
+        },
+        {
+          "titre": "Épreuve 2",
+          "lieu": { "titre": "Lieu de test C2", "description": "Montez sur la terrasse panoramique.", "adresse": "Barrage Vauban, Strasbourg", "lat": 48.5788, "lng": 7.7392 },
+          "objet": { "titre": "Objet mystère", "description": "Un objet est caché près d'une des arches." },
+          "indice": "Indice bonus : le code correspond au nombre d'arches visibles x 100.",
+          "code": { "valeur": "700", "essaisAvantPiege": 2 },
+          "piege": { "texte": "Piège ! Une fausse indication vous a ralentis.", "dureeMinutes": 2 },
+          "revelation": { "texte": "Révélation (test) : direction la Place Saint-Thomas." }
+        },
+        {
+          "titre": "Épreuve 3",
+          "lieu": { "titre": "Lieu de test C3", "description": "Dernière étape avant le rassemblement final.", "adresse": "Place Saint-Thomas, Strasbourg", "lat": 48.5798, "lng": 7.7448 },
+          "objet": { "titre": "Objet mystère", "description": "Cherchez l'objet caché près du parvis de l'église." },
+          "indice": "Indice bonus : observez la date sur le fronton.",
+          "code": { "valeur": "5959", "essaisAvantPiege": 2 },
+          "piege": { "texte": "Piège ! Une fausse piste vous a fait perdre du temps.", "dureeMinutes": 2 },
+          "revelation": { "texte": "Révélation (test) : Mission accomplie, direction la Place Benjamin Zix !" }
+        }
+      ]
+    },
+    "vert": {
+      "label": "Équipe Verte",
+      "heroName": "Sylvana",
+      "epreuves": [
+        {
+          "titre": "Épreuve 1",
+          "lieu": { "titre": "Lieu de test D1", "description": "Rendez-vous devant le parvis de l'église.", "adresse": "Place Saint-Thomas, Strasbourg", "lat": 48.5798, "lng": 7.7448 },
+          "objet": { "titre": "Objet mystère", "description": "Cherchez un objet vert caché près de l'entrée." },
+          "indice": "Indice bonus : comptez les vitraux visibles depuis l'extérieur.",
+          "code": { "valeur": "6262", "essaisAvantPiege": 2 },
+          "piege": { "texte": "Piège ! Une fausse consigne vous a fait perdre du temps.", "dureeMinutes": 2 },
+          "revelation": { "texte": "Révélation (test) : direction la Place du Marché Gayot." }
+        },
+        {
+          "titre": "Épreuve 2",
+          "lieu": { "titre": "Lieu de test D2", "description": "Cherchez l'indice entre les terrasses.", "adresse": "Place du Marché Gayot, Strasbourg", "lat": 48.5807, "lng": 7.7464 },
+          "objet": { "titre": "Objet mystère", "description": "Un objet est caché sous une jardinière." },
+          "indice": "Indice bonus : le code est le numéro de la terrasse la plus fleurie.",
+          "code": { "valeur": "0808", "essaisAvantPiege": 2 },
+          "piege": { "texte": "Piège ! Un faux indice vous a égarés.", "dureeMinutes": 2 },
+          "revelation": { "texte": "Révélation (test) : direction la Place Broglie." }
+        },
+        {
+          "titre": "Épreuve 3",
+          "lieu": { "titre": "Lieu de test D3", "description": "Dernière étape avant le rassemblement final.", "adresse": "Place Broglie, Strasbourg", "lat": 48.5852, "lng": 7.7481 },
+          "objet": { "titre": "Objet mystère", "description": "Cherchez l'objet caché près du kiosque." },
+          "indice": "Indice bonus : observez la couleur des grilles du parc.",
+          "code": { "valeur": "9191", "essaisAvantPiege": 2 },
+          "piege": { "texte": "Piège ! Une fausse piste vous a ralentis.", "dureeMinutes": 2 },
+          "revelation": { "texte": "Révélation (test) : Mission accomplie, direction la Place Benjamin Zix !" }
+        }
+      ]
+    },
+    "violet": {
+      "label": "Équipe Violette",
+      "heroName": "Améthyste",
+      "epreuves": [
+        {
+          "titre": "Épreuve 1",
+          "lieu": { "titre": "Lieu de test E1", "description": "Rendez-vous devant la grille d'entrée.", "adresse": "Palais Rohan, Strasbourg", "lat": 48.5806, "lng": 7.7517 },
+          "objet": { "titre": "Objet mystère", "description": "Cherchez un objet violet caché près du bassin." },
+          "indice": "Indice bonus : comptez les fenêtres du premier étage.",
+          "code": { "valeur": "1122", "essaisAvantPiege": 2 },
+          "piege": { "texte": "Piège ! Une fausse indication vous a ralentis.", "dureeMinutes": 2 },
+          "revelation": { "texte": "Révélation (test) : direction la Cathédrale de Strasbourg." }
+        },
+        {
+          "titre": "Épreuve 2",
+          "lieu": { "titre": "Lieu de test E2", "description": "Levez les yeux vers la flèche.", "adresse": "Cathédrale de Strasbourg", "lat": 48.5819, "lng": 7.7507 },
+          "objet": { "titre": "Objet mystère", "description": "Un objet est caché près de l'horloge astronomique." },
+          "indice": "Indice bonus : le code est la hauteur approximative de la flèche en mètres.",
+          "code": { "valeur": "142", "essaisAvantPiege": 2 },
+          "piege": { "texte": "Piège ! Une fausse piste vous a fait perdre du temps.", "dureeMinutes": 2 },
+          "revelation": { "texte": "Révélation (test) : direction la Petite France." }
+        },
+        {
+          "titre": "Épreuve 3",
+          "lieu": { "titre": "Lieu de test E3", "description": "Dernière étape avant le rassemblement final.", "adresse": "Petite France, Strasbourg", "lat": 48.5793, "lng": 7.7398 },
+          "objet": { "titre": "Objet mystère", "description": "Cherchez l'objet caché près d'un pont fleuri." },
+          "indice": "Indice bonus : observez la couleur des volets environnants.",
+          "code": { "valeur": "4444", "essaisAvantPiege": 2 },
+          "piege": { "texte": "Piège ! Une fausse ruelle vous a fait tourner en rond.", "dureeMinutes": 2 },
+          "revelation": { "texte": "Révélation (test) : Mission accomplie, direction la Place Benjamin Zix !" }
+        }
+      ]
+    }
+  }
+}

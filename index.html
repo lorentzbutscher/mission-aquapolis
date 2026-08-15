@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
+<title>Mission Aquapolis</title>
+<meta name="description" content="Livre du jeu numérique — Mission Aquapolis, Strasbourg" />
+<meta name="theme-color" content="#0b1e3d" />
+<link rel="manifest" href="./manifest.json" />
+<link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
+<link rel="icon" href="./icons/icon-192.png" />
+<link rel="stylesheet" href="./css/style.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+</head>
+<body>
+<div class="app" id="app">
+
+  <header class="header">
+    <div class="logo-row">
+      <img src="./assets/logo.png" class="logo-img" alt="" id="brand-logo" onerror="this.src='./icons/icon-192.png'">
+      <span class="brand-title">Mission Aquapolis</span>
+    </div>
+    <span class="sync-badge offline" id="sync-badge"><span class="sync-dot"></span><span id="sync-label">Hors-ligne</span></span>
+  </header>
+
+  <div id="chrono-wrap"></div>
+
+  <section class="view active" id="view-loading">
+    <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px;">
+      <div style="font-size:52px;">🦸</div>
+      <p class="muted">Chargement de la mission…</p>
+    </div>
+  </section>
+
+  <section class="view" id="view-team-select">
+    <h1>Choisis ta brigade</h1>
+    <p class="muted">Sélectionne la couleur de ton équipe pour commencer la mission.</p>
+    <div class="team-grid" id="team-grid"></div>
+  </section>
+
+  <section class="view" id="view-start">
+    <div style="text-align:center; display:flex; flex-direction:column; align-items:center; gap:8px;">
+      <img id="start-badge" alt="" style="width:96px;height:96px;border-radius:50%;box-shadow:var(--shadow);background:rgba(255,255,255,.1);">
+      <h1 id="start-team-name">Équipe</h1>
+      <p class="muted" id="start-hero-name"></p>
+    </div>
+    <div class="card">
+      <h3>Avant de partir</h3>
+      <p>Votre équipe doit résoudre <strong>3 épreuves</strong> dans les rues de Strasbourg. Chaque épreuve indique un lieu, parfois un objet à trouver, et un code à valider.</p>
+      <p class="muted" style="margin-top:8px;">Durée cible : 2h00 — maximum 2h30. Restez groupés et prudents dans la circulation.</p>
+    </div>
+    <button class="btn btn-primary btn-block" id="btn-start-mission">🚀 Démarrer la mission</button>
+    <button class="small-link" id="btn-change-team">Changer d'équipe</button>
+    <button class="small-link" id="btn-reset-progress">Réinitialiser la progression (mode test)</button>
+  </section>
+
+  <section class="view" id="view-epreuve">
+    <div class="progress-dots" id="progress-dots"></div>
+    <h2 id="epreuve-title">Épreuve 1</h2>
+
+    <div class="card lieu">
+      <div class="card-head">
+        <div class="card-pict">📍</div>
+        <div>
+          <div class="card-family">Lieu</div>
+          <h3 id="lieu-titre"></h3>
+        </div>
+      </div>
+      <p id="lieu-desc"></p>
+      <p class="muted" id="lieu-adresse" style="margin-top:6px;"></p>
+      <button class="btn btn-outline btn-sm" id="btn-open-map" style="margin-top:10px;">🗺️ Voir sur la carte</button>
+    </div>
+
+    <div class="card objet" id="card-objet" style="display:none;">
+      <div class="card-head">
+        <div class="card-pict">🎒</div>
+        <div>
+          <div class="card-family">Objet</div>
+          <h3 id="objet-titre"></h3>
+        </div>
+      </div>
+      <p id="objet-desc"></p>
+    </div>
+
+    <button class="btn btn-ghost btn-sm" id="btn-indice" style="display:none;"></button>
+    <div class="card revelation" id="card-indice" style="display:none;">
+      <div class="card-head"><div class="card-pict">💡</div><div class="card-family">Indice bonus</div></div>
+      <p id="indice-text"></p>
+    </div>
+
+    <div class="card code">
+      <div class="card-head">
+        <div class="card-pict">🔑</div>
+        <div class="card-family">Code</div>
+      </div>
+      <form class="code-form" id="code-form" autocomplete="off">
+        <input class="code-input" id="code-input" inputmode="text" autocomplete="off" placeholder="CODE" maxlength="12" />
+        <button class="btn btn-primary" type="submit">✓</button>
+      </form>
+      <div class="code-feedback" id="code-feedback"></div>
+    </div>
+
+    <div class="card revelation" id="card-revelation" style="display:none;">
+      <div class="card-head">
+        <div class="card-pict">⭐</div>
+        <div class="card-family">Révélation</div>
+      </div>
+      <p id="revelation-text"></p>
+      <button class="btn btn-gold btn-block" id="btn-next-epreuve" style="margin-top:12px;">Épreuve suivante ➜</button>
+    </div>
+  </section>
+
+  <section class="view" id="view-final">
+    <div class="final-hero">
+      <div class="big-emoji">🏆</div>
+      <h1>Mission accomplie !</h1>
+      <p class="muted">Bravo, votre équipe a résolu les 3 épreuves.</p>
+    </div>
+    <div class="card revelation">
+      <div class="card-head"><div class="card-pict">📍</div><div class="card-family">Rassemblement final</div></div>
+      <h3 id="final-lieu-name"></h3>
+      <p id="final-lieu-detail"></p>
+      <button class="btn btn-outline btn-sm" id="btn-final-map" style="margin-top:10px;">🗺️ Voir l'itinéraire</button>
+    </div>
+    <div class="countdown-box">
+      <div class="card-family">Rassemblement à</div>
+      <div class="time" id="final-time"></div>
+      <div class="muted" id="final-countdown"></div>
+    </div>
+  </section>
+
+  <div class="footer-note">Mission Aquapolis · 17 septembre 2026 · Strasbourg</div>
+</div>
+
+<div class="trap-overlay" id="trap-overlay" style="display:none;">
+  <div class="trap-icon">⚠️</div>
+  <h1>PIÈGE DÉCLENCHÉ !</h1>
+  <p id="trap-text" style="max-width:320px;"></p>
+  <div class="trap-time" id="trap-time">02:00</div>
+  <p class="muted">Pénalité en cours… patientez.</p>
+</div>
+
+<div class="map-modal" id="map-modal" style="display:none;">
+  <div class="map-modal-head">
+    <h3 id="map-modal-title">Carte</h3>
+    <button class="btn btn-ghost btn-sm" id="btn-close-map">✕ Fermer</button>
+  </div>
+  <div id="leaflet-map" style="position:relative;"></div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script type="module" src="./js/app.js"></script>
+</body>
+</html>
