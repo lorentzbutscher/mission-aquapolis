@@ -246,6 +246,41 @@ function onCodeWrong(ep) {
   }
   persist();
 }
+function openStopConfirm() {
+  $("#stop-confirm-overlay").style.display = "flex";
+}
+
+function closeStopConfirm() {
+  $("#stop-confirm-overlay").style.display = "none";
+}
+
+function abandonGame() {
+  clearInterval(chronoTimer);
+  clearInterval(trapTimer);
+  clearInterval(convergenceTimer);
+  $("#trap-overlay").style.display = "none";
+  closeStopConfirm();
+
+  if (TEAM) {
+    gameStore.resetState(TEAM);
+    pushGameState(TEAM, {
+      status: "not_started",
+      currentEpreuveIndex: 0,
+      startedAt: null,
+      finishedAt: null,
+      currentTrapEndsAt: null,
+      trapCount: 0,
+    });
+  }
+  gameStore.clearSelectedTeam();
+  TEAM = null;
+  STATE = null;
+  delete document.body.dataset.team;
+  $("#chrono-wrap").innerHTML = "";
+  renderTeamGrid();
+  show("view-team-select");
+  showToast("Partie arrêtée — retour à la sélection d'équipe.");
+}
 
 function finishGame() {
   STATE.status = "finished";
