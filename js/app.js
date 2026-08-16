@@ -181,32 +181,7 @@ function renderEpreuveView() {
   const ep = currentEpreuve();
   $("#epreuve-title").textContent = ep.titre || `Épreuve ${STATE.currentEpreuveIndex + 1}`;
   renderProgressDots();
-
-  $("#lieu-titre").textContent = ep.lieu?.titre || "";
-  $("#lieu-desc").textContent = ep.lieu?.description || "";
-  $("#lieu-adresse").textContent = ep.lieu?.adresse ? `📍 ${ep.lieu.adresse}` : "";
-
-  const objetCard = $("#card-objet");
-  if (ep.objet && (ep.objet.titre || ep.objet.description)) {
-    objetCard.style.display = "";
-    $("#objet-titre").textContent = ep.objet.titre || "";
-    $("#objet-desc").textContent = ep.objet.description || "";
-  } else {
-    objetCard.style.display = "none";
-  }
-
-  const indiceBtn = $("#btn-indice");
-  const indiceCard = $("#card-indice");
-  const hintShown = !!STATE.hintRevealed[STATE.currentEpreuveIndex];
-  if (ep.indice) {
-    indiceBtn.style.display = "";
-    indiceBtn.textContent = hintShown ? "💡 Indice bonus affiché" : "💡 Voir l'indice bonus";
-    indiceCard.style.display = hintShown ? "" : "none";
-    $("#indice-text").textContent = ep.indice;
-  } else {
-    indiceBtn.style.display = "none";
-    indiceCard.style.display = "none";
-  }
+  renderBlocks(ep);
 
   $("#card-revelation").style.display = "none";
   $("#code-form").style.display = "";
@@ -215,13 +190,109 @@ function renderEpreuveView() {
   setTimeout(() => $("#code-input")?.focus(), 50);
 }
 
+function renderBlocks(ep) {
+  const container = $("#blocks-container");
+  container.innerHTML = "";
+  if (!STATE.revealedBlocks[STATE.currentEpreuveIndex]) STATE.revealedBlocks[STATE.currentEpreuveIndex] = [];
+  const revealedIds = STATE.revealedBlocks[STATE.currentEpreuveIndex];
+  (ep.blocks || [])
+    .filter((b) => b.visible)
+    .forEach((block) => container.appendChild(renderBlock(block, revealedIds)));
+}
+
+function renderBlock(block, revealedIds) {
+  const el = document.createElement("div");
+  switch (block.type) {
+    case "texte": {
+      el.className = "card block-texte";
+      el.innerHTML = block.html || "";
+      break;
+    }
+    case "photo": {
+      el.className = "card block-photo";
+      if (block.url) {
+        const img = document.createElement("img");
+        img.src = block.url;
+        img.alt = block.caption || "";
+        img.loading = "lazy";
+        el.appendChild(img);
+      }
+      if (block.caption) {
+        const p = document.createElement("p");
+        p.className = "muted";
+        p.style.marginTop = "8px";
+        p.textContent = block.caption;
+        el.appendChild(p);
+      }
+      break;
+    }
+    case "video": {
+      el.className = "card block-video";
+      if (block.youtubeId) {
+        const wrap = document.createElement("div");
+        wrap.className = "video-embed";
+        const iframe = document.createElement("iframe");
+        iframe.src = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(block.youtubeId)}`;
+        iframe.title = "Vidéo";
+        iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
+        iframe.allowFullscreen = true;
+        iframe.loading = "lazy";
+        wrap.appendChild(iframe);
+        el.appendChild(wrap);
+      }
+      break;
+    }
+    case "carte": {
+      el.className = "card block-carte";
+      const a = document.createElement("a");
+      a.href = block.url || "#";
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      a.className = "btn btn-outline btn-block";
+      a.textContent = "🗺️ " + (block.label || "Voir l'itinéraire");
+      el.appendChild(a);
+      break;
+    }
+    case "indice": {
+      el.className = "card revelation block-indice";
+      const isRevealed = revealedIds.includes(block.id);
+      if (isRevealed) {
+        const head = document.createElement("div");
+        head.className = "card-head";
+        head.innerHTML = `<div class="card-pict">💡</div><div class="card-family">Indice</div>`;
+        el.appendChild(head);
+        const p = document.createElement("p");
+        p.textContent = block.texte || "";
+        el.appendChild(p);
+      } else {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "btn btn-ghost btn-block";
+        btn.textContent = "💡 Voir l'indice";
+        btn.addEventListener("click", () => revealBlock(block.id));
+        el.appendChild(btn);
+      }
+      break;
+    }
+  }
+  return el;
+}
+
+function revealBlock(blockId) {
+  const idx = STATE.currentEpreuveIndex;
+  if (!STATE.revealedBlocks[idx]) STATE.revealedBlocks[idx] = [];
+  if (!STATE.revealedBlocks[idx].includes(blockId)) {
+    STATE.revealedBlocks[idx].push(blockId);
+  }
+  persist();
+  renderBlocks(currentEpreuve());
+}
+
 function onCodeCorrect(ep) {
   playSuccessSound();
   vibrate(120);
   $("#code-feedback").textContent = "";
   $("#code-form").style.display = "none";
-  $("#btn-indice").style.display = "none";
-  $("#card-indice").style.display = "none";
   $("#card-revelation").style.display = "";
   $("#revelation-text").textContent = ep.revelation?.texte || "Bravo, épreuve réussie !";
   STATE.wrongAttempts = 0;
@@ -384,8 +455,11 @@ function openMap(finalOnly = false) {
   $("#map-modal").style.display = "flex";
   $("#map-modal-title").textContent = finalOnly
     ? "Itinéraire vers le rassemblement"
-    : currentEpreuve().lieu?.titre || "Carte";
+    : currentEpreuve().titre || "Carte";
 
+  // Forcer un recalcul de mise en page avant d'initialiser Leaflet, pour que
+  // le conteneur ait déjà sa taille finale (la modale vient de passer à
+  // display:flex). Lire une propriété géométrique déclenche ce recalcul.
   void document.getElementById("leaflet-map").offsetHeight;
 
   if (map) {
@@ -402,7 +476,7 @@ function openMap(finalOnly = false) {
       color: getComputedStyle(document.body).getPropertyValue("--team-color").trim() || "#2563eb",
       imgUrl: `./assets/badges/${TEAM}.png`,
       emoji: "📍",
-      label: ep.lieu.titre,
+      label: ep.titre,
     });
     points.push([ep.lieu.lat, ep.lieu.lng]);
   }
@@ -489,12 +563,6 @@ function initListeners() {
       renderStartView();
       showToast("Progression réinitialisée.");
     }
-  });
-
-  $("#btn-indice").addEventListener("click", () => {
-    STATE.hintRevealed[STATE.currentEpreuveIndex] = true;
-    persist();
-    renderEpreuveView();
   });
 
   $("#code-form").addEventListener("submit", (e) => {

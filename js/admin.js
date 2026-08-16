@@ -7,6 +7,7 @@ import {
   saveTeamContent,
   saveEventConfig,
   resetTeamState,
+  uploadBlockImage,
   configured,
   TEAM_COLORS,
 } from "./sync.js";
@@ -44,13 +45,64 @@ function flash(msg, isError = false) {
 function emptyEpreuve(n) {
   return {
     titre: `Épreuve ${n}`,
-    lieu: { titre: "", description: "", adresse: "", lat: 48.5836, lng: 7.7458 },
-    objet: { titre: "", description: "" },
-    indice: "",
+    lieu: { lat: 48.5836, lng: 7.7458 },
     code: { valeur: "", essaisAvantPiege: 2 },
     piege: { texte: "", dureeMinutes: 2 },
     revelation: { texte: "" },
+    blocks: [],
   };
+}
+
+// ---- Blocs de contenu -----------------------------------------------------
+
+function blockTypeMeta(type) {
+  return (
+    {
+      texte: { icon: "📝", label: "Texte" },
+      photo: { icon: "📷", label: "Photo" },
+      video: { icon: "🎬", label: "Vidéo" },
+      carte: { icon: "🗺️", label: "Carte" },
+      indice: { icon: "💡", label: "Indice" },
+    }[type] || { icon: "❓", label: type }
+  );
+}
+
+function newBlockId() {
+  return "blk_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+}
+
+function blockDefaults(type) {
+  const base = { id: newBlockId(), type, visible: true };
+  switch (type) {
+    case "texte":
+      return { ...base, html: "<p>Nouveau texte…</p>" };
+    case "photo":
+      return { ...base, url: "", caption: "" };
+    case "video":
+      return { ...base, url: "", youtubeId: "" };
+    case "carte":
+      return { ...base, url: "", label: "Voir l'itinéraire" };
+    case "indice":
+      return { ...base, texte: "" };
+    default:
+      return base;
+  }
+}
+
+function parseYouTubeId(url) {
+  if (!url) return "";
+  const patterns = [
+    /youtu\.be\/([A-Za-z0-9_-]{6,})/,
+    /youtube\.com\/watch\?v=([A-Za-z0-9_-]{6,})/,
+    /youtube\.com\/embed\/([A-Za-z0-9_-]{6,})/,
+    /youtube-nocookie\.com\/embed\/([A-Za-z0-9_-]{6,})/,
+    /youtube\.com\/shorts\/([A-Za-z0-9_-]{6,})/,
+  ];
+  for (const re of patterns) {
+    const m = url.match(re);
+    if (m) return m[1];
+  }
+  return "";
 }
 
 function emptyTeam(color) {
@@ -227,50 +279,332 @@ function renderEpreuveForm(ep, i) {
   <div class="epreuve-form" data-idx="${i}" style="display:${i === 0 ? "" : "none"};">
     <div class="admin-card">
       <div class="field"><label>Titre de l'épreuve</label><input class="ep-titre" value="${escapeHtml(ep.titre || "")}" /></div>
-      <h3>📍 Carte Lieu</h3>
-      <div class="field"><label>Titre du lieu</label><input class="ep-lieu-titre" value="${escapeHtml(ep.lieu?.titre || "")}" /></div>
-      <div class="field"><label>Description / indice de localisation</label><textarea class="ep-lieu-desc">${escapeHtml(ep.lieu?.description || "")}</textarea></div>
-      <div class="field"><label>Adresse (affichée aux équipes)</label><input class="ep-lieu-adresse" value="${escapeHtml(ep.lieu?.adresse || "")}" /></div>
+    </div>
+    <div class="admin-card">
+      <h3>📍 Coordonnées GPS <span class="muted" style="font-weight:400;">(pour la carte intégrée "Voir sur la carte")</span></h3>
       <div class="grid-2">
         <div class="field"><label>Latitude</label><input class="ep-lieu-lat" type="number" step="0.000001" value="${ep.lieu?.lat ?? ""}" /></div>
         <div class="field"><label>Longitude</label><input class="ep-lieu-lng" type="number" step="0.000001" value="${ep.lieu?.lng ?? ""}" /></div>
       </div>
       <div class="ep-map" style="height:200px;border-radius:12px;overflow:hidden;"></div>
-      <p class="muted" style="font-size:12px;margin-top:6px;">Cliquez sur la carte pour placer le lieu précis.</p>
+      <p class="muted" style="font-size:12px;margin-top:6px;">Clique sur la carte pour placer le lieu précis.</p>
     </div>
     <div class="admin-card">
-      <h3>🎒 Carte Objet <span class="muted" style="font-weight:400;">(optionnel)</span></h3>
-      <div class="field"><label>Titre de l'objet</label><input class="ep-objet-titre" value="${escapeHtml(ep.objet?.titre || "")}" /></div>
-      <div class="field"><label>Description</label><textarea class="ep-objet-desc">${escapeHtml(ep.objet?.description || "")}</textarea></div>
-    </div>
-    <div class="admin-card">
-      <h3>💡 Indice bonus <span class="muted" style="font-weight:400;">(optionnel)</span></h3>
-      <div class="field"><textarea class="ep-indice">${escapeHtml(ep.indice || "")}</textarea></div>
-    </div>
-    <div class="admin-card">
-      <h3>🔑 Carte Code</h3>
+      <h3>🔑 Code</h3>
       <div class="grid-2">
         <div class="field"><label>Code à saisir</label><input class="ep-code-valeur" value="${escapeHtml(ep.code?.valeur || "")}" /></div>
         <div class="field"><label>Essais avant piège</label><input class="ep-code-essais" type="number" min="1" value="${ep.code?.essaisAvantPiege ?? 2}" /></div>
       </div>
     </div>
     <div class="admin-card">
-      <h3>⚠️ Carte Piège</h3>
+      <h3>⚠️ Piège</h3>
       <div class="grid-2">
         <div class="field"><label>Texte affiché</label><input class="ep-piege-texte" value="${escapeHtml(ep.piege?.texte || "")}" /></div>
         <div class="field"><label>Durée pénalité (min)</label><input class="ep-piege-duree" type="number" min="1" value="${ep.piege?.dureeMinutes ?? 2}" /></div>
       </div>
     </div>
     <div class="admin-card">
-      <h3>⭐ Carte Révélation</h3>
+      <h3>⭐ Révélation <span class="muted" style="font-weight:400;">(affichée après validation du code)</span></h3>
       <div class="field"><textarea class="ep-revelation">${escapeHtml(ep.revelation?.texte || "")}</textarea></div>
     </div>
+
+    <div class="admin-card">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; flex-wrap:wrap; gap:10px;">
+        <h3 style="margin:0;">🧩 Contenu de la page (blocs)</h3>
+        <div style="position:relative;">
+          <button type="button" class="btn btn-gold btn-sm add-block-btn">+ Ajouter un bloc</button>
+          <div class="add-block-menu" style="display:none;"></div>
+        </div>
+      </div>
+      <p class="muted" style="font-size:13px; margin-bottom:12px;">Composez librement la page vue par l'équipe avant validation du code : texte, photo, vidéo, lien carte, indices. Décochez "Visible" pour préparer un bloc sans le publier.</p>
+      <div class="blocks-list"></div>
+    </div>
+
+    <div class="admin-card">
+      <h3>👁️ Aperçu joueur</h3>
+      <div class="player-preview preview-frame"></div>
+    </div>
   </div>`;
+}
+
+// ---- Éditeur de blocs -----------------------------------------------------
+
+function renderBlocksList(color, epIdx, panel) {
+  const form = panel.querySelector(`.epreuve-form[data-idx="${epIdx}"]`);
+  if (!form) return;
+  const listEl = form.querySelector(".blocks-list");
+  const ep = TEAMS_DATA[color].epreuves[epIdx];
+  const blocks = ep.blocks || (ep.blocks = []);
+  listEl.innerHTML = "";
+  blocks.forEach((block, bi) => {
+    listEl.appendChild(renderBlockItem(color, epIdx, block, bi, blocks.length, panel));
+  });
+  renderPreview(color, epIdx, panel);
+}
+
+function renderBlockItem(color, epIdx, block, bi, total, panel) {
+  const meta = blockTypeMeta(block.type);
+  const item = document.createElement("div");
+  item.className = "block-editor-item";
+
+  const head = document.createElement("div");
+  head.className = "block-editor-head";
+  head.innerHTML = `
+    <span class="block-type-badge">${meta.icon} ${meta.label}</span>
+    <label class="block-visible-toggle"><input type="checkbox" class="block-visible-cb" ${block.visible ? "checked" : ""}> Visible</label>
+    <span style="flex:1"></span>
+    <button type="button" class="icon-btn move-up" title="Monter" ${bi === 0 ? "disabled" : ""}>↑</button>
+    <button type="button" class="icon-btn move-down" title="Descendre" ${bi === total - 1 ? "disabled" : ""}>↓</button>
+    <button type="button" class="icon-btn delete-block" title="Supprimer">🗑️</button>
+  `;
+  item.appendChild(head);
+
+  const body = document.createElement("div");
+  body.className = "block-editor-body";
+  body.appendChild(renderBlockBody(color, epIdx, block, panel));
+  item.appendChild(body);
+
+  head.querySelector(".block-visible-cb").addEventListener("change", (e) => {
+    block.visible = e.target.checked;
+    renderPreview(color, epIdx, panel);
+  });
+  head.querySelector(".move-up").addEventListener("click", () => {
+    const blocks = TEAMS_DATA[color].epreuves[epIdx].blocks;
+    if (bi === 0) return;
+    [blocks[bi - 1], blocks[bi]] = [blocks[bi], blocks[bi - 1]];
+    renderBlocksList(color, epIdx, panel);
+  });
+  head.querySelector(".move-down").addEventListener("click", () => {
+    const blocks = TEAMS_DATA[color].epreuves[epIdx].blocks;
+    if (bi === blocks.length - 1) return;
+    [blocks[bi + 1], blocks[bi]] = [blocks[bi], blocks[bi + 1]];
+    renderBlocksList(color, epIdx, panel);
+  });
+  head.querySelector(".delete-block").addEventListener("click", () => {
+    if (!confirm("Supprimer ce bloc ?")) return;
+    const blocks = TEAMS_DATA[color].epreuves[epIdx].blocks;
+    blocks.splice(bi, 1);
+    renderBlocksList(color, epIdx, panel);
+  });
+
+  return item;
+}
+
+function renderBlockBody(color, epIdx, block, panel) {
+  const wrap = document.createElement("div");
+
+  if (block.type === "texte") {
+    wrap.innerHTML = `
+      <div class="rte-toolbar">
+        <button type="button" class="rte-btn" data-cmd="bold" title="Gras"><b>B</b></button>
+        <button type="button" class="rte-btn" data-cmd="italic" title="Italique"><i>I</i></button>
+        <button type="button" class="rte-btn" data-cmd="underline" title="Souligné"><u>U</u></button>
+        <select class="rte-size" title="Taille">
+          <option value="2">Petit</option>
+          <option value="3" selected>Normal</option>
+          <option value="5">Grand</option>
+          <option value="6">Très grand</option>
+        </select>
+        <input type="color" class="rte-color" value="#ffffff" title="Couleur du texte">
+        <button type="button" class="rte-btn" data-cmd="justifyLeft" title="Aligner à gauche">⯇</button>
+        <button type="button" class="rte-btn" data-cmd="justifyCenter" title="Centrer">≡</button>
+        <button type="button" class="rte-btn" data-cmd="justifyRight" title="Aligner à droite">⯈</button>
+        <button type="button" class="rte-btn" data-cmd="insertUnorderedList" title="Liste à puces">• Liste</button>
+      </div>
+      <div class="rte-editor" contenteditable="true"></div>
+    `;
+    const editor = wrap.querySelector(".rte-editor");
+    editor.innerHTML = block.html || "";
+    wrap.querySelectorAll(".rte-btn").forEach((btn) => {
+      btn.addEventListener("mousedown", (e) => e.preventDefault());
+      btn.addEventListener("click", () => {
+        editor.focus();
+        document.execCommand(btn.dataset.cmd, false, null);
+        block.html = editor.innerHTML;
+        renderPreview(color, epIdx, panel);
+      });
+    });
+    const sizeSel = wrap.querySelector(".rte-size");
+    sizeSel.addEventListener("mousedown", (e) => e.stopPropagation());
+    sizeSel.addEventListener("change", () => {
+      editor.focus();
+      document.execCommand("fontSize", false, sizeSel.value);
+      block.html = editor.innerHTML;
+      renderPreview(color, epIdx, panel);
+    });
+    const colorInput = wrap.querySelector(".rte-color");
+    colorInput.addEventListener("input", () => {
+      editor.focus();
+      document.execCommand("foreColor", false, colorInput.value);
+      block.html = editor.innerHTML;
+      renderPreview(color, epIdx, panel);
+    });
+    editor.addEventListener("input", () => {
+      block.html = editor.innerHTML;
+      renderPreview(color, epIdx, panel);
+    });
+  } else if (block.type === "photo") {
+    wrap.innerHTML = `
+      <div class="field"><label>Image</label><input type="file" accept="image/*" class="photo-file-input"></div>
+      <div class="photo-upload-status muted" style="font-size:13px;"></div>
+      <div class="photo-preview">${block.url ? `<img src="${escapeHtml(block.url)}" style="max-width:180px;border-radius:10px;">` : ""}</div>
+      <div class="field" style="margin-top:8px;"><label>Légende (optionnel)</label><input class="photo-caption" value="${escapeHtml(block.caption || "")}"></div>
+    `;
+    const fileInput = wrap.querySelector(".photo-file-input");
+    const statusEl = wrap.querySelector(".photo-upload-status");
+    const previewEl = wrap.querySelector(".photo-preview");
+    fileInput.addEventListener("change", async () => {
+      const file = fileInput.files[0];
+      if (!file) return;
+      statusEl.textContent = "Envoi en cours…";
+      try {
+        const url = await uploadBlockImage(file, (p) => {
+          statusEl.textContent = `Envoi en cours… ${Math.round(p * 100)}%`;
+        });
+        block.url = url;
+        statusEl.textContent = "✅ Image envoyée";
+        previewEl.innerHTML = `<img src="${escapeHtml(url)}" style="max-width:180px;border-radius:10px;">`;
+        renderPreview(color, epIdx, panel);
+      } catch (err) {
+        statusEl.textContent = "❌ Échec de l'envoi : " + (err.message || "erreur inconnue");
+      }
+    });
+    wrap.querySelector(".photo-caption").addEventListener("input", (e) => {
+      block.caption = e.target.value;
+      renderPreview(color, epIdx, panel);
+    });
+  } else if (block.type === "video") {
+    wrap.innerHTML = `
+      <div class="field"><label>Lien YouTube</label><input class="video-url" value="${escapeHtml(block.url || "")}" placeholder="https://youtube.com/watch?v=..."></div>
+      <div class="video-status muted" style="font-size:13px;">${block.youtubeId ? "✅ Vidéo reconnue" : ""}</div>
+    `;
+    const input = wrap.querySelector(".video-url");
+    const status = wrap.querySelector(".video-status");
+    input.addEventListener("input", () => {
+      block.url = input.value.trim();
+      const id = parseYouTubeId(block.url);
+      block.youtubeId = id;
+      status.textContent = block.url ? (id ? "✅ Vidéo reconnue" : "⚠️ Lien YouTube non reconnu") : "";
+      renderPreview(color, epIdx, panel);
+    });
+  } else if (block.type === "carte") {
+    wrap.innerHTML = `
+      <div class="field"><label>Lien Google Maps</label><input class="carte-url" value="${escapeHtml(block.url || "")}" placeholder="https://maps.google.com/..."></div>
+      <div class="field"><label>Texte du bouton</label><input class="carte-label" value="${escapeHtml(block.label || "")}"></div>
+    `;
+    wrap.querySelector(".carte-url").addEventListener("input", (e) => {
+      block.url = e.target.value.trim();
+      renderPreview(color, epIdx, panel);
+    });
+    wrap.querySelector(".carte-label").addEventListener("input", (e) => {
+      block.label = e.target.value;
+      renderPreview(color, epIdx, panel);
+    });
+  } else if (block.type === "indice") {
+    wrap.innerHTML = `<div class="field"><textarea class="indice-texte">${escapeHtml(block.texte || "")}</textarea></div>`;
+    wrap.querySelector(".indice-texte").addEventListener("input", (e) => {
+      block.texte = e.target.value;
+      renderPreview(color, epIdx, panel);
+    });
+  }
+
+  return wrap;
+}
+
+function renderPreview(color, epIdx, panel) {
+  const form = panel.querySelector(`.epreuve-form[data-idx="${epIdx}"]`);
+  if (!form) return;
+  const previewEl = form.querySelector(".player-preview");
+  const blocks = TEAMS_DATA[color].epreuves[epIdx].blocks || [];
+  const visible = blocks.filter((b) => b.visible);
+  previewEl.innerHTML = "";
+  if (!visible.length) {
+    previewEl.innerHTML = `<p class="muted" style="font-size:13px;">Aucun bloc visible pour l'instant.</p>`;
+    return;
+  }
+  visible.forEach((block) => previewEl.appendChild(renderPreviewBlock(block)));
+}
+
+function renderPreviewBlock(block) {
+  const el = document.createElement("div");
+  if (block.type === "texte") {
+    el.className = "card block-texte";
+    el.innerHTML = block.html || "";
+  } else if (block.type === "photo") {
+    el.className = "card block-photo";
+    if (block.url) {
+      const img = document.createElement("img");
+      img.src = block.url;
+      el.appendChild(img);
+    } else {
+      el.innerHTML = `<p class="muted" style="font-size:13px;">(aucune image envoyée)</p>`;
+    }
+    if (block.caption) {
+      const p = document.createElement("p");
+      p.className = "muted";
+      p.style.marginTop = "8px";
+      p.textContent = block.caption;
+      el.appendChild(p);
+    }
+  } else if (block.type === "video") {
+    el.className = "card block-video";
+    el.innerHTML = block.youtubeId
+      ? `<div class="video-embed"><iframe src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(block.youtubeId)}" allowfullscreen loading="lazy"></iframe></div>`
+      : `<p class="muted" style="font-size:13px;">(lien vidéo non reconnu)</p>`;
+  } else if (block.type === "carte") {
+    el.className = "card block-carte";
+    const a = document.createElement("a");
+    a.href = block.url || "#";
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    a.className = "btn btn-outline btn-block";
+    a.textContent = "🗺️ " + (block.label || "Voir l'itinéraire");
+    el.appendChild(a);
+  } else if (block.type === "indice") {
+    el.className = "card revelation block-indice";
+    el.innerHTML = `<div class="card-head"><div class="card-pict">💡</div><div class="card-family">Indice (masqué par défaut côté joueur)</div></div><p>${escapeHtml(block.texte || "")}</p>`;
+  }
+  return el;
+}
+
+function wireAddBlockMenu(color, epIdx, panel, form) {
+  const btn = form.querySelector(".add-block-btn");
+  const menu = form.querySelector(".add-block-menu");
+  const types = ["texte", "photo", "video", "carte", "indice"];
+  menu.innerHTML = types
+    .map((t) => {
+      const meta = blockTypeMeta(t);
+      return `<button type="button" class="add-block-option" data-type="${t}">${meta.icon} ${meta.label}</button>`;
+    })
+    .join("");
+  btn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    menu.style.display = menu.style.display === "none" ? "flex" : "none";
+  });
+  menu.querySelectorAll(".add-block-option").forEach((optBtn) => {
+    optBtn.addEventListener("click", () => {
+      const type = optBtn.dataset.type;
+      TEAMS_DATA[color].epreuves[epIdx].blocks.push(blockDefaults(type));
+      menu.style.display = "none";
+      renderBlocksList(color, epIdx, panel);
+    });
+  });
+  document.addEventListener("click", (e) => {
+    if (menu.style.display !== "none" && !menu.contains(e.target) && e.target !== btn) {
+      menu.style.display = "none";
+    }
+  });
 }
 
 function wireTeamPanel(color, panel) {
   epMaps[color] = [];
   activeEpIdx[color] = 0;
+
+  panel.querySelectorAll(".epreuve-form").forEach((form) => {
+    const idx = Number(form.dataset.idx);
+    renderBlocksList(color, idx, panel);
+    wireAddBlockMenu(color, idx, panel, form);
+  });
 
   panel.querySelectorAll(".epreuve-tab").forEach((tabEl) => {
     tabEl.addEventListener("click", () => {
@@ -329,20 +663,12 @@ async function saveTeamPanel(color, panel) {
   const label = panel.querySelector(".t-label").value.trim();
   const heroName = panel.querySelector(".t-hero").value.trim();
   const epreuveForms = panel.querySelectorAll(".epreuve-form");
-  const epreuves = Array.from(epreuveForms).map((f) => ({
+  const epreuves = Array.from(epreuveForms).map((f, i) => ({
     titre: f.querySelector(".ep-titre").value.trim(),
     lieu: {
-      titre: f.querySelector(".ep-lieu-titre").value.trim(),
-      description: f.querySelector(".ep-lieu-desc").value.trim(),
-      adresse: f.querySelector(".ep-lieu-adresse").value.trim(),
       lat: Number(f.querySelector(".ep-lieu-lat").value) || 0,
       lng: Number(f.querySelector(".ep-lieu-lng").value) || 0,
     },
-    objet: {
-      titre: f.querySelector(".ep-objet-titre").value.trim(),
-      description: f.querySelector(".ep-objet-desc").value.trim(),
-    },
-    indice: f.querySelector(".ep-indice").value.trim(),
     code: {
       valeur: f.querySelector(".ep-code-valeur").value.trim(),
       essaisAvantPiege: Number(f.querySelector(".ep-code-essais").value) || 2,
@@ -354,6 +680,7 @@ async function saveTeamPanel(color, panel) {
     revelation: {
       texte: f.querySelector(".ep-revelation").value.trim(),
     },
+    blocks: (TEAMS_DATA[color].epreuves[i]?.blocks || []).map((b) => ({ ...b })),
   }));
   const teamData = { label, heroName, epreuves };
   try {

@@ -9,7 +9,9 @@ export function defaultState() {
     finishedAt: null,
     currentTrapEndsAt: null,
     wrongAttempts: 0,
-    hintRevealed: [false, false, false],
+    // Un tableau d'identifiants de blocs "indice" révélés, par épreuve
+    // (ex. revealedBlocks[0] = ["blk_2"] pour l'épreuve 1).
+    revealedBlocks: [[], [], []],
     trapCount: 0,
   };
 }

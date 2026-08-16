@@ -21,15 +21,17 @@ function load() {
   if (!_modPromise) {
     _modPromise = (async () => {
       try {
-        const [{ initializeApp }, firestore, authMod] = await Promise.all([
+        const [{ initializeApp }, firestore, authMod, storageMod] = await Promise.all([
           import(/* webpackIgnore: true */ `${CDN}/firebase-app.js`),
           import(/* webpackIgnore: true */ `${CDN}/firebase-firestore.js`),
           import(/* webpackIgnore: true */ `${CDN}/firebase-auth.js`),
+          import(/* webpackIgnore: true */ `${CDN}/firebase-storage.js`),
         ]);
         const app = initializeApp(firebaseConfig);
         const db = firestore.getFirestore(app);
         const auth = authMod.getAuth(app);
-        return { app, db, auth, firestore, authMod };
+        const storage = storageMod.getStorage(app);
+        return { app, db, auth, firestore, authMod, storage, storageMod };
       } catch (err) {
         console.warn("[sync] Firebase indisponible, mode local uniquement.", err);
         return null;
@@ -178,6 +180,34 @@ export async function getAllTeamsContentOnce() {
     if (snap.exists()) teams[color] = snap.data();
   }
   return teams;
+}
+
+// ---- Stockage des photos (blocs) ------------------------------------------
+
+export async function uploadBlockImage(file, onProgress) {
+  const m = await load();
+  if (!m) throw new Error("Firebase non configuré.");
+  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+  const path = `blocks/${Date.now()}-${safeName}`;
+  const fileRef = m.storageMod.ref(m.storage, path);
+  const task = m.storageMod.uploadBytesResumable(fileRef, file);
+  return new Promise((resolve, reject) => {
+    task.on(
+      "state_changed",
+      (snap) => {
+        if (onProgress) onProgress(snap.bytesTransferred / snap.totalBytes);
+      },
+      reject,
+      async () => {
+        try {
+          const url = await m.storageMod.getDownloadURL(task.snapshot.ref);
+          resolve(url);
+        } catch (err) {
+          reject(err);
+        }
+      }
+    );
+  });
 }
 
 export async function getEventConfigOnce() {
