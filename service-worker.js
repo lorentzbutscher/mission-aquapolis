@@ -4,7 +4,7 @@
 // appels Firebase/Firestore ne sont JAMAIS interceptés (on laisse le réseau
 // natif gérer, sync.js gère déjà les échecs proprement).
 
-const CACHE_VERSION = "aquapolis-v7";
+const CACHE_VERSION = "aquapolis-v8";
 
 const APP_SHELL = [
   "./",
@@ -63,7 +63,16 @@ self.addEventListener("activate", (event) => {
 });
 
 const TILE_HOSTS = ["tile.openstreetmap.org"];
-const BYPASS_HOSTS = ["googleapis.com", "firebaseio.com", "gstatic.com"];
+// Uniquement les appels d'API Firebase (Firestore/Auth) : jamais interceptés,
+// on laisse le réseau natif gérer. Les images Firebase Storage, elles,
+// passent par le cache normal plus bas (staleWhileRevalidate) pour rester
+// disponibles hors-ligne.
+const BYPASS_HOSTS = [
+  "firestore.googleapis.com",
+  "identitytoolkit.googleapis.com",
+  "securetoken.googleapis.com",
+  "firebaseio.com",
+];
 
 self.addEventListener("fetch", (event) => {
   const req = event.request;
@@ -76,7 +85,7 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  if (BYPASS_HOSTS.some((h) => url.hostname.endsWith(h))) return;
+  if (BYPASS_HOSTS.some((h) => url.hostname.endsWith(h))) return; // laisser passer nativement
 
   if (TILE_HOSTS.some((h) => url.hostname.endsWith(h))) {
     event.respondWith(cacheFirst(req));
