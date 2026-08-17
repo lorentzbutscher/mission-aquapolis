@@ -55,10 +55,17 @@ function renderTeamGrid() {
   grid.innerHTML = "";
   for (const color of TEAM_COLORS) {
     const btn = document.createElement("button");
-    btn.className = `team-btn ${color}`;
-    btn.innerHTML = `<img src="./assets/badges/${color}.png" alt="" onerror="this.style.display='none'"><span>${labelFor(
-      color
-    )}</span>`;
+    btn.className = "team-btn-img";
+    btn.type = "button";
+    btn.setAttribute("aria-label", labelFor(color));
+    const img = document.createElement("img");
+    img.src = `./assets/team-buttons/${color}.webp`;
+    img.alt = labelFor(color);
+    img.onerror = () => {
+      btn.classList.add("team-btn-fallback", color);
+      btn.textContent = labelFor(color);
+    };
+    btn.appendChild(img);
     btn.addEventListener("click", () => selectTeam(color));
     grid.appendChild(btn);
   }
