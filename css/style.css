@@ -89,10 +89,12 @@ img { max-width: 100%; display: block; }
   justify-content: center;
   align-items: center;
   text-align: center;
+  gap: 10px;
 }
 .landing-logo {
-  width: min(80%, 320px);
+  width: min(65%, 240px);
   margin: 0 auto;
+  border-radius: 28px;
 }
 
 @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
