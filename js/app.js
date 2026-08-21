@@ -182,6 +182,8 @@ function renderProgressDots() {
       (i === STATE.currentEpreuveIndex ? " current" : "");
     dots.appendChild(d);
   }
+  const badge = $("#epreuve-badge");
+  if (badge) badge.textContent = `Épreuve ${STATE.currentEpreuveIndex + 1} / ${total}`;
 }
 
 function renderEpreuveView() {
