@@ -272,8 +272,10 @@ p { line-height: 1.5; margin: 0; }
 
 /* Code input */
 .code-form { display: flex; gap: 10px; }
+.code-form .btn { flex-shrink: 0; }
 .code-input {
   flex: 1;
+  min-width: 0;
   min-height: var(--tap-min);
   border-radius: var(--radius-md);
   border: 2px solid rgba(255,255,255,.25);
