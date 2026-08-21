@@ -46,7 +46,7 @@
       <p class="muted" id="start-hero-name"></p>
     </div>
     <img class="villain-img" src="./assets/villain.png" alt="" onerror="this.remove()">
-    <div class="card">
+    <div class="card card-intro">
       <h3>Avant de partir</h3>
       <p>Votre équipe doit résoudre <strong>3 épreuves</strong> dans les rues de Strasbourg. Chaque épreuve indique un lieu, parfois un objet à trouver, et un code à valider.</p>
       <p class="muted" style="margin-top:8px;">Durée cible : 2h00 — maximum 2h30. Restez groupés et prudents dans la circulation.</p>
@@ -57,7 +57,10 @@
   </section>
 
   <section class="view" id="view-epreuve">
-    <button class="small-link" id="btn-back-to-start" style="align-self:flex-start; padding:4px 0;">← Retour</button>
+    <div style="display:flex; align-items:center; justify-content:space-between;">
+      <button class="small-link" id="btn-back-to-start" style="padding:4px 0;">← Retour</button>
+      <span class="epreuve-badge" id="epreuve-badge"></span>
+    </div>
     <div class="progress-dots" id="progress-dots"></div>
     <h2 id="epreuve-title">Épreuve 1</h2>
 
