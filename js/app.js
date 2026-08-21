@@ -23,6 +23,7 @@ let convergenceTimer = null;
 let map = null;
 let alertedDuration = false;
 let alertedMax = false;
+let villainTauntTimer = null;
 
 function labelFor(color) {
   return CONTENT?.teams?.[color]?.label || `Équipe ${color[0].toUpperCase()}${color.slice(1)}`;
@@ -196,6 +197,7 @@ function renderEpreuveView() {
   $("#code-form").style.display = "";
   $("#code-input").value = "";
   $("#code-feedback").textContent = "";
+  hideVillainTaunt();
   setTimeout(() => $("#code-input")?.focus(), 50);
 }
 
@@ -302,11 +304,20 @@ function onCodeCorrect(ep) {
   vibrate(120);
   $("#code-feedback").textContent = "";
   $("#code-form").style.display = "none";
+  hideVillainTaunt();
   $("#card-revelation").style.display = "";
   $("#revelation-text").textContent = ep.revelation?.texte || "Bravo, épreuve réussie !";
   STATE.wrongAttempts = 0;
   persist();
 }
+
+const VILLAIN_TAUNTS = [
+  "Trop facile, héros de pacotille !",
+  "Strasbourg sera bientôt sous les eaux…",
+  "Vous n'y êtes pas du tout !",
+  "Continuez à chercher, ça m'amuse.",
+  "Mes vannes s'ouvrent déjà !",
+];
 
 function onCodeWrong(ep) {
   STATE.wrongAttempts = (STATE.wrongAttempts || 0) + 1;
@@ -321,12 +332,28 @@ function onCodeWrong(ep) {
   if (STATE.wrongAttempts >= seuil && ep.piege) {
     feedback.textContent = "";
     STATE.wrongAttempts = 0;
+    hideVillainTaunt();
     triggerTrap(ep);
   } else {
     feedback.textContent = "Code incorrect, réessayez.";
     feedback.className = "code-feedback error";
+    showVillainTaunt();
   }
   persist();
+}
+
+function showVillainTaunt() {
+  const el = $("#villain-taunt");
+  const text = VILLAIN_TAUNTS[Math.floor(Math.random() * VILLAIN_TAUNTS.length)];
+  $("#villain-taunt-text").textContent = text;
+  el.style.display = "flex";
+  clearTimeout(villainTauntTimer);
+  villainTauntTimer = setTimeout(hideVillainTaunt, 3200);
+}
+
+function hideVillainTaunt() {
+  const el = $("#villain-taunt");
+  if (el) el.style.display = "none";
 }
 
 // ---- Arrêter la partie ---------------------------------------------------------
