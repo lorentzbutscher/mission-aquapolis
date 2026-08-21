@@ -215,11 +215,23 @@ p { line-height: 1.5; margin: 0; }
 .chrono.danger .chrono-time { color: #f87171; }
 @keyframes pulseBg { 0%,100% { filter: brightness(1); } 50% { filter: brightness(1.35); } }
 
-/* Progress dots */
-.progress-dots { display: flex; gap: 8px; justify-content: center; }
-.progress-dots .dot { width: 12px; height: 12px; border-radius: 50%; background: rgba(255,255,255,.25); }
+/* Progress bar (par épreuve) */
+.progress-dots { display: flex; gap: 5px; }
+.progress-dots .dot { flex: 1; height: 6px; border-radius: 4px; background: rgba(255,255,255,.18); }
 .progress-dots .dot.done { background: var(--vert); }
-.progress-dots .dot.current { background: var(--gold); box-shadow: 0 0 0 4px rgba(255,209,46,.25); }
+.progress-dots .dot.current { background: var(--gold); box-shadow: 0 0 8px rgba(255,209,46,.5); }
+
+.epreuve-badge {
+  font-family: var(--font-display);
+  font-size: 13px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: rgba(255,209,46,.14);
+  color: var(--gold);
+  border: 1px solid rgba(255,209,46,.4);
+  flex-shrink: 0;
+  white-space: nowrap;
+}
 
 /* Cards */
 .card {
@@ -245,6 +257,7 @@ p { line-height: 1.5; margin: 0; }
 .card.piege { border-left: 6px solid var(--card-piege); background: rgba(220,38,38,.14); }
 .card.piege .card-pict { background: var(--card-piege); color: white; }
 .card.revelation { border-left: 6px solid var(--card-revelation); background: rgba(255,209,46,.12); }
+.card-intro { border-left: 6px solid var(--gold); }
 .card.revelation .card-pict { background: var(--card-revelation); color: var(--ink); }
 
 /* Blocs de contenu d'épreuve */
