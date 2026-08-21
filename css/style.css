@@ -292,39 +292,31 @@ p { line-height: 1.5; margin: 0; }
 .code-feedback.error { color: #f87171; }
 .code-feedback.success { color: #4ade80; }
 
-/* Raillerie du vilain (code faux) */
-.villain-taunt {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-top: 10px;
-  animation: villainPop .25s ease;
+/* Raillerie du vilain (code faux) — plein écran */
+.villain-taunt-overlay {
+  position: fixed; inset: 0; z-index: 55;
+  background: radial-gradient(circle at 50% 30%, rgba(220,38,38,.35), rgba(5,8,16,.94) 70%);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 18px; padding: 24px; text-align: center;
+  animation: villainPop .2s ease;
 }
 .villain-taunt-face {
-  width: 76px; height: 76px;
+  width: min(70%, 260px);
   object-fit: contain;
-  object-position: bottom;
-  flex-shrink: 0;
-  filter: drop-shadow(0 4px 8px rgba(0,0,0,.5));
+  filter: drop-shadow(0 8px 20px rgba(0,0,0,.6));
 }
 .villain-taunt-bubble {
   background: var(--white);
   color: var(--ink);
   font-family: var(--font-display);
-  font-size: 15px;
-  line-height: 1.3;
-  padding: 10px 14px;
-  border-radius: 14px;
-  border: 2px solid var(--rouge);
-  position: relative;
+  font-size: 20px;
+  line-height: 1.35;
+  padding: 14px 20px;
+  border-radius: 16px;
+  border: 3px solid var(--rouge);
+  max-width: 300px;
 }
-.villain-taunt-bubble::before {
-  content: "";
-  position: absolute; left: -8px; top: 18px;
-  border: 7px solid transparent;
-  border-right-color: var(--rouge);
-}
-@keyframes villainPop { from { opacity: 0; transform: scale(.8); } to { opacity: 1; transform: scale(1); } }
+@keyframes villainPop { from { opacity: 0; transform: scale(.9); } to { opacity: 1; transform: scale(1); } }
 
 /* Trap overlay */
 .trap-overlay {
