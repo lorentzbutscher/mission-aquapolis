@@ -1,19 +1,30 @@
 const STORAGE_PREFIX = "aquapolis_state_";
 const TEAM_KEY = "aquapolis_selected_team";
+const ACCESS_KEY = "aquapolis_access_unlocked";
 
 export function defaultState() {
   return {
     status: "not_started", // not_started | in_progress | trap | finished
     currentEpreuveIndex: 0,
+    currentPageIndex: 0,
     startedAt: null,
     finishedAt: null,
     currentTrapEndsAt: null,
     wrongAttempts: 0,
     // Un tableau d'identifiants de blocs "indice" révélés, par épreuve
-    // (ex. revealedBlocks[0] = ["blk_2"] pour l'épreuve 1).
-    revealedBlocks: [[], [], []],
+    // (ex. revealedBlocks[0] = ["blk_2"] pour l'épreuve 1). Rempli à la volée,
+    // sa taille n'est pas fixée d'avance (le nombre d'épreuves varie par équipe).
+    revealedBlocks: [],
     trapCount: 0,
   };
+}
+
+export function isAccessUnlocked() {
+  return localStorage.getItem(ACCESS_KEY) === "1";
+}
+
+export function setAccessUnlocked() {
+  localStorage.setItem(ACCESS_KEY, "1");
 }
 
 export function getSelectedTeam() {

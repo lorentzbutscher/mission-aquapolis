@@ -11,10 +11,10 @@
 // page d'administration.
 // ============================================================================
 export const firebaseConfig = {
-  apiKey: "AIzaSyBic9g9EyvQModcXoKkb-ncDvLAsM3PbgY",
-  authDomain: "mission-aquapolis.firebaseapp.com",
-  projectId: "mission-aquapolis",
-  storageBucket: "mission-aquapolis.firebasestorage.app",
-  messagingSenderId: "749256629954",
-  appId: "1:749256629954:web:6b2f638f9340047867655b"
+  apiKey: "REMPLACER_MOI",
+  authDomain: "REMPLACER_MOI.firebaseapp.com",
+  projectId: "REMPLACER_MOI",
+  storageBucket: "REMPLACER_MOI.appspot.com",
+  messagingSenderId: "REMPLACER_MOI",
+  appId: "REMPLACER_MOI",
 };

@@ -66,15 +66,18 @@ export async function fetchContentFromCloud() {
   try {
     const configRef = m.firestore.doc(m.db, "config", "event");
     const configSnap = await m.firestore.getDoc(configRef);
+    const finalRef = m.firestore.doc(m.db, "config", "finalEpreuve");
+    const finalSnap = await m.firestore.getDoc(finalRef);
     const teams = {};
     for (const color of TEAM_COLORS) {
       const tRef = m.firestore.doc(m.db, "teams", color);
       const tSnap = await m.firestore.getDoc(tRef);
       if (tSnap.exists()) teams[color] = tSnap.data();
     }
-    if (!configSnap.exists() && Object.keys(teams).length === 0) return null;
+    if (!configSnap.exists() && !finalSnap.exists() && Object.keys(teams).length === 0) return null;
     return {
       config: configSnap.exists() ? configSnap.data() : undefined,
+      finalEpreuve: finalSnap.exists() ? finalSnap.data() : undefined,
       teams,
     };
   } catch (err) {
@@ -208,6 +211,21 @@ export async function uploadBlockImage(file, onProgress) {
       }
     );
   });
+}
+
+export async function saveFinalEpreuve(data) {
+  const m = await load();
+  if (!m) throw new Error("Firebase non configuré.");
+  const ref = m.firestore.doc(m.db, "config", "finalEpreuve");
+  await m.firestore.setDoc(ref, data, { merge: false });
+}
+
+export async function getFinalEpreuveOnce() {
+  const m = await load();
+  if (!m) return null;
+  const ref = m.firestore.doc(m.db, "config", "finalEpreuve");
+  const snap = await m.firestore.getDoc(ref);
+  return snap.exists() ? snap.data() : null;
 }
 
 export async function getEventConfigOnce() {

@@ -8,6 +8,8 @@ import {
   saveEventConfig,
   resetTeamState,
   uploadBlockImage,
+  saveFinalEpreuve,
+  getFinalEpreuveOnce,
   configured,
   TEAM_COLORS,
 } from "./sync.js";
@@ -15,12 +17,14 @@ import { createMap, addCustomMarker } from "./map.js";
 
 const $ = (s) => document.querySelector(s);
 const TEAM_LABELS = { bleu: "Bleue", rouge: "Rouge", jaune: "Jaune", vert: "Verte", violet: "Violette" };
+const FINAL_KEY = "__final__";
+const ALL_TAB_KEYS = [...TEAM_COLORS, FINAL_KEY];
 
-let TEAMS_DATA = {};
+let TEAMS_DATA = {}; // clés : bleu/rouge/jaune/vert/violet + "__final__"
 let CONFIG_DATA = {};
 let cfgMap = null;
 let cfgMarker = null;
-const epMaps = {};
+const epMaps = {}; // epMaps[color][epIdx] = instance Leaflet
 const activeEpIdx = {};
 
 function escapeHtml(s) {
@@ -42,6 +46,8 @@ function flash(msg, isError = false) {
   el._t = setTimeout(() => el.classList.remove("show"), 3000);
 }
 
+// ---- Modèle de données ------------------------------------------------------------
+
 function emptyEpreuve(n) {
   return {
     titre: `Épreuve ${n}`,
@@ -49,11 +55,23 @@ function emptyEpreuve(n) {
     code: { valeur: "", essaisAvantPiege: 2 },
     piege: { texte: "", dureeMinutes: 2 },
     revelation: { texte: "" },
-    blocks: [],
+    pages: [{ blocks: [] }],
   };
 }
 
-// ---- Blocs de contenu -----------------------------------------------------
+function emptyTeam(color) {
+  const count = color === "jaune" ? 4 : 3;
+  const epreuves = [];
+  for (let i = 1; i <= count; i++) epreuves.push(emptyEpreuve(i));
+  return { label: `Équipe ${TEAM_LABELS[color]}`, heroName: "", epreuves };
+}
+
+function normalizeEpreuve(ep) {
+  if (!ep) return emptyEpreuve(1);
+  if (ep.pages) return ep;
+  const { blocks, ...rest } = ep;
+  return { ...rest, pages: [{ blocks: blocks || [] }] };
+}
 
 function blockTypeMeta(type) {
   return (
@@ -62,6 +80,7 @@ function blockTypeMeta(type) {
       photo: { icon: "📷", label: "Photo" },
       video: { icon: "🎬", label: "Vidéo" },
       carte: { icon: "🗺️", label: "Carte" },
+      audio: { icon: "🎧", label: "Audio" },
       indice: { icon: "💡", label: "Indice" },
     }[type] || { icon: "❓", label: type }
   );
@@ -82,6 +101,8 @@ function blockDefaults(type) {
       return { ...base, url: "", youtubeId: "" };
     case "carte":
       return { ...base, url: "", label: "Voir l'itinéraire" };
+    case "audio":
+      return { ...base, url: "", label: "Message audio" };
     case "indice":
       return { ...base, texte: "" };
     default:
@@ -103,14 +124,6 @@ function parseYouTubeId(url) {
     if (m) return m[1];
   }
   return "";
-}
-
-function emptyTeam(color) {
-  return {
-    label: `Équipe ${TEAM_LABELS[color]}`,
-    heroName: "",
-    epreuves: [emptyEpreuve(1), emptyEpreuve(2), emptyEpreuve(3)],
-  };
 }
 
 function defaultConfig() {
@@ -172,9 +185,19 @@ onAdminAuthChange(async (user) => {
 });
 
 async function loadAllData() {
-  const [teams, cfg] = await Promise.all([getAllTeamsContentOnce(), getEventConfigOnce()]);
+  const [teams, cfg, finalEp] = await Promise.all([getAllTeamsContentOnce(), getEventConfigOnce(), getFinalEpreuveOnce()]);
   TEAMS_DATA = {};
-  for (const color of TEAM_COLORS) TEAMS_DATA[color] = teams[color] || emptyTeam(color);
+  for (const color of TEAM_COLORS) {
+    const team = teams[color] || emptyTeam(color);
+    team.epreuves = team.epreuves.map(normalizeEpreuve);
+    const expectedCount = color === "jaune" ? 4 : 3;
+    while (team.epreuves.length < expectedCount) team.epreuves.push(emptyEpreuve(team.epreuves.length + 1));
+    TEAMS_DATA[color] = team;
+  }
+  TEAMS_DATA[FINAL_KEY] = {
+    label: "Épreuve finale",
+    epreuves: [normalizeEpreuve(finalEp || emptyEpreuve(1))],
+  };
   CONFIG_DATA = cfg || defaultConfig();
 }
 
@@ -233,17 +256,17 @@ $("#btn-save-general").addEventListener("click", async () => {
   }
 });
 
-// ---- Onglets équipe --------------------------------------------------------------
+// ---- Onglets équipe (+ onglet "Épreuve finale") --------------------------------------
 
 function renderTeamPanels() {
   const wrap = $("#team-panels");
   wrap.innerHTML = "";
-  for (const color of TEAM_COLORS) {
+  for (const color of ALL_TAB_KEYS) {
     const panel = document.createElement("div");
     panel.className = "tab-panel";
     panel.id = `tab-${color}`;
     panel.style.display = "none";
-    panel.innerHTML = renderTeamPanelHtml(color);
+    panel.innerHTML = color === FINAL_KEY ? renderFinalPanelHtml() : renderTeamPanelHtml(color);
     wrap.appendChild(panel);
     wireTeamPanel(color, panel);
   }
@@ -274,6 +297,20 @@ function renderTeamPanelHtml(color) {
   `;
 }
 
+function renderFinalPanelHtml() {
+  const team = TEAMS_DATA[FINAL_KEY];
+  return `
+    <div class="admin-card">
+      <h3>⭐ Épreuve finale</h3>
+      <p class="muted" style="font-size:13px;">Cette épreuve est strictement identique pour les 5 équipes : elle arrive automatiquement après leurs épreuves habituelles et mène toutes les équipes vers le rassemblement final.</p>
+    </div>
+    <div class="epreuve-forms">
+      ${renderEpreuveForm(team.epreuves[0], 0)}
+    </div>
+    <button class="btn btn-gold save-team" style="width:100%; margin-top:10px;">💾 Enregistrer l'épreuve finale</button>
+  `;
+}
+
 function renderEpreuveForm(ep, i) {
   return `
   <div class="epreuve-form" data-idx="${i}" style="display:${i === 0 ? "" : "none"};">
@@ -281,7 +318,7 @@ function renderEpreuveForm(ep, i) {
       <div class="field"><label>Titre de l'épreuve</label><input class="ep-titre" value="${escapeHtml(ep.titre || "")}" /></div>
     </div>
     <div class="admin-card">
-      <h3>📍 Coordonnées GPS <span class="muted" style="font-weight:400;">(pour la carte intégrée "Voir sur la carte")</span></h3>
+      <h3>📍 Coordonnées GPS <span class="muted" style="font-weight:400;">(pour la carte de l'écran résultat)</span></h3>
       <div class="grid-2">
         <div class="field"><label>Latitude</label><input class="ep-lieu-lat" type="number" step="0.000001" value="${ep.lieu?.lat ?? ""}" /></div>
         <div class="field"><label>Longitude</label><input class="ep-lieu-lng" type="number" step="0.000001" value="${ep.lieu?.lng ?? ""}" /></div>
@@ -310,21 +347,89 @@ function renderEpreuveForm(ep, i) {
 
     <div class="admin-card">
       <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; flex-wrap:wrap; gap:10px;">
-        <h3 style="margin:0;">🧩 Contenu de la page (blocs)</h3>
+        <h3 style="margin:0;">📄 Pages de l'épreuve</h3>
+        <button type="button" class="btn btn-gold btn-sm add-page-btn">+ Ajouter une page</button>
+      </div>
+      <p class="muted" style="font-size:12px; margin-bottom:10px;">Le code de validation n'apparaît côté joueur qu'après la dernière page.</p>
+      <div class="page-tabs"></div>
+
+      <div style="display:flex; align-items:center; justify-content:space-between; margin:16px 0 12px;">
+        <h3 style="margin:0;">🧩 Blocs de cette page</h3>
         <div style="position:relative;">
           <button type="button" class="btn btn-gold btn-sm add-block-btn">+ Ajouter un bloc</button>
           <div class="add-block-menu" style="display:none;"></div>
         </div>
       </div>
-      <p class="muted" style="font-size:13px; margin-bottom:12px;">Composez librement la page vue par l'équipe avant validation du code : texte, photo, vidéo, lien carte, indices. Décochez "Visible" pour préparer un bloc sans le publier.</p>
       <div class="blocks-list"></div>
+      <button type="button" class="btn btn-danger btn-sm delete-page-btn" style="margin-top:12px;">🗑️ Supprimer cette page</button>
     </div>
 
     <div class="admin-card">
-      <h3>👁️ Aperçu joueur</h3>
+      <h3>👁️ Aperçu joueur (page affichée ci-dessus)</h3>
       <div class="player-preview preview-frame"></div>
     </div>
   </div>`;
+}
+
+// ---- Pages ------------------------------------------------------------------------
+
+function getEpreuve(color, epIdx) {
+  return TEAMS_DATA[color].epreuves[epIdx];
+}
+
+function activePageIndex(ep) {
+  if (ep._activePage == null || ep._activePage >= ep.pages.length) ep._activePage = ep.pages.length - 1;
+  if (ep._activePage < 0) ep._activePage = 0;
+  return ep._activePage;
+}
+
+function currentPage(color, epIdx) {
+  const ep = getEpreuve(color, epIdx);
+  return ep.pages[activePageIndex(ep)];
+}
+
+function renderPageTabs(color, epIdx, panel) {
+  const form = panel.querySelector(`.epreuve-form[data-idx="${epIdx}"]`);
+  if (!form) return;
+  const ep = getEpreuve(color, epIdx);
+  const idx = activePageIndex(ep);
+  const tabsEl = form.querySelector(".page-tabs");
+  tabsEl.innerHTML = "";
+  ep.pages.forEach((page, pi) => {
+    const tab = document.createElement("div");
+    tab.className = "epreuve-tab" + (pi === idx ? " active" : "");
+    tab.textContent = `Page ${pi + 1}`;
+    tab.addEventListener("click", () => {
+      ep._activePage = pi;
+      renderPageTabs(color, epIdx, panel);
+      renderBlocksList(color, epIdx, panel);
+    });
+    tabsEl.appendChild(tab);
+  });
+  const delBtn = form.querySelector(".delete-page-btn");
+  delBtn.disabled = ep.pages.length <= 1;
+  delBtn.style.opacity = ep.pages.length <= 1 ? "0.4" : "1";
+}
+
+function wirePageControls(color, epIdx, panel) {
+  const form = panel.querySelector(`.epreuve-form[data-idx="${epIdx}"]`);
+  form.querySelector(".add-page-btn").addEventListener("click", () => {
+    const ep = getEpreuve(color, epIdx);
+    ep.pages.push({ blocks: [] });
+    ep._activePage = ep.pages.length - 1;
+    renderPageTabs(color, epIdx, panel);
+    renderBlocksList(color, epIdx, panel);
+  });
+  form.querySelector(".delete-page-btn").addEventListener("click", () => {
+    const ep = getEpreuve(color, epIdx);
+    if (ep.pages.length <= 1) return;
+    if (!confirm("Supprimer cette page et tous ses blocs ?")) return;
+    const idx = activePageIndex(ep);
+    ep.pages.splice(idx, 1);
+    ep._activePage = Math.max(0, idx - 1);
+    renderPageTabs(color, epIdx, panel);
+    renderBlocksList(color, epIdx, panel);
+  });
 }
 
 // ---- Éditeur de blocs -----------------------------------------------------
@@ -333,8 +438,8 @@ function renderBlocksList(color, epIdx, panel) {
   const form = panel.querySelector(`.epreuve-form[data-idx="${epIdx}"]`);
   if (!form) return;
   const listEl = form.querySelector(".blocks-list");
-  const ep = TEAMS_DATA[color].epreuves[epIdx];
-  const blocks = ep.blocks || (ep.blocks = []);
+  const page = currentPage(color, epIdx);
+  const blocks = page.blocks || (page.blocks = []);
   listEl.innerHTML = "";
   blocks.forEach((block, bi) => {
     listEl.appendChild(renderBlockItem(color, epIdx, block, bi, blocks.length, panel));
@@ -369,20 +474,20 @@ function renderBlockItem(color, epIdx, block, bi, total, panel) {
     renderPreview(color, epIdx, panel);
   });
   head.querySelector(".move-up").addEventListener("click", () => {
-    const blocks = TEAMS_DATA[color].epreuves[epIdx].blocks;
+    const blocks = currentPage(color, epIdx).blocks;
     if (bi === 0) return;
     [blocks[bi - 1], blocks[bi]] = [blocks[bi], blocks[bi - 1]];
     renderBlocksList(color, epIdx, panel);
   });
   head.querySelector(".move-down").addEventListener("click", () => {
-    const blocks = TEAMS_DATA[color].epreuves[epIdx].blocks;
+    const blocks = currentPage(color, epIdx).blocks;
     if (bi === blocks.length - 1) return;
     [blocks[bi + 1], blocks[bi]] = [blocks[bi], blocks[bi + 1]];
     renderBlocksList(color, epIdx, panel);
   });
   head.querySelector(".delete-block").addEventListener("click", () => {
     if (!confirm("Supprimer ce bloc ?")) return;
-    const blocks = TEAMS_DATA[color].epreuves[epIdx].blocks;
+    const blocks = currentPage(color, epIdx).blocks;
     blocks.splice(bi, 1);
     renderBlocksList(color, epIdx, panel);
   });
@@ -500,6 +605,33 @@ function renderBlockBody(color, epIdx, block, panel) {
       block.label = e.target.value;
       renderPreview(color, epIdx, panel);
     });
+  } else if (block.type === "audio") {
+    wrap.innerHTML = `
+      <div class="field"><label>Titre affiché</label><input class="audio-label" value="${escapeHtml(block.label || "")}"></div>
+      <div class="field"><label>Fichier audio (MP3)</label><input type="file" accept="audio/*" class="audio-file-input"></div>
+      <div class="audio-upload-status muted" style="font-size:13px;">${block.url ? "✅ Fichier déjà envoyé" : ""}</div>
+    `;
+    wrap.querySelector(".audio-label").addEventListener("input", (e) => {
+      block.label = e.target.value;
+      renderPreview(color, epIdx, panel);
+    });
+    const fileInput = wrap.querySelector(".audio-file-input");
+    const statusEl = wrap.querySelector(".audio-upload-status");
+    fileInput.addEventListener("change", async () => {
+      const file = fileInput.files[0];
+      if (!file) return;
+      statusEl.textContent = "Envoi en cours…";
+      try {
+        const url = await uploadBlockImage(file, (p) => {
+          statusEl.textContent = `Envoi en cours… ${Math.round(p * 100)}%`;
+        });
+        block.url = url;
+        statusEl.textContent = "✅ Fichier envoyé";
+        renderPreview(color, epIdx, panel);
+      } catch (err) {
+        statusEl.textContent = "❌ Échec de l'envoi : " + (err.message || "erreur inconnue");
+      }
+    });
   } else if (block.type === "indice") {
     wrap.innerHTML = `<div class="field"><textarea class="indice-texte">${escapeHtml(block.texte || "")}</textarea></div>`;
     wrap.querySelector(".indice-texte").addEventListener("input", (e) => {
@@ -515,7 +647,7 @@ function renderPreview(color, epIdx, panel) {
   const form = panel.querySelector(`.epreuve-form[data-idx="${epIdx}"]`);
   if (!form) return;
   const previewEl = form.querySelector(".player-preview");
-  const blocks = TEAMS_DATA[color].epreuves[epIdx].blocks || [];
+  const blocks = currentPage(color, epIdx).blocks || [];
   const visible = blocks.filter((b) => b.visible);
   previewEl.innerHTML = "";
   if (!visible.length) {
@@ -560,6 +692,11 @@ function renderPreviewBlock(block) {
     a.className = "btn btn-outline btn-block";
     a.textContent = "🗺️ " + (block.label || "Voir l'itinéraire");
     el.appendChild(a);
+  } else if (block.type === "audio") {
+    el.className = "card block-audio";
+    el.innerHTML = `<p style="font-weight:800;">🎧 ${escapeHtml(block.label || "Message audio")}</p><p class="muted" style="font-size:13px;">${
+      block.url ? "Fichier prêt ✅" : "(aucun fichier envoyé pour l'instant)"
+    }</p>`;
   } else if (block.type === "indice") {
     el.className = "card revelation block-indice";
     el.innerHTML = `<div class="card-head"><div class="card-pict">💡</div><div class="card-family">Indice (masqué par défaut côté joueur)</div></div><p>${escapeHtml(block.texte || "")}</p>`;
@@ -570,7 +707,7 @@ function renderPreviewBlock(block) {
 function wireAddBlockMenu(color, epIdx, panel, form) {
   const btn = form.querySelector(".add-block-btn");
   const menu = form.querySelector(".add-block-menu");
-  const types = ["texte", "photo", "video", "carte", "indice"];
+  const types = ["texte", "photo", "video", "audio", "carte", "indice"];
   menu.innerHTML = types
     .map((t) => {
       const meta = blockTypeMeta(t);
@@ -584,7 +721,7 @@ function wireAddBlockMenu(color, epIdx, panel, form) {
   menu.querySelectorAll(".add-block-option").forEach((optBtn) => {
     optBtn.addEventListener("click", () => {
       const type = optBtn.dataset.type;
-      TEAMS_DATA[color].epreuves[epIdx].blocks.push(blockDefaults(type));
+      currentPage(color, epIdx).blocks.push(blockDefaults(type));
       menu.style.display = "none";
       renderBlocksList(color, epIdx, panel);
     });
@@ -602,15 +739,18 @@ function wireTeamPanel(color, panel) {
 
   panel.querySelectorAll(".epreuve-form").forEach((form) => {
     const idx = Number(form.dataset.idx);
+    renderPageTabs(color, idx, panel);
     renderBlocksList(color, idx, panel);
     wireAddBlockMenu(color, idx, panel, form);
+    wirePageControls(color, idx, panel);
   });
 
   panel.querySelectorAll(".epreuve-tab").forEach((tabEl) => {
+    if (tabEl.closest(".page-tabs")) return; // les onglets de page se gèrent séparément
     tabEl.addEventListener("click", () => {
       const idx = Number(tabEl.dataset.idx);
       activeEpIdx[color] = idx;
-      panel.querySelectorAll(".epreuve-tab").forEach((t) => t.classList.toggle("active", t === tabEl));
+      panel.querySelectorAll(".epreuve-tabs > .epreuve-tab").forEach((t) => t.classList.toggle("active", t === tabEl));
       panel.querySelectorAll(".epreuve-form").forEach((f) => {
         f.style.display = Number(f.dataset.idx) === idx ? "" : "none";
       });
@@ -618,21 +758,26 @@ function wireTeamPanel(color, panel) {
     });
   });
 
-  panel.querySelector(".save-team").addEventListener("click", () => saveTeamPanel(color, panel));
-  panel.querySelector(".reset-team").addEventListener("click", async () => {
-    if (
-      confirm(
-        `Réinitialiser la progression en cours de l'équipe ${TEAM_LABELS[color]} ? (à utiliser avant chaque test, ou avant le jour J)`
-      )
-    ) {
-      try {
-        await resetTeamState(color);
-        flash("Progression réinitialisée ✅");
-      } catch (err) {
-        flash("Erreur : " + err.message, true);
+  const saveBtn = panel.querySelector(".save-team");
+  if (color === FINAL_KEY) {
+    saveBtn.addEventListener("click", () => saveFinalPanel(panel));
+  } else {
+    saveBtn.addEventListener("click", () => saveTeamPanel(color, panel));
+    panel.querySelector(".reset-team")?.addEventListener("click", async () => {
+      if (
+        confirm(
+          `Réinitialiser la progression en cours de l'équipe ${TEAM_LABELS[color]} ? (à utiliser avant chaque test, ou avant le jour J)`
+        )
+      ) {
+        try {
+          await resetTeamState(color);
+          flash("Progression réinitialisée ✅");
+        } catch (err) {
+          flash("Erreur : " + err.message, true);
+        }
       }
-    }
-  });
+    });
+  }
 }
 
 function ensureEpMap(color, idx, panel) {
@@ -659,11 +804,9 @@ function ensureEpMap(color, idx, panel) {
   setTimeout(() => m.invalidateSize(), 100);
 }
 
-async function saveTeamPanel(color, panel) {
-  const label = panel.querySelector(".t-label").value.trim();
-  const heroName = panel.querySelector(".t-hero").value.trim();
+function readEpreuvesFromForms(color, panel) {
   const epreuveForms = panel.querySelectorAll(".epreuve-form");
-  const epreuves = Array.from(epreuveForms).map((f, i) => ({
+  return Array.from(epreuveForms).map((f, i) => ({
     titre: f.querySelector(".ep-titre").value.trim(),
     lieu: {
       lat: Number(f.querySelector(".ep-lieu-lat").value) || 0,
@@ -680,13 +823,33 @@ async function saveTeamPanel(color, panel) {
     revelation: {
       texte: f.querySelector(".ep-revelation").value.trim(),
     },
-    blocks: (TEAMS_DATA[color].epreuves[i]?.blocks || []).map((b) => ({ ...b })),
+    pages: (TEAMS_DATA[color].epreuves[i]?.pages || [{ blocks: [] }]).map((p) => ({
+      blocks: (p.blocks || []).map((b) => ({ ...b })),
+    })),
   }));
+}
+
+async function saveTeamPanel(color, panel) {
+  const label = panel.querySelector(".t-label").value.trim();
+  const heroName = panel.querySelector(".t-hero").value.trim();
+  const epreuves = readEpreuvesFromForms(color, panel);
   const teamData = { label, heroName, epreuves };
   try {
     await saveTeamContent(color, teamData);
     TEAMS_DATA[color] = teamData;
     flash(`Équipe ${TEAM_LABELS[color]} enregistrée ✅`);
+  } catch (err) {
+    flash("Erreur : " + err.message, true);
+  }
+}
+
+async function saveFinalPanel(panel) {
+  const epreuves = readEpreuvesFromForms(FINAL_KEY, panel);
+  const finalData = epreuves[0];
+  try {
+    await saveFinalEpreuve(finalData);
+    TEAMS_DATA[FINAL_KEY].epreuves = [finalData];
+    flash("Épreuve finale enregistrée ✅ (appliquée aux 5 équipes)");
   } catch (err) {
     flash("Erreur : " + err.message, true);
   }

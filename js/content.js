@@ -50,6 +50,7 @@ async function refreshFromCloud() {
   const current = readCache() || {};
   const merged = {
     config: cloud.config || current.config,
+    finalEpreuve: cloud.finalEpreuve || current.finalEpreuve,
     teams: { ...(current.teams || {}), ...(cloud.teams || {}) },
   };
   writeCache(merged);

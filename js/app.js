@@ -14,6 +14,19 @@ import { playSuccessSound, playTrapSound, playVictorySound, initSoundToggle, sta
 
 const $ = (sel) => document.querySelector(sel);
 
+const ACCESS_CODE = "ETIENNE";
+const ACCESS_INTRO_DEFAULT =
+  "⚡ Alerte rouge sur les canaux de Strasbourg : le super-vilain Déversoir sème la panique parmi les écluses. Un renfort inattendu vient d'arriver en ville — un héros dont le nom seul suffit à redonner espoir aux agents VNF. Saisissez son nom pour débloquer la mission et rejoindre le combat.";
+
+const MORSE_MAP = {
+  A: ".-", B: "-...", C: "-.-.", D: "-..", E: ".", F: "..-.", G: "--.", H: "....",
+  I: "..", J: ".---", K: "-.-", L: ".-..", M: "--", N: "-.", O: "---", P: ".--.",
+  Q: "--.-", R: ".-.", S: "...", T: "-", U: "..-", V: "...-", W: ".--", X: "-..-",
+  Y: "-.--", Z: "--..",
+  0: "-----", 1: ".----", 2: "..---", 3: "...--", 4: "....-", 5: ".....",
+  6: "-....", 7: "--...", 8: "---..", 9: "----.",
+};
+
 let CONTENT = null;
 let TEAM = null;
 let STATE = null;
@@ -21,9 +34,9 @@ let chronoTimer = null;
 let trapTimer = null;
 let convergenceTimer = null;
 let map = null;
+let resultMap = null;
 let alertedDuration = false;
 let alertedMax = false;
-let villainTauntTimer = null;
 
 function labelFor(color) {
   return CONTENT?.teams?.[color]?.label || `Équipe ${color[0].toUpperCase()}${color.slice(1)}`;
@@ -47,6 +60,48 @@ function persist() {
     currentTrapEndsAt: STATE.currentTrapEndsAt,
     trapCount: STATE.trapCount,
   });
+}
+
+// ---- Modèle des épreuves (gère l'épreuve finale partagée + migration pages) --------
+
+function normalizeEpreuve(ep) {
+  if (!ep) return ep;
+  if (ep.pages) return ep;
+  return { ...ep, pages: [{ blocks: ep.blocks || [] }] };
+}
+
+function totalEpreuvesForTeam(color) {
+  return (CONTENT.teams[color]?.epreuves.length || 0) + 1; // +1 pour l'épreuve finale commune
+}
+
+function epreuveAt(color, index) {
+  const teamEpreuves = CONTENT.teams[color].epreuves;
+  if (index < teamEpreuves.length) return normalizeEpreuve(teamEpreuves[index]);
+  return normalizeEpreuve(CONTENT.finalEpreuve || { titre: "Épreuve finale", pages: [{ blocks: [] }] });
+}
+
+function currentEpreuve() {
+  return epreuveAt(TEAM, STATE.currentEpreuveIndex);
+}
+
+function currentPages() {
+  return currentEpreuve().pages || [{ blocks: [] }];
+}
+
+// ---- Écran de code d'accès --------------------------------------------------------
+
+function initAccessCodeScreen() {
+  $("#access-intro-text").textContent = ACCESS_INTRO_DEFAULT;
+}
+
+function proceedAfterAccess() {
+  renderTeamGrid();
+  const saved = gameStore.getSelectedTeam();
+  if (saved && CONTENT.teams?.[saved]) {
+    selectTeam(saved);
+  } else {
+    show("view-team-select");
+  }
 }
 
 // ---- Sélection équipe -----------------------------------------------------
@@ -111,6 +166,8 @@ function renderStartView() {
   badge.onerror = () => (badge.style.visibility = "hidden");
   badge.style.visibility = "visible";
 
+  $("#start-epreuve-count").textContent = `${totalEpreuvesForTeam(TEAM)} épreuves`;
+
   const startBtn = $("#btn-start-mission");
   startBtn.textContent = STATE.status === "not_started" ? "🚀 Démarrer la mission" : "↩️ Reprendre la mission en cours";
 }
@@ -130,7 +187,8 @@ function renderChronoTick() {
     STATE &&
     STATE.status !== "not_started" &&
     activeView !== "view-team-select" &&
-    activeView !== "view-loading";
+    activeView !== "view-loading" &&
+    activeView !== "view-access-code";
   if (!visible || !STATE.startedAt) {
     wrap.innerHTML = "";
     return;
@@ -167,12 +225,8 @@ function handleChronoAlerts(elapsed, durationMs, maxMs) {
 
 // ---- Épreuve -----------------------------------------------------------------
 
-function currentEpreuve() {
-  return CONTENT.teams[TEAM].epreuves[STATE.currentEpreuveIndex];
-}
-
 function renderProgressDots() {
-  const total = CONTENT.teams[TEAM].epreuves.length;
+  const total = totalEpreuvesForTeam(TEAM);
   const dots = $("#progress-dots");
   dots.innerHTML = "";
   for (let i = 0; i < total; i++) {
@@ -183,30 +237,51 @@ function renderProgressDots() {
       (i === STATE.currentEpreuveIndex ? " current" : "");
     dots.appendChild(d);
   }
-  const badge = $("#epreuve-badge");
-  if (badge) badge.textContent = `Épreuve ${STATE.currentEpreuveIndex + 1} / ${total}`;
 }
 
 function renderEpreuveView() {
   const ep = currentEpreuve();
   $("#epreuve-title").textContent = ep.titre || `Épreuve ${STATE.currentEpreuveIndex + 1}`;
   renderProgressDots();
-  renderBlocks(ep);
+  renderPage();
+}
 
+function renderPage() {
+  const pages = currentPages();
+  if (STATE.currentPageIndex == null || STATE.currentPageIndex >= pages.length) {
+    STATE.currentPageIndex = pages.length - 1;
+  }
+  if (STATE.currentPageIndex < 0) STATE.currentPageIndex = 0;
+  const page = pages[STATE.currentPageIndex];
+  const isLastPage = STATE.currentPageIndex === pages.length - 1;
+
+  renderBlocks(page);
+
+  const nav = $("#page-nav");
+  if (pages.length > 1) {
+    nav.style.display = "flex";
+    $("#page-indicator").textContent = `Page ${STATE.currentPageIndex + 1}/${pages.length}`;
+    $("#btn-prev-page").style.visibility = STATE.currentPageIndex === 0 ? "hidden" : "visible";
+    $("#btn-next-page").style.display = isLastPage ? "none" : "";
+  } else {
+    nav.style.display = "none";
+  }
+
+  $("#card-code").style.display = isLastPage ? "" : "none";
   $("#card-revelation").style.display = "none";
   $("#code-form").style.display = "";
   $("#code-input").value = "";
   $("#code-feedback").textContent = "";
-  hideVillainTaunt();
-  setTimeout(() => $("#code-input")?.focus(), 50);
+  if (isLastPage) setTimeout(() => $("#code-input")?.focus(), 50);
 }
 
-function renderBlocks(ep) {
+function renderBlocks(page) {
   const container = $("#blocks-container");
   container.innerHTML = "";
-  if (!STATE.revealedBlocks[STATE.currentEpreuveIndex]) STATE.revealedBlocks[STATE.currentEpreuveIndex] = [];
-  const revealedIds = STATE.revealedBlocks[STATE.currentEpreuveIndex];
-  (ep.blocks || [])
+  const idx = STATE.currentEpreuveIndex;
+  if (!STATE.revealedBlocks[idx]) STATE.revealedBlocks[idx] = [];
+  const revealedIds = STATE.revealedBlocks[idx];
+  (page.blocks || [])
     .filter((b) => b.visible)
     .forEach((block) => container.appendChild(renderBlock(block, revealedIds)));
 }
@@ -226,6 +301,7 @@ function renderBlock(block, revealedIds) {
         img.src = block.url;
         img.alt = block.caption || "";
         img.loading = "lazy";
+        img.addEventListener("click", () => openLightbox(block.url, block.caption || ""));
         el.appendChild(img);
       }
       if (block.caption) {
@@ -264,60 +340,178 @@ function renderBlock(block, revealedIds) {
       el.appendChild(a);
       break;
     }
-    case "indice": {
-      el.className = "card revelation block-indice";
-      const isRevealed = revealedIds.includes(block.id);
-      if (isRevealed) {
-        const head = document.createElement("div");
-        head.className = "card-head";
-        head.innerHTML = `<div class="card-pict">💡</div><div class="card-family">Indice</div>`;
-        el.appendChild(head);
-        const p = document.createElement("p");
-        p.textContent = block.texte || "";
-        el.appendChild(p);
+    case "audio": {
+      el.className = "card block-audio";
+      const head = document.createElement("div");
+      head.className = "card-head";
+      const pict = document.createElement("div");
+      pict.className = "card-pict";
+      pict.textContent = "🎧";
+      const fam = document.createElement("div");
+      fam.className = "card-family";
+      fam.textContent = block.label || "Message audio";
+      head.appendChild(pict);
+      head.appendChild(fam);
+      el.appendChild(head);
+      if (block.url) {
+        el.appendChild(buildAudioPlayer(block.url));
       } else {
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.className = "btn btn-ghost btn-block";
-        btn.textContent = "💡 Voir l'indice";
-        btn.addEventListener("click", () => revealBlock(block.id));
-        el.appendChild(btn);
+        const p = document.createElement("p");
+        p.className = "muted";
+        p.textContent = "(fichier audio à venir)";
+        el.appendChild(p);
       }
+      const morseBtn = document.createElement("button");
+      morseBtn.type = "button";
+      morseBtn.className = "btn btn-ghost btn-sm audio-morse-link";
+      morseBtn.textContent = "📡 Voir l'alphabet morse";
+      morseBtn.addEventListener("click", openMorseModal);
+      el.appendChild(morseBtn);
+      break;
+    }
+    case "indice": {
+      el.className = "card block-indice";
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "btn btn-ghost btn-block";
+      const already = revealedIds.includes(block.id);
+      btn.textContent = already ? "💡 Revoir l'indice" : "💡 Voir l'indice";
+      btn.addEventListener("click", () => {
+        const modalOpen = $("#indice-modal").style.display === "flex";
+        if (modalOpen) {
+          closeIndiceModal();
+          return;
+        }
+        if (!revealedIds.includes(block.id)) {
+          revealedIds.push(block.id);
+          persist();
+          btn.textContent = "💡 Revoir l'indice";
+        }
+        openIndiceModal(block.texte || "");
+      });
+      el.appendChild(btn);
       break;
     }
   }
   return el;
 }
 
-function revealBlock(blockId) {
-  const idx = STATE.currentEpreuveIndex;
-  if (!STATE.revealedBlocks[idx]) STATE.revealedBlocks[idx] = [];
-  if (!STATE.revealedBlocks[idx].includes(blockId)) {
-    STATE.revealedBlocks[idx].push(blockId);
-  }
-  persist();
-  renderBlocks(currentEpreuve());
+// ---- Lecteur audio (bloc "audio") --------------------------------------------------
+
+function buildAudioPlayer(url) {
+  const wrap = document.createElement("div");
+  wrap.className = "audio-player";
+
+  const audio = new Audio(url);
+  audio.preload = "metadata";
+
+  const playBtn = document.createElement("button");
+  playBtn.type = "button";
+  playBtn.className = "audio-play-btn";
+  playBtn.textContent = "▶";
+  playBtn.setAttribute("aria-label", "Lecture");
+
+  const track = document.createElement("div");
+  track.className = "audio-progress-track";
+  const fill = document.createElement("div");
+  fill.className = "audio-progress-fill";
+  track.appendChild(fill);
+
+  const time = document.createElement("span");
+  time.className = "audio-time";
+  time.textContent = "0:00";
+
+  playBtn.addEventListener("click", () => {
+    if (audio.paused) {
+      audio.play().catch(() => showToast("Lecture audio impossible."));
+    } else {
+      audio.pause();
+    }
+  });
+  audio.addEventListener("play", () => (playBtn.textContent = "⏸"));
+  audio.addEventListener("pause", () => (playBtn.textContent = "▶"));
+  audio.addEventListener("ended", () => (playBtn.textContent = "▶"));
+  audio.addEventListener("timeupdate", () => {
+    const pct = audio.duration ? (audio.currentTime / audio.duration) * 100 : 0;
+    fill.style.width = pct + "%";
+    time.textContent = formatMinSec(audio.currentTime * 1000);
+  });
+  track.addEventListener("click", (e) => {
+    if (!audio.duration) return;
+    const rect = track.getBoundingClientRect();
+    const ratio = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
+    audio.currentTime = ratio * audio.duration;
+  });
+
+  wrap.appendChild(playBtn);
+  wrap.appendChild(track);
+  wrap.appendChild(time);
+  return wrap;
 }
+
+// ---- Modale indice ------------------------------------------------------------------
+
+function openIndiceModal(text) {
+  $("#indice-modal-text").textContent = text;
+  $("#indice-modal").style.display = "flex";
+}
+function closeIndiceModal() {
+  $("#indice-modal").style.display = "none";
+}
+
+// ---- Lightbox image -----------------------------------------------------------------
+
+function openLightbox(url, alt) {
+  $("#lightbox-img").src = url;
+  $("#lightbox-img").alt = alt || "";
+  $("#lightbox-modal").style.display = "flex";
+}
+function closeLightbox() {
+  $("#lightbox-modal").style.display = "none";
+  $("#lightbox-img").src = "";
+}
+
+// ---- Table morse --------------------------------------------------------------------
+
+function renderMorseTableOnce() {
+  const el = $("#morse-table");
+  if (el.children.length) return;
+  Object.entries(MORSE_MAP).forEach(([letter, code]) => {
+    const cell = document.createElement("div");
+    cell.className = "morse-cell";
+    const l = document.createElement("span");
+    l.className = "letter";
+    l.textContent = letter;
+    const c = document.createElement("span");
+    c.className = "code";
+    c.textContent = code;
+    cell.appendChild(l);
+    cell.appendChild(c);
+    el.appendChild(cell);
+  });
+}
+function openMorseModal() {
+  renderMorseTableOnce();
+  $("#morse-modal").style.display = "flex";
+}
+function closeMorseModal() {
+  $("#morse-modal").style.display = "none";
+}
+
+// ---- Validation code / révélation ----------------------------------------------------
 
 function onCodeCorrect(ep) {
   playSuccessSound();
   vibrate(120);
   $("#code-feedback").textContent = "";
   $("#code-form").style.display = "none";
-  hideVillainTaunt();
+  $("#page-nav").style.display = "none";
   $("#card-revelation").style.display = "";
   $("#revelation-text").textContent = ep.revelation?.texte || "Bravo, épreuve réussie !";
+  renderResultMap();
   STATE.wrongAttempts = 0;
   persist();
 }
-
-const VILLAIN_TAUNTS = [
-  "Trop facile, héros de pacotille !",
-  "Strasbourg sera bientôt sous les eaux…",
-  "Vous n'y êtes pas du tout !",
-  "Continuez à chercher, ça m'amuse.",
-  "Mes vannes s'ouvrent déjà !",
-];
 
 function onCodeWrong(ep) {
   STATE.wrongAttempts = (STATE.wrongAttempts || 0) + 1;
@@ -332,28 +526,56 @@ function onCodeWrong(ep) {
   if (STATE.wrongAttempts >= seuil && ep.piege) {
     feedback.textContent = "";
     STATE.wrongAttempts = 0;
-    hideVillainTaunt();
     triggerTrap(ep);
   } else {
     feedback.textContent = "Code incorrect, réessayez.";
     feedback.className = "code-feedback error";
-    showVillainTaunt();
   }
   persist();
 }
 
-function showVillainTaunt() {
-  const el = $("#villain-taunt");
-  const text = VILLAIN_TAUNTS[Math.floor(Math.random() * VILLAIN_TAUNTS.length)];
-  $("#villain-taunt-text").textContent = text;
-  el.style.display = "flex";
-  clearTimeout(villainTauntTimer);
-  villainTauntTimer = setTimeout(hideVillainTaunt, 3200);
-}
+// ---- Carte sur l'écran résultat (point vers la prochaine épreuve) --------------------
 
-function hideVillainTaunt() {
-  const el = $("#villain-taunt");
-  if (el) el.style.display = "none";
+function renderResultMap() {
+  const wrap = $("#result-map-wrap");
+  const total = totalEpreuvesForTeam(TEAM);
+  const nextIndex = STATE.currentEpreuveIndex + 1;
+  let target = null;
+  let label = "";
+
+  if (nextIndex < total) {
+    const nextEp = epreuveAt(TEAM, nextIndex);
+    if (nextEp.lieu?.lat && nextEp.lieu?.lng) {
+      target = nextEp.lieu;
+      label = nextEp.titre || "Prochaine épreuve";
+    }
+  } else {
+    const conv = CONTENT.config.convergence;
+    if (conv) {
+      target = conv;
+      label = conv.name || "Rassemblement";
+    }
+  }
+
+  if (!target) {
+    wrap.style.display = "none";
+    return;
+  }
+
+  wrap.style.display = "block";
+  void document.getElementById("result-map").offsetHeight;
+  if (resultMap) {
+    resultMap.remove();
+    resultMap = null;
+  }
+  resultMap = createMap("result-map", [target.lat, target.lng], 15);
+  addCustomMarker(resultMap, target.lat, target.lng, {
+    color: getComputedStyle(document.body).getPropertyValue("--team-color").trim() || "#2563eb",
+    imgUrl: `./assets/badges/${TEAM}.png`,
+    emoji: "📍",
+    label,
+  });
+  setTimeout(() => resultMap && resultMap.invalidateSize(), 60);
 }
 
 // ---- Arrêter la partie ---------------------------------------------------------
@@ -485,48 +707,26 @@ function startConvergenceCountdown(conv) {
   convergenceTimer = setInterval(tick, 1000);
 }
 
-// ---- Carte ------------------------------------------------------------------------
+// ---- Carte (modale) — itinéraire final uniquement ------------------------------------
 
-function openMap(finalOnly = false) {
+function openMap() {
   $("#map-modal").style.display = "flex";
-  $("#map-modal-title").textContent = finalOnly
-    ? "Itinéraire vers le rassemblement"
-    : currentEpreuve().titre || "Carte";
-
-  // Forcer un recalcul de mise en page avant d'initialiser Leaflet, pour que
-  // le conteneur ait déjà sa taille finale (la modale vient de passer à
-  // display:flex). Lire une propriété géométrique déclenche ce recalcul.
+  $("#map-modal-title").textContent = "Itinéraire vers le rassemblement";
   void document.getElementById("leaflet-map").offsetHeight;
-
   if (map) {
     map.remove();
     map = null;
   }
   const conv = CONTENT.config.convergence;
-  const center = finalOnly ? [conv.lat, conv.lng] : [currentEpreuve().lieu.lat, currentEpreuve().lieu.lng];
-  map = createMap("leaflet-map", center, 16);
-  const points = [];
-  if (!finalOnly) {
-    const ep = currentEpreuve();
-    addCustomMarker(map, ep.lieu.lat, ep.lieu.lng, {
-      color: getComputedStyle(document.body).getPropertyValue("--team-color").trim() || "#2563eb",
-      imgUrl: `./assets/badges/${TEAM}.png`,
-      emoji: "📍",
-      label: ep.titre,
-    });
-    points.push([ep.lieu.lat, ep.lieu.lng]);
-  }
-  if (conv) {
-    addCustomMarker(map, conv.lat, conv.lng, {
-      color: "#ffd12e",
-      imgUrl: "./assets/logo.png",
-      emoji: "🏁",
-      big: true,
-      label: conv.name,
-    });
-    points.push([conv.lat, conv.lng]);
-  }
-  fitToMarkers(map, points);
+  if (!conv) return;
+  map = createMap("leaflet-map", [conv.lat, conv.lng], 16);
+  addCustomMarker(map, conv.lat, conv.lng, {
+    color: "#ffd12e",
+    imgUrl: "./assets/logo.png",
+    emoji: "🏁",
+    big: true,
+    label: conv.name,
+  });
   addLocateButton();
   setTimeout(() => map && map.invalidateSize(), 60);
 }
@@ -562,10 +762,32 @@ function updateSyncBadge() {
 // ---- Câblage des événements -----------------------------------------------------------
 
 function initListeners() {
+  $("#access-code-input").addEventListener("input", (e) => {
+    e.target.value = e.target.value.toUpperCase();
+  });
+
+  $("#access-code-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const input = $("#access-code-input");
+    const val = normalizeCode(input.value);
+    if (val === normalizeCode(ACCESS_CODE)) {
+      gameStore.setAccessUnlocked();
+      $("#access-code-feedback").textContent = "";
+      proceedAfterAccess();
+    } else {
+      $("#access-code-feedback").textContent = "Nom incorrect. Réessayez.";
+      input.classList.remove("shake");
+      void input.offsetWidth;
+      input.classList.add("shake");
+      vibrate([80, 60, 80]);
+    }
+  });
+
   $("#btn-start-mission").addEventListener("click", () => {
     if (STATE.status === "not_started") {
       STATE.status = "in_progress";
       STATE.startedAt = Date.now();
+      STATE.currentPageIndex = 0;
       persist();
     }
     renderEpreuveView();
@@ -601,6 +823,23 @@ function initListeners() {
     }
   });
 
+  $("#btn-prev-page").addEventListener("click", () => {
+    if (STATE.currentPageIndex > 0) {
+      STATE.currentPageIndex -= 1;
+      persist();
+      renderPage();
+    }
+  });
+
+  $("#btn-next-page").addEventListener("click", () => {
+    const pages = currentPages();
+    if (STATE.currentPageIndex < pages.length - 1) {
+      STATE.currentPageIndex += 1;
+      persist();
+      renderPage();
+    }
+  });
+
   $("#code-form").addEventListener("submit", (e) => {
     e.preventDefault();
     const ep = currentEpreuve();
@@ -612,18 +851,33 @@ function initListeners() {
   });
 
   $("#btn-next-epreuve").addEventListener("click", () => {
-    const total = CONTENT.teams[TEAM].epreuves.length;
+    const total = totalEpreuvesForTeam(TEAM);
     if (STATE.currentEpreuveIndex + 1 >= total) {
       finishGame();
     } else {
       STATE.currentEpreuveIndex += 1;
+      STATE.currentPageIndex = 0;
       persist();
       renderEpreuveView();
     }
   });
 
-  $("#btn-open-map").addEventListener("click", () => openMap(false));
-  $("#btn-final-map").addEventListener("click", () => openMap(true));
+  $("#btn-close-indice").addEventListener("click", closeIndiceModal);
+  $("#indice-modal").addEventListener("click", (e) => {
+    if (e.target.id === "indice-modal") closeIndiceModal();
+  });
+
+  $("#btn-close-lightbox").addEventListener("click", closeLightbox);
+  $("#lightbox-modal").addEventListener("click", (e) => {
+    if (e.target.id === "lightbox-modal") closeLightbox();
+  });
+
+  $("#btn-close-morse").addEventListener("click", closeMorseModal);
+  $("#morse-modal").addEventListener("click", (e) => {
+    if (e.target.id === "morse-modal") closeMorseModal();
+  });
+
+  $("#btn-final-map").addEventListener("click", openMap);
   $("#btn-close-map").addEventListener("click", closeMap);
 
   window.addEventListener("online", updateSyncBadge);
@@ -644,19 +898,18 @@ async function boot() {
   initSoundToggle();
   startBackgroundMusic();
   updateSyncBadge();
+  initAccessCodeScreen();
   CONTENT = await loadContent();
   if (!CONTENT) {
     $("#view-loading").innerHTML =
       '<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:20px;"><div style="font-size:48px;">⚠️</div><h2>Chargement impossible</h2><p class="muted">Connectez-vous une première fois à Internet, puis rechargez la page.</p></div>';
     return;
   }
-  renderTeamGrid();
-  const saved = gameStore.getSelectedTeam();
-  if (saved && CONTENT.teams?.[saved]) {
-    selectTeam(saved);
-  } else {
-    show("view-team-select");
+  if (!gameStore.isAccessUnlocked()) {
+    show("view-access-code");
+    return;
   }
+  proceedAfterAccess();
 }
 
 boot();
