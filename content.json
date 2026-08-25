@@ -34,24 +34,28 @@
           "revelation": {
             "texte": "Révélation (test) : le prochain lieu se trouve près de la Place Broglie."
           },
-          "blocks": [
+          "pages": [
             {
-              "id": "blk_1",
-              "type": "texte",
-              "visible": true,
-              "html": "<p><strong>Lieu de test A1</strong></p><p>Rendez-vous sur la place et cherchez l'indice près de la fontaine.</p><p>📍 Place Kléber, Strasbourg</p>"
-            },
-            {
-              "id": "blk_2",
-              "type": "texte",
-              "visible": true,
-              "html": "<p>🎒 <strong>Objet mystère</strong> — Cherchez un objet bleu caché à proximité du banc.</p>"
-            },
-            {
-              "id": "blk_3",
-              "type": "indice",
-              "visible": true,
-              "texte": "Indice bonus : comptez les lampadaires entre vous et la statue."
+              "blocks": [
+                {
+                  "id": "blk_1",
+                  "type": "texte",
+                  "visible": true,
+                  "html": "<p><strong>Lieu de test A1</strong></p><p>Rendez-vous sur la place et cherchez l'indice près de la fontaine.</p><p>📍 Place Kléber, Strasbourg</p>"
+                },
+                {
+                  "id": "blk_2",
+                  "type": "texte",
+                  "visible": true,
+                  "html": "<p>🎒 <strong>Objet mystère</strong> — Cherchez un objet bleu caché à proximité du banc.</p>"
+                },
+                {
+                  "id": "blk_3",
+                  "type": "indice",
+                  "visible": true,
+                  "texte": "Indice bonus : comptez les lampadaires entre vous et la statue."
+                }
+              ]
             }
           ]
         },
@@ -72,24 +76,28 @@
           "revelation": {
             "texte": "Révélation (test) : direction la Place du Marché Gayot."
           },
-          "blocks": [
+          "pages": [
             {
-              "id": "blk_4",
-              "type": "texte",
-              "visible": true,
-              "html": "<p><strong>Lieu de test A2</strong></p><p>Cherchez le second indice près du kiosque à musique.</p><p>📍 Place Broglie, Strasbourg</p>"
-            },
-            {
-              "id": "blk_5",
-              "type": "texte",
-              "visible": true,
-              "html": "<p>🎒 <strong>Objet mystère</strong> — Un objet est caché sous le troisième banc en partant de la gauche.</p>"
-            },
-            {
-              "id": "blk_6",
-              "type": "indice",
-              "visible": true,
-              "texte": "Indice bonus : le code correspond à une date."
+              "blocks": [
+                {
+                  "id": "blk_4",
+                  "type": "texte",
+                  "visible": true,
+                  "html": "<p><strong>Lieu de test A2</strong></p><p>Cherchez le second indice près du kiosque à musique.</p><p>📍 Place Broglie, Strasbourg</p>"
+                },
+                {
+                  "id": "blk_5",
+                  "type": "texte",
+                  "visible": true,
+                  "html": "<p>🎒 <strong>Objet mystère</strong> — Un objet est caché sous le troisième banc en partant de la gauche.</p>"
+                },
+                {
+                  "id": "blk_6",
+                  "type": "indice",
+                  "visible": true,
+                  "texte": "Indice bonus : le code correspond à une date."
+                }
+              ]
             }
           ]
         },
@@ -110,24 +118,28 @@
           "revelation": {
             "texte": "Révélation (test) : Mission accomplie, direction la Place Benjamin Zix !"
           },
-          "blocks": [
+          "pages": [
             {
-              "id": "blk_7",
-              "type": "texte",
-              "visible": true,
-              "html": "<p><strong>Lieu de test A3</strong></p><p>Dernière étape avant le rassemblement final.</p><p>📍 Place du Marché Gayot, Strasbourg</p>"
-            },
-            {
-              "id": "blk_8",
-              "type": "texte",
-              "visible": true,
-              "html": "<p>🎒 <strong>Objet mystère</strong> — Cherchez l'objet violet posé sur une table de terrasse.</p>"
-            },
-            {
-              "id": "blk_9",
-              "type": "indice",
-              "visible": true,
-              "texte": "Indice bonus : additionnez le nombre de terrasses visibles."
+              "blocks": [
+                {
+                  "id": "blk_7",
+                  "type": "texte",
+                  "visible": true,
+                  "html": "<p><strong>Lieu de test A3</strong></p><p>Dernière étape avant le rassemblement final.</p><p>📍 Place du Marché Gayot, Strasbourg</p>"
+                },
+                {
+                  "id": "blk_8",
+                  "type": "texte",
+                  "visible": true,
+                  "html": "<p>🎒 <strong>Objet mystère</strong> — Cherchez l'objet violet posé sur une table de terrasse.</p>"
+                },
+                {
+                  "id": "blk_9",
+                  "type": "indice",
+                  "visible": true,
+                  "texte": "Indice bonus : additionnez le nombre de terrasses visibles."
+                }
+              ]
             }
           ]
         }
@@ -154,24 +166,28 @@
           "revelation": {
             "texte": "Révélation (test) : direction le Palais Rohan."
           },
-          "blocks": [
+          "pages": [
             {
-              "id": "blk_10",
-              "type": "texte",
-              "visible": true,
-              "html": "<p><strong>Lieu de test B1</strong></p><p>Rendez-vous devant le grand portail.</p><p>📍 Cathédrale de Strasbourg</p>"
-            },
-            {
-              "id": "blk_11",
-              "type": "texte",
-              "visible": true,
-              "html": "<p>🎒 <strong>Objet mystère</strong> — Cherchez un objet rouge caché près du parvis.</p>"
-            },
-            {
-              "id": "blk_12",
-              "type": "indice",
-              "visible": true,
-              "texte": "Indice bonus : comptez les statues sur la façade."
+              "blocks": [
+                {
+                  "id": "blk_10",
+                  "type": "texte",
+                  "visible": true,
+                  "html": "<p><strong>Lieu de test B1</strong></p><p>Rendez-vous devant le grand portail.</p><p>📍 Cathédrale de Strasbourg</p>"
+                },
+                {
+                  "id": "blk_11",
+                  "type": "texte",
+                  "visible": true,
+                  "html": "<p>🎒 <strong>Objet mystère</strong> — Cherchez un objet rouge caché près du parvis.</p>"
+                },
+                {
+                  "id": "blk_12",
+                  "type": "indice",
+                  "visible": true,
+                  "texte": "Indice bonus : comptez les statues sur la façade."
+                }
+              ]
             }
           ]
         },
@@ -192,24 +208,28 @@
           "revelation": {
             "texte": "Révélation (test) : direction le Quai des Bateliers."
           },
-          "blocks": [
+          "pages": [
             {
-              "id": "blk_13",
-              "type": "texte",
-              "visible": true,
-              "html": "<p><strong>Lieu de test B2</strong></p><p>Cherchez l'indice près de l'entrée du musée.</p><p>📍 Palais Rohan, Strasbourg</p>"
-            },
-            {
-              "id": "blk_14",
-              "type": "texte",
-              "visible": true,
-              "html": "<p>🎒 <strong>Objet mystère</strong> — Un objet est caché près de la grille d'entrée.</p>"
-            },
-            {
-              "id": "blk_15",
-              "type": "indice",
-              "visible": true,
-              "texte": "Indice bonus : le code est le nombre de fenêtres du rez-de-chaussée."
+              "blocks": [
+                {
+                  "id": "blk_13",
+                  "type": "texte",
+                  "visible": true,
+                  "html": "<p><strong>Lieu de test B2</strong></p><p>Cherchez l'indice près de l'entrée du musée.</p><p>📍 Palais Rohan, Strasbourg</p>"
+                },
+                {
+                  "id": "blk_14",
+                  "type": "texte",
+                  "visible": true,
+                  "html": "<p>🎒 <strong>Objet mystère</strong> — Un objet est caché près de la grille d'entrée.</p>"
+                },
+                {
+                  "id": "blk_15",
+                  "type": "indice",
+                  "visible": true,
+                  "texte": "Indice bonus : le code est le nombre de fenêtres du rez-de-chaussée."
+                }
+              ]
             }
           ]
         },
@@ -230,24 +250,28 @@
           "revelation": {
             "texte": "Révélation (test) : Mission accomplie, direction la Place Benjamin Zix !"
           },
-          "blocks": [
+          "pages": [
             {
-              "id": "blk_16",
-              "type": "texte",
-              "visible": true,
-              "html": "<p><strong>Lieu de test B3</strong></p><p>Dernière étape avant le rassemblement final.</p><p>📍 Quai des Bateliers, Strasbourg</p>"
-            },
-            {
-              "id": "blk_17",
-              "type": "texte",
-              "visible": true,
-              "html": "<p>🎒 <strong>Objet mystère</strong> — Cherchez l'objet caché près d'un point d'amarrage.</p>"
-            },
-            {
-              "id": "blk_18",
-              "type": "indice",
-              "visible": true,
-              "texte": "Indice bonus : observez le niveau de l'eau."
+              "blocks": [
+                {
+                  "id": "blk_16",
+                  "type": "texte",
+                  "visible": true,
+                  "html": "<p><strong>Lieu de test B3</strong></p><p>Dernière étape avant le rassemblement final.</p><p>📍 Quai des Bateliers, Strasbourg</p>"
+                },
+                {
+                  "id": "blk_17",
+                  "type": "texte",
+                  "visible": true,
+                  "html": "<p>🎒 <strong>Objet mystère</strong> — Cherchez l'objet caché près d'un point d'amarrage.</p>"
+                },
+                {
+                  "id": "blk_18",
+                  "type": "indice",
+                  "visible": true,
+                  "texte": "Indice bonus : observez le niveau de l'eau."
+                }
+              ]
             }
           ]
         }
@@ -274,24 +298,28 @@
           "revelation": {
             "texte": "Révélation (test) : direction le Barrage Vauban."
           },
-          "blocks": [
+          "pages": [
             {
-              "id": "blk_19",
-              "type": "texte",
-              "visible": true,
-              "html": "<p><strong>Lieu de test C1</strong></p><p>Rendez-vous à l'entrée du quartier historique.</p><p>📍 Petite France, Strasbourg</p>"
-            },
-            {
-              "id": "blk_20",
-              "type": "texte",
-              "visible": true,
-              "html": "<p>🎒 <strong>Objet mystère</strong> — Cherchez un objet jaune caché près d'un pont.</p>"
-            },
-            {
-              "id": "blk_21",
-              "type": "indice",
-              "visible": true,
-              "texte": "Indice bonus : comptez les maisons à colombages visibles."
+              "blocks": [
+                {
+                  "id": "blk_19",
+                  "type": "texte",
+                  "visible": true,
+                  "html": "<p><strong>Lieu de test C1</strong></p><p>Rendez-vous à l'entrée du quartier historique.</p><p>📍 Petite France, Strasbourg</p>"
+                },
+                {
+                  "id": "blk_20",
+                  "type": "texte",
+                  "visible": true,
+                  "html": "<p>🎒 <strong>Objet mystère</strong> — Cherchez un objet jaune caché près d'un pont.</p>"
+                },
+                {
+                  "id": "blk_21",
+                  "type": "indice",
+                  "visible": true,
+                  "texte": "Indice bonus : comptez les maisons à colombages visibles."
+                }
+              ]
             }
           ]
         },
@@ -312,24 +340,28 @@
           "revelation": {
             "texte": "Révélation (test) : direction la Place Saint-Thomas."
           },
-          "blocks": [
+          "pages": [
             {
-              "id": "blk_22",
-              "type": "texte",
-              "visible": true,
-              "html": "<p><strong>Lieu de test C2</strong></p><p>Montez sur la terrasse panoramique.</p><p>📍 Barrage Vauban, Strasbourg</p>"
-            },
-            {
-              "id": "blk_23",
-              "type": "texte",
-              "visible": true,
-              "html": "<p>🎒 <strong>Objet mystère</strong> — Un objet est caché près d'une des arches.</p>"
-            },
-            {
-              "id": "blk_24",
-              "type": "indice",
-              "visible": true,
-              "texte": "Indice bonus : le code correspond au nombre d'arches visibles x 100."
+              "blocks": [
+                {
+                  "id": "blk_22",
+                  "type": "texte",
+                  "visible": true,
+                  "html": "<p><strong>Lieu de test C2</strong></p><p>Montez sur la terrasse panoramique.</p><p>📍 Barrage Vauban, Strasbourg</p>"
+                },
+                {
+                  "id": "blk_23",
+                  "type": "texte",
+                  "visible": true,
+                  "html": "<p>🎒 <strong>Objet mystère</strong> — Un objet est caché près d'une des arches.</p>"
+                },
+                {
+                  "id": "blk_24",
+                  "type": "indice",
+                  "visible": true,
+                  "texte": "Indice bonus : le code correspond au nombre d'arches visibles x 100."
+                }
+              ]
             }
           ]
         },
@@ -350,24 +382,64 @@
           "revelation": {
             "texte": "Révélation (test) : Mission accomplie, direction la Place Benjamin Zix !"
           },
-          "blocks": [
+          "pages": [
             {
-              "id": "blk_25",
-              "type": "texte",
-              "visible": true,
-              "html": "<p><strong>Lieu de test C3</strong></p><p>Dernière étape avant le rassemblement final.</p><p>📍 Place Saint-Thomas, Strasbourg</p>"
-            },
+              "blocks": [
+                {
+                  "id": "blk_25",
+                  "type": "texte",
+                  "visible": true,
+                  "html": "<p><strong>Lieu de test C3</strong></p><p>Dernière étape avant le rassemblement final.</p><p>📍 Place Saint-Thomas, Strasbourg</p>"
+                },
+                {
+                  "id": "blk_26",
+                  "type": "texte",
+                  "visible": true,
+                  "html": "<p>🎒 <strong>Objet mystère</strong> — Cherchez l'objet caché près du parvis de l'église.</p>"
+                },
+                {
+                  "id": "blk_27",
+                  "type": "indice",
+                  "visible": true,
+                  "texte": "Indice bonus : observez la date sur le fronton."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "titre": "Épreuve 4",
+          "lieu": {
+            "lat": 48.5798,
+            "lng": 7.7448
+          },
+          "code": {
+            "valeur": "2026",
+            "essaisAvantPiege": 2
+          },
+          "piege": {
+            "texte": "Piège ! Une fausse indication vous a ralentis.",
+            "dureeMinutes": 2
+          },
+          "revelation": {
+            "texte": "Révélation (test) : direction l'épreuve finale !"
+          },
+          "pages": [
             {
-              "id": "blk_26",
-              "type": "texte",
-              "visible": true,
-              "html": "<p>🎒 <strong>Objet mystère</strong> — Cherchez l'objet caché près du parvis de l'église.</p>"
-            },
-            {
-              "id": "blk_27",
-              "type": "indice",
-              "visible": true,
-              "texte": "Indice bonus : observez la date sur le fronton."
+              "blocks": [
+                {
+                  "id": "blk_1001",
+                  "type": "texte",
+                  "visible": true,
+                  "html": "<p><strong>Lieu de test C4</strong></p><p>Dernière étape avant l'épreuve finale commune.</p><p>📍 Place Saint-Thomas, Strasbourg</p>"
+                },
+                {
+                  "id": "blk_1002",
+                  "type": "indice",
+                  "visible": true,
+                  "texte": "Indice bonus : observez la date sur le fronton."
+                }
+              ]
             }
           ]
         }
@@ -394,24 +466,28 @@
           "revelation": {
             "texte": "Révélation (test) : direction la Place du Marché Gayot."
           },
-          "blocks": [
+          "pages": [
             {
-              "id": "blk_28",
-              "type": "texte",
-              "visible": true,
-              "html": "<p><strong>Lieu de test D1</strong></p><p>Rendez-vous devant le parvis de l'église.</p><p>📍 Place Saint-Thomas, Strasbourg</p>"
-            },
-            {
-              "id": "blk_29",
-              "type": "texte",
-              "visible": true,
-              "html": "<p>🎒 <strong>Objet mystère</strong> — Cherchez un objet vert caché près de l'entrée.</p>"
-            },
-            {
-              "id": "blk_30",
-              "type": "indice",
-              "visible": true,
-              "texte": "Indice bonus : comptez les vitraux visibles depuis l'extérieur."
+              "blocks": [
+                {
+                  "id": "blk_28",
+                  "type": "texte",
+                  "visible": true,
+                  "html": "<p><strong>Lieu de test D1</strong></p><p>Rendez-vous devant le parvis de l'église.</p><p>📍 Place Saint-Thomas, Strasbourg</p>"
+                },
+                {
+                  "id": "blk_29",
+                  "type": "texte",
+                  "visible": true,
+                  "html": "<p>🎒 <strong>Objet mystère</strong> — Cherchez un objet vert caché près de l'entrée.</p>"
+                },
+                {
+                  "id": "blk_30",
+                  "type": "indice",
+                  "visible": true,
+                  "texte": "Indice bonus : comptez les vitraux visibles depuis l'extérieur."
+                }
+              ]
             }
           ]
         },
@@ -432,24 +508,28 @@
           "revelation": {
             "texte": "Révélation (test) : direction la Place Broglie."
           },
-          "blocks": [
+          "pages": [
             {
-              "id": "blk_31",
-              "type": "texte",
-              "visible": true,
-              "html": "<p><strong>Lieu de test D2</strong></p><p>Cherchez l'indice entre les terrasses.</p><p>📍 Place du Marché Gayot, Strasbourg</p>"
-            },
-            {
-              "id": "blk_32",
-              "type": "texte",
-              "visible": true,
-              "html": "<p>🎒 <strong>Objet mystère</strong> — Un objet est caché sous une jardinière.</p>"
-            },
-            {
-              "id": "blk_33",
-              "type": "indice",
-              "visible": true,
-              "texte": "Indice bonus : le code est le numéro de la terrasse la plus fleurie."
+              "blocks": [
+                {
+                  "id": "blk_31",
+                  "type": "texte",
+                  "visible": true,
+                  "html": "<p><strong>Lieu de test D2</strong></p><p>Cherchez l'indice entre les terrasses.</p><p>📍 Place du Marché Gayot, Strasbourg</p>"
+                },
+                {
+                  "id": "blk_32",
+                  "type": "texte",
+                  "visible": true,
+                  "html": "<p>🎒 <strong>Objet mystère</strong> — Un objet est caché sous une jardinière.</p>"
+                },
+                {
+                  "id": "blk_33",
+                  "type": "indice",
+                  "visible": true,
+                  "texte": "Indice bonus : le code est le numéro de la terrasse la plus fleurie."
+                }
+              ]
             }
           ]
         },
@@ -470,24 +550,28 @@
           "revelation": {
             "texte": "Révélation (test) : Mission accomplie, direction la Place Benjamin Zix !"
           },
-          "blocks": [
+          "pages": [
             {
-              "id": "blk_34",
-              "type": "texte",
-              "visible": true,
-              "html": "<p><strong>Lieu de test D3</strong></p><p>Dernière étape avant le rassemblement final.</p><p>📍 Place Broglie, Strasbourg</p>"
-            },
-            {
-              "id": "blk_35",
-              "type": "texte",
-              "visible": true,
-              "html": "<p>🎒 <strong>Objet mystère</strong> — Cherchez l'objet caché près du kiosque.</p>"
-            },
-            {
-              "id": "blk_36",
-              "type": "indice",
-              "visible": true,
-              "texte": "Indice bonus : observez la couleur des grilles du parc."
+              "blocks": [
+                {
+                  "id": "blk_34",
+                  "type": "texte",
+                  "visible": true,
+                  "html": "<p><strong>Lieu de test D3</strong></p><p>Dernière étape avant le rassemblement final.</p><p>📍 Place Broglie, Strasbourg</p>"
+                },
+                {
+                  "id": "blk_35",
+                  "type": "texte",
+                  "visible": true,
+                  "html": "<p>🎒 <strong>Objet mystère</strong> — Cherchez l'objet caché près du kiosque.</p>"
+                },
+                {
+                  "id": "blk_36",
+                  "type": "indice",
+                  "visible": true,
+                  "texte": "Indice bonus : observez la couleur des grilles du parc."
+                }
+              ]
             }
           ]
         }
@@ -514,24 +598,28 @@
           "revelation": {
             "texte": "Révélation (test) : direction la Cathédrale de Strasbourg."
           },
-          "blocks": [
+          "pages": [
             {
-              "id": "blk_37",
-              "type": "texte",
-              "visible": true,
-              "html": "<p><strong>Lieu de test E1</strong></p><p>Rendez-vous devant la grille d'entrée.</p><p>📍 Palais Rohan, Strasbourg</p>"
-            },
-            {
-              "id": "blk_38",
-              "type": "texte",
-              "visible": true,
-              "html": "<p>🎒 <strong>Objet mystère</strong> — Cherchez un objet violet caché près du bassin.</p>"
-            },
-            {
-              "id": "blk_39",
-              "type": "indice",
-              "visible": true,
-              "texte": "Indice bonus : comptez les fenêtres du premier étage."
+              "blocks": [
+                {
+                  "id": "blk_37",
+                  "type": "texte",
+                  "visible": true,
+                  "html": "<p><strong>Lieu de test E1</strong></p><p>Rendez-vous devant la grille d'entrée.</p><p>📍 Palais Rohan, Strasbourg</p>"
+                },
+                {
+                  "id": "blk_38",
+                  "type": "texte",
+                  "visible": true,
+                  "html": "<p>🎒 <strong>Objet mystère</strong> — Cherchez un objet violet caché près du bassin.</p>"
+                },
+                {
+                  "id": "blk_39",
+                  "type": "indice",
+                  "visible": true,
+                  "texte": "Indice bonus : comptez les fenêtres du premier étage."
+                }
+              ]
             }
           ]
         },
@@ -552,24 +640,28 @@
           "revelation": {
             "texte": "Révélation (test) : direction la Petite France."
           },
-          "blocks": [
+          "pages": [
             {
-              "id": "blk_40",
-              "type": "texte",
-              "visible": true,
-              "html": "<p><strong>Lieu de test E2</strong></p><p>Levez les yeux vers la flèche.</p><p>📍 Cathédrale de Strasbourg</p>"
-            },
-            {
-              "id": "blk_41",
-              "type": "texte",
-              "visible": true,
-              "html": "<p>🎒 <strong>Objet mystère</strong> — Un objet est caché près de l'horloge astronomique.</p>"
-            },
-            {
-              "id": "blk_42",
-              "type": "indice",
-              "visible": true,
-              "texte": "Indice bonus : le code est la hauteur approximative de la flèche en mètres."
+              "blocks": [
+                {
+                  "id": "blk_40",
+                  "type": "texte",
+                  "visible": true,
+                  "html": "<p><strong>Lieu de test E2</strong></p><p>Levez les yeux vers la flèche.</p><p>📍 Cathédrale de Strasbourg</p>"
+                },
+                {
+                  "id": "blk_41",
+                  "type": "texte",
+                  "visible": true,
+                  "html": "<p>🎒 <strong>Objet mystère</strong> — Un objet est caché près de l'horloge astronomique.</p>"
+                },
+                {
+                  "id": "blk_42",
+                  "type": "indice",
+                  "visible": true,
+                  "texte": "Indice bonus : le code est la hauteur approximative de la flèche en mètres."
+                }
+              ]
             }
           ]
         },
@@ -590,28 +682,79 @@
           "revelation": {
             "texte": "Révélation (test) : Mission accomplie, direction la Place Benjamin Zix !"
           },
-          "blocks": [
+          "pages": [
             {
-              "id": "blk_43",
-              "type": "texte",
-              "visible": true,
-              "html": "<p><strong>Lieu de test E3</strong></p><p>Dernière étape avant le rassemblement final.</p><p>📍 Petite France, Strasbourg</p>"
-            },
-            {
-              "id": "blk_44",
-              "type": "texte",
-              "visible": true,
-              "html": "<p>🎒 <strong>Objet mystère</strong> — Cherchez l'objet caché près d'un pont fleuri.</p>"
-            },
-            {
-              "id": "blk_45",
-              "type": "indice",
-              "visible": true,
-              "texte": "Indice bonus : observez la couleur des volets environnants."
+              "blocks": [
+                {
+                  "id": "blk_43",
+                  "type": "texte",
+                  "visible": true,
+                  "html": "<p><strong>Lieu de test E3</strong></p><p>Dernière étape avant le rassemblement final.</p><p>📍 Petite France, Strasbourg</p>"
+                },
+                {
+                  "id": "blk_44",
+                  "type": "texte",
+                  "visible": true,
+                  "html": "<p>🎒 <strong>Objet mystère</strong> — Cherchez l'objet caché près d'un pont fleuri.</p>"
+                },
+                {
+                  "id": "blk_45",
+                  "type": "indice",
+                  "visible": true,
+                  "texte": "Indice bonus : observez la couleur des volets environnants."
+                }
+              ]
             }
           ]
         }
       ]
     }
+  },
+  "finalEpreuve": {
+    "titre": "Épreuve finale",
+    "lieu": {
+      "lat": 48.5798,
+      "lng": 7.7422
+    },
+    "code": {
+      "valeur": "ZIX",
+      "essaisAvantPiege": 3
+    },
+    "piege": {
+      "texte": "Piège ! Une fausse indication vous a ralentis.",
+      "dureeMinutes": 2
+    },
+    "revelation": {
+      "texte": "Révélation (test) : Bravo ! Rendez-vous Place Benjamin Zix pour la photo de groupe !"
+    },
+    "pages": [
+      {
+        "blocks": [
+          {
+            "id": "blk_1003",
+            "type": "texte",
+            "visible": true,
+            "html": "<p><strong>Épreuve finale</strong></p><p>Un dernier message crypté vous parvient en morse. Écoutez-le et décodez le lieu de rassemblement.</p>"
+          },
+          {
+            "id": "blk_1004",
+            "type": "audio",
+            "visible": true,
+            "url": "",
+            "label": "Message codé"
+          }
+        ]
+      },
+      {
+        "blocks": [
+          {
+            "id": "blk_1005",
+            "type": "texte",
+            "visible": true,
+            "html": "<p>Une fois le message décodé, saisissez le code ci-dessous.</p>"
+          }
+        ]
+      }
+    ]
   }
 }

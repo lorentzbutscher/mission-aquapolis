@@ -32,6 +32,18 @@
     </div>
   </section>
 
+  <section class="view" id="view-access-code">
+    <div class="card">
+      <h1>🦸 Un allié arrive en renfort</h1>
+      <p id="access-intro-text"></p>
+    </div>
+    <form id="access-code-form" autocomplete="off">
+      <input class="code-input access-code-input" id="access-code-input" placeholder="NOM DU HÉROS" maxlength="30" autocapitalize="characters" autocomplete="off" />
+      <button class="btn btn-primary btn-block" type="submit" style="margin-top:12px;">Déverrouiller la mission</button>
+    </form>
+    <p class="code-feedback error" id="access-code-feedback" style="text-align:center;"></p>
+  </section>
+
   <section class="view" id="view-team-select">
     <img class="landing-logo" src="./assets/logo.png" alt="Mission Aquapolis" onerror="this.style.display='none'">
     <h1>Choisis ta brigade</h1>
@@ -46,9 +58,9 @@
       <p class="muted" id="start-hero-name"></p>
     </div>
     <img class="villain-img" src="./assets/villain.png" alt="" onerror="this.remove()">
-    <div class="card card-intro">
+    <div class="card">
       <h3>Avant de partir</h3>
-      <p>Votre équipe doit résoudre <strong>3 épreuves</strong> dans les rues de Strasbourg. Chaque épreuve indique un lieu, parfois un objet à trouver, et un code à valider.</p>
+      <p>Votre équipe doit résoudre <strong id="start-epreuve-count">3 épreuves</strong> dans les rues de Strasbourg. Chaque épreuve indique un lieu, parfois un objet à trouver, et un code à valider.</p>
       <p class="muted" style="margin-top:8px;">Durée cible : 2h00 — maximum 2h30. Restez groupés et prudents dans la circulation.</p>
     </div>
     <button class="btn btn-primary btn-block" id="btn-start-mission">🚀 Démarrer la mission</button>
@@ -57,18 +69,19 @@
   </section>
 
   <section class="view" id="view-epreuve">
-    <div style="display:flex; align-items:center; justify-content:space-between;">
-      <button class="small-link" id="btn-back-to-start" style="padding:4px 0;">← Retour</button>
-      <span class="epreuve-badge" id="epreuve-badge"></span>
-    </div>
+    <button class="small-link" id="btn-back-to-start" style="align-self:flex-start; padding:4px 0;">← Retour</button>
     <div class="progress-dots" id="progress-dots"></div>
     <h2 id="epreuve-title">Épreuve 1</h2>
 
-    <button class="btn btn-outline btn-sm" id="btn-open-map">🗺️ Voir sur la carte</button>
-
     <div id="blocks-container"></div>
 
-    <div class="card code">
+    <div class="page-nav" id="page-nav" style="display:none;">
+      <button class="btn btn-ghost btn-sm" id="btn-prev-page" type="button">← Page précédente</button>
+      <span class="page-indicator" id="page-indicator">Page 1/1</span>
+      <button class="btn btn-ghost btn-sm" id="btn-next-page" type="button">Page suivante →</button>
+    </div>
+
+    <div class="card code" id="card-code">
       <div class="card-head">
         <div class="card-pict">🔑</div>
         <div class="card-family">Code</div>
@@ -86,6 +99,10 @@
         <div class="card-family">Révélation</div>
       </div>
       <p id="revelation-text"></p>
+      <div id="result-map-wrap" style="display:none; margin-top:12px;">
+        <p class="muted" style="margin-bottom:6px;">📍 Direction :</p>
+        <div id="result-map" class="result-map"></div>
+      </div>
       <button class="btn btn-gold btn-block" id="btn-next-epreuve" style="margin-top:12px;">Épreuve suivante ➜</button>
     </div>
   </section>
@@ -94,7 +111,7 @@
     <div class="final-hero">
       <div class="big-emoji">🏆</div>
       <h1>Mission accomplie !</h1>
-      <p class="muted">Bravo, votre équipe a résolu les 3 épreuves.</p>
+      <p class="muted" id="final-epreuve-count-text">Bravo, votre équipe a résolu toutes les épreuves.</p>
     </div>
     <div class="card revelation">
       <div class="card-head"><div class="card-pict">📍</div><div class="card-family">Rassemblement final</div></div>
@@ -110,11 +127,6 @@
   </section>
 
   <div class="footer-note">Mission Aquapolis · 17 septembre 2026 · Strasbourg</div>
-</div>
-
-<div class="villain-taunt-overlay" id="villain-taunt" style="display:none;">
-  <img class="villain-taunt-face" src="./assets/villain-face.png" alt="" onerror="this.remove()">
-  <div class="villain-taunt-bubble" id="villain-taunt-text"></div>
 </div>
 
 <div class="trap-overlay" id="trap-overlay" style="display:none;">
@@ -142,6 +154,27 @@
     <button class="btn btn-ghost btn-sm" id="btn-close-map">✕ Fermer</button>
   </div>
   <div id="leaflet-map" style="position:relative;"></div>
+</div>
+
+<div class="confirm-overlay" id="indice-modal" style="display:none;">
+  <div class="confirm-box indice-box">
+    <div class="card-head"><div class="card-pict">💡</div><div class="card-family">Indice</div></div>
+    <p id="indice-modal-text"></p>
+    <button class="btn btn-outline btn-block" id="btn-close-indice" style="margin-top:6px;">Fermer</button>
+  </div>
+</div>
+
+<div class="lightbox" id="lightbox-modal" style="display:none;">
+  <button class="lightbox-close" id="btn-close-lightbox" aria-label="Fermer l'image">✕</button>
+  <img id="lightbox-img" src="" alt="">
+</div>
+
+<div class="confirm-overlay" id="morse-modal" style="display:none;">
+  <div class="confirm-box morse-box">
+    <div class="card-head"><div class="card-pict">📡</div><div class="card-family">Alphabet Morse</div></div>
+    <div class="morse-table" id="morse-table"></div>
+    <button class="btn btn-outline btn-block" id="btn-close-morse" style="margin-top:6px;">Fermer</button>
+  </div>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
