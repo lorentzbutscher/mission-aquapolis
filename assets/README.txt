@@ -11,9 +11,14 @@ Dépose ici tes visuels exportés depuis Canva (PNG, fond transparent) :
   assets/pictos/objet.png          → picto carte Objet (optionnel)
   assets/pictos/piege.png          → picto carte Piège (optionnel)
   assets/pictos/revelation.png     → picto carte Révélation (optionnel)
-assets/deversoir.mp3               → musique de fond
+  assets/villain.png               → illustration du super-méchant "Déversoir", écran de briefing
+  assets/audio/deversoir.mp3       → musique de fond en boucle
+  assets/audio/succes.mp3          → son court quand un code est validé
+  assets/audio/piege.mp3           → son court quand un piège se déclenche
+  assets/audio/victoire.mp3        → son court à la fin du parcours
 
-Tant que ces fichiers n'existent pas, l'application affiche des émojis à la
-place (aucune erreur, aucun blocage) — tu peux donc tester dès maintenant et
-ajouter les vrais visuels plus tard, simplement en les déposant ici avec
-exactement ces noms de fichiers, puis en publiant la mise à jour.
+Tant que ces fichiers n'existent pas, l'application affiche des émojis (images)
+ou des bips synthétiques (sons) à la place — aucune erreur, aucun blocage. Tu
+peux donc tester dès maintenant et ajouter les vrais fichiers plus tard,
+simplement en les déposant ici avec exactement ces noms, puis en publiant la
+mise à jour.
