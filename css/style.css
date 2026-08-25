@@ -77,7 +77,7 @@ img { max-width: 100%; display: block; }
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  padding: 16px 16px calc(24px + env(safe-area-inset-bottom));
+   padding: calc(16px + env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom));
 }
 
 .view { display: none; flex-direction: column; gap: 16px; flex: 1; animation: fadeIn .25s ease; }
