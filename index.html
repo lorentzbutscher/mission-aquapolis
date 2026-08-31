@@ -14,6 +14,12 @@
 <link rel="icon" href="./icons/icon-192.png" />
 <link rel="stylesheet" href="./css/style.css" />
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<!-- Préchargement des 4 fonds d'écran (tirés au hasard à chaque écran, voir js/background.js)
+     pour éviter tout flash lors du changement de fond. -->
+<link rel="preload" as="image" href="./assets/backgrounds/villain_toxic_vert.jpg" />
+<link rel="preload" as="image" href="./assets/backgrounds/villain_orage_violet.jpg" />
+<link rel="preload" as="image" href="./assets/backgrounds/duel_vnf_coucher.jpg" />
+<link rel="preload" as="image" href="./assets/backgrounds/villain_pluie_bleu.jpg" />
 </head>
 <body>
 <div class="app" id="app">
