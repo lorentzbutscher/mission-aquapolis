@@ -57,7 +57,12 @@ body {
   overscroll-behavior-y: contain;
 }
 
-/* Fond d'illustration, fixe derrière le contenu, assombri pour rester lisible */
+/* Fond d'illustration, fixe derrière le contenu, assombri pour rester lisible.
+   L'image est pilotée par la variable --current-bg (voir js/background.js),
+   tirée au hasard parmi 4 visuels à chaque changement d'écran ; le dégradé
+   de superposition et le cadrage (cover) restent identiques quelle que soit
+   l'image. Le fond d'origine sert de repli tant que le JS n'a pas encore
+   choisi d'image (ex. tout premier écran de chargement). */
 body::before {
   content: "";
   position: fixed;
@@ -65,7 +70,7 @@ body::before {
   z-index: -1;
   background:
     linear-gradient(rgba(7,20,39,.55), rgba(7,20,39,.68)),
-    url("../assets/background.webp") center 15% / cover no-repeat;
+    var(--current-bg, url("../assets/background.webp")) center 15% / cover no-repeat;
 }
 
 img { max-width: 100%; display: block; }
