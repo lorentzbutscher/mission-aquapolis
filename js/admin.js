@@ -20,11 +20,11 @@ const TEAM_LABELS = { bleu: "Bleue", rouge: "Rouge", jaune: "Jaune", vert: "Vert
 const FINAL_KEY = "__final__";
 const ALL_TAB_KEYS = [...TEAM_COLORS, FINAL_KEY];
 const PAYS_OPTIONS = [
-  { value: "suisse", label: "🇨🇭 Suisse" },
-  { value: "france", label: "🇫🇷 France" },
-  { value: "belgique", label: "🇧🇪 Belgique" },
-  { value: "allemagne", label: "🇩🇪 Allemagne" },
-  { value: "paysbas", label: "🇳🇱 Pays-Bas" },
+  { value: "suisse", label: "🇨🇭 Suisse", nom: "Suisse", emoji: "🇨🇭", img: "./assets/flags/flag_suisse.png" },
+  { value: "france", label: "🇫🇷 France", nom: "France", emoji: "🇫🇷", img: "./assets/flags/flag_france.png" },
+  { value: "belgique", label: "🇧🇪 Belgique", nom: "Belgique", emoji: "🇧🇪", img: "./assets/flags/flag_belgique.png" },
+  { value: "allemagne", label: "🇩🇪 Allemagne", nom: "Allemagne", emoji: "🇩🇪", img: "./assets/flags/flag_allemagne.png" },
+  { value: "paysbas", label: "🇳🇱 Pays-Bas", nom: "Pays-Bas", emoji: "🇳🇱", img: "./assets/flags/flag_pays_bas.png" },
 ];
 
 let TEAMS_DATA = {}; // clés : bleu/rouge/jaune/vert/violet + "__final__"
@@ -804,8 +804,13 @@ function renderPreviewBlock(block) {
       <p class="muted" style="font-size:13px; margin-bottom:8px;">🚩 Sélecteur de drapeaux — bon pays : <strong>${escapeHtml(correct?.label || "non défini")}</strong></p>
       <div class="drapeaux-grid">
         ${PAYS_OPTIONS.map(
-          (o) =>
-            `<div class="drapeau-btn${o.value === block.paysCorrect ? " correct" : ""}"><span class="drapeau-flag">${o.label.split(" ")[0]}</span><span class="drapeau-label">${o.label.split(" ").slice(1).join(" ")}</span></div>`
+          (o) => `<div class="drapeau-btn${o.value === block.paysCorrect ? " correct" : ""}">
+            <span class="drapeau-flag-wrap">
+              <img class="drapeau-flag-img" src="${o.img}" alt="${escapeHtml(o.nom)}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+              <span class="drapeau-flag-emoji" style="display:none; align-items:center; justify-content:center; width:100%; height:100%;">${o.emoji}</span>
+            </span>
+            <span class="drapeau-label">${escapeHtml(o.nom)}</span>
+          </div>`
         ).join("")}
       </div>
     `;

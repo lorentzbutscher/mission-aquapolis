@@ -20,11 +20,11 @@ const ACCESS_INTRO_DEFAULT =
   "⚡ Alerte rouge sur les canaux de Strasbourg : le super-vilain Déversoir sème la panique parmi les écluses. Un renfort inattendu vient d'arriver en ville — un héros dont le nom seul suffit à redonner espoir aux agents VNF. Saisissez son nom pour débloquer la mission et rejoindre le combat.";
 
 const PAYS_META = {
-  suisse: { emoji: "🇨🇭", label: "Suisse" },
-  france: { emoji: "🇫🇷", label: "France" },
-  belgique: { emoji: "🇧🇪", label: "Belgique" },
-  allemagne: { emoji: "🇩🇪", label: "Allemagne" },
-  paysbas: { emoji: "🇳🇱", label: "Pays-Bas" },
+  suisse: { img: "./assets/flags/flag_suisse.png", emoji: "🇨🇭", label: "Suisse" },
+  france: { img: "./assets/flags/flag_france.png", emoji: "🇫🇷", label: "France" },
+  belgique: { img: "./assets/flags/flag_belgique.png", emoji: "🇧🇪", label: "Belgique" },
+  allemagne: { img: "./assets/flags/flag_allemagne.png", emoji: "🇩🇪", label: "Allemagne" },
+  paysbas: { img: "./assets/flags/flag_pays_bas.png", emoji: "🇳🇱", label: "Pays-Bas" },
 };
 
 const MORSE_MAP = {
@@ -398,7 +398,24 @@ function renderBlock(block, revealedIds, opts) {
         const btn = document.createElement("button");
         btn.type = "button";
         btn.className = "drapeau-btn";
-        btn.innerHTML = `<span class="drapeau-flag">${meta.emoji}</span><span class="drapeau-label">${meta.label}</span>`;
+        const wrap = document.createElement("span");
+        wrap.className = "drapeau-flag-wrap";
+        const img = document.createElement("img");
+        img.className = "drapeau-flag-img";
+        img.src = meta.img;
+        img.alt = meta.label;
+        img.onerror = () => {
+          const fallback = document.createElement("span");
+          fallback.className = "drapeau-flag-emoji";
+          fallback.textContent = meta.emoji;
+          img.replaceWith(fallback);
+        };
+        wrap.appendChild(img);
+        const label = document.createElement("span");
+        label.className = "drapeau-label";
+        label.textContent = meta.label;
+        btn.appendChild(wrap);
+        btn.appendChild(label);
         btn.addEventListener("click", () => {
           if (solved) return;
           if (key === block.paysCorrect) {
