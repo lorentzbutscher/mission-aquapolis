@@ -300,7 +300,7 @@ function renderPage() {
       `Épreuve ${STATE.currentEpreuveIndex + 1} sur ${total}` +
       (pages.length > 1 ? ` · page ${STATE.currentPageIndex + 1}/${pages.length}` : "");
   }
-
+}
 
 function renderBlocks(page) {
   const container = $("#blocks-container");
