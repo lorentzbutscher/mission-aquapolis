@@ -320,6 +320,15 @@ function openDuplicate(srcColor, epIdx) {
 // ---- Démarrage ---------------------------------------------------------------
 
 function boot() {
+  const screenEl = document.getElementById("admin-screen");
+  const applyGrid = () => {
+    if (screenEl.style.display !== "none" && screenEl.style.display !== "grid") {
+      screenEl.style.display = "grid";
+    }
+  };
+  applyGrid();
+  new MutationObserver(applyGrid).observe(screenEl, { attributes: true, attributeFilter: ["style"] });
+
   buildTopbar();
   buildSidebar();
   injectDuplicateButtons();
