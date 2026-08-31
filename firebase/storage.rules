@@ -1,0 +1,16 @@
+// Règles de sécurité Firebase Storage — Mission Aquapolis
+// À copier-coller dans : console Firebase > Storage > Règles > Publier
+//
+// Logique : les photos des blocs sont lisibles par tout le monde (les
+// équipes doivent pouvoir les afficher sans se connecter), mais seul le
+// compte admin connecté peut en ajouter.
+
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /blocks/{allPaths=**} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+  }
+}
