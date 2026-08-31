@@ -601,7 +601,7 @@ function onCodeWrong() {
   input.classList.add("shake");
   vibrate([80, 60, 80]);
   const feedback = $("#code-feedback");
-  feedback.textContent = "Code incorrect, réessayez.";
+  feedback.textContent = "Code incorrect — vérifiez l'orthographe, sans accent.";;
   feedback.className = "code-feedback error";
 }
 
