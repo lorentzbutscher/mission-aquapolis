@@ -219,7 +219,7 @@ function renderChronoTick() {
   let cls = "";
   if (elapsed >= durationMs - 15 * 60000) cls = "warn";
   if (elapsed >= durationMs) cls = "danger";
- const remaining = Math.max(0, durationMs - elapsed);
+  const remaining = Math.max(0, durationMs - elapsed);
   wrap.innerHTML = `<div class="chrono ${cls}">
     <div><div class="chrono-label">Temps restant</div><div class="chrono-time">${formatHMS(remaining)}</div></div>
     <div style="text-align:right"><div class="chrono-label">Écoulé</div><div class="chrono-time" style="font-size:16px;">${formatHMS(elapsed)}</div></div>
@@ -601,7 +601,7 @@ function onCodeWrong() {
   input.classList.add("shake");
   vibrate([80, 60, 80]);
   const feedback = $("#code-feedback");
-  feedback.textContent = "Code incorrect — vérifiez l'orthographe, sans accent.";;
+  feedback.textContent = "Code incorrect — vérifiez l'orthographe, sans accent.";
   feedback.className = "code-feedback error";
 }
 
