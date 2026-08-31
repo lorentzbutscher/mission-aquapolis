@@ -7,6 +7,17 @@
 
 const A = () => window.__aqAdmin;
 
+// Pastilles de couleur du menu — mêmes teintes que les brigades côté joueur
+const DOT_COLORS = {
+  general: "#8497b8",
+  __final__: "#ffd12e",
+  bleu: "#2563eb",
+  rouge: "#dc2626",
+  jaune: "#eab308",
+  vert: "#16a34a",
+  violet: "#7c3aed",
+};
+
 let dirty = 0;
 let lastPublished = null;
 let statusEl = null;
@@ -107,14 +118,14 @@ function buildSidebar() {
     const key = btn.dataset.tab;
     const isTeam = !["general", "__final__"].includes(key);
     if (isTeam) return;
-    side.appendChild(makeItem(btn.textContent.replace(/^[^\p{L}]+/u, "").trim(), btn, "aq-side-item"));
+    side.appendChild(makeItem(btn.textContent.replace(/^[^\p{L}]+/u, "").trim(), btn, "aq-side-item", DOT_COLORS[key]));
   });
 
   side.appendChild(groupTitle("Brigades"));
   [...tabs.querySelectorAll(".tab-btn")].forEach((btn) => {
     const key = btn.dataset.tab;
     if (["general", "__final__"].includes(key)) return;
-    const item = makeItem("Brigade " + btn.textContent.replace(/^[^\p{L}]+/u, "").trim(), btn, "aq-side-item aq-side-team");
+    const item = makeItem("Brigade " + btn.textContent.replace(/^[^\p{L}]+/u, "").trim(), btn, "aq-side-item aq-side-team", DOT_COLORS[key]);
     item.dataset.team = key;
     side.appendChild(item);
 
@@ -128,10 +139,33 @@ function buildSidebar() {
   highlightActive();
 }
 
+// Affiche soit le prologue « Palais du Rhin », soit les épreuves — jamais les deux
+// empilés : c'est ce qui donnait l'impression que le menu ne réagissait pas.
+function showSection(panel, what) {
+  const palaisForms = panel.querySelector(".palais-forms");
+  if (!palaisForms) return;
+  const palaisHead = palaisForms.previousElementSibling;
+  const showPalais = what === "palais";
+  palaisForms.style.display = showPalais ? "" : "none";
+  if (palaisHead && palaisHead.classList.contains("admin-card")) {
+    palaisHead.style.display = showPalais ? "" : "none";
+  }
+  panel.querySelector(".epreuve-tabs") &&
+    (panel.querySelector(".epreuve-tabs").style.display = showPalais ? "none" : "");
+  panel.querySelectorAll(".epreuve-forms:not(.palais-forms)").forEach((el) => {
+    el.style.display = showPalais ? "none" : "";
+  });
+}
+
 function fillSubItems(key, tabBtn, sub) {
   const panel = document.getElementById("tab-" + key);
   if (!panel) return;
   sub.innerHTML = "";
+
+  const markLink = (el) => {
+    sub.querySelectorAll(".aq-side-link").forEach((l) => l.classList.remove("active"));
+    el.classList.add("active");
+  };
 
   const palais = document.createElement("button");
   palais.type = "button";
@@ -139,8 +173,10 @@ function fillSubItems(key, tabBtn, sub) {
   palais.textContent = "Palais du Rhin (prologue)";
   palais.addEventListener("click", () => {
     tabBtn.click();
+    showSection(panel, "palais");
     highlightActive(key);
-    panel.querySelector(".palais-forms")?.scrollIntoView({ block: "start" });
+    markLink(palais);
+    window.scrollTo({ top: 0 });
   });
   sub.appendChild(palais);
 
@@ -152,20 +188,30 @@ function fillSubItems(key, tabBtn, sub) {
     link.addEventListener("click", () => {
       tabBtn.click();
       tab.click();
+      showSection(panel, "epreuves");
       highlightActive(key);
+      markLink(link);
       window.scrollTo({ top: 0 });
     });
     sub.appendChild(link);
   });
 }
 
-function makeItem(label, tabBtn, cls) {
+function makeItem(label, tabBtn, cls, color) {
   const b = document.createElement("button");
   b.type = "button";
   b.className = cls;
-  b.textContent = label;
+  if (color) {
+    const dot = document.createElement("span");
+    dot.className = "aq-dot";
+    dot.style.background = color;
+    b.appendChild(dot);
+  }
+  b.appendChild(document.createTextNode(label));
   b.addEventListener("click", () => {
     tabBtn.click();
+    const panel = document.getElementById("tab-" + tabBtn.dataset.tab);
+    if (panel) showSection(panel, "palais");
     highlightActive(tabBtn.dataset.tab);
     window.scrollTo({ top: 0 });
   });
@@ -320,6 +366,8 @@ function openDuplicate(srcColor, epIdx) {
 // ---- Démarrage ---------------------------------------------------------------
 
 function boot() {
+  // admin.js applique display:block en style inline sur #admin-screen : un style
+  // inline l'emporte sur la feuille, la grille 2 colonnes ne s'appliquerait pas.
   const screenEl = document.getElementById("admin-screen");
   const applyGrid = () => {
     if (screenEl.style.display !== "none" && screenEl.style.display !== "grid") {
