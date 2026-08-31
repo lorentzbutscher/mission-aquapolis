@@ -308,9 +308,15 @@ function renderBlocks(page) {
   const idx = STATE.currentEpreuveIndex;
   if (!STATE.revealedBlocks[idx]) STATE.revealedBlocks[idx] = [];
   const revealedIds = STATE.revealedBlocks[idx];
-  (page.blocks || [])
-    .filter((b) => b.visible)
-    .forEach((block) => container.appendChild(renderBlock(block, revealedIds)));
+  const visibles = (page.blocks || []).filter((b) => b.visible);
+  visibles.forEach((block, i) => {
+    const el = renderBlock(block, revealedIds);
+    if (i === 0 && block.type === "texte") {
+      el.classList.add("block-narration");
+      el.dataset.narrateur = block.narrateur || "Transmission";
+    }
+    container.appendChild(el);
+  });
 }
 
 function renderBlock(block, revealedIds, opts) {
