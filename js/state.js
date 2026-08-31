@@ -4,18 +4,23 @@ const ACCESS_KEY = "aquapolis_access_unlocked";
 
 export function defaultState() {
   return {
-    status: "not_started", // not_started | in_progress | trap | finished
+    status: "not_started", // not_started | in_progress | finished
     currentEpreuveIndex: 0,
     currentPageIndex: 0,
     startedAt: null,
     finishedAt: null,
-    currentTrapEndsAt: null,
-    wrongAttempts: 0,
     // Un tableau d'identifiants de blocs "indice" révélés, par épreuve
     // (ex. revealedBlocks[0] = ["blk_2"] pour l'épreuve 1). Rempli à la volée,
     // sa taille n'est pas fixée d'avance (le nombre d'épreuves varie par équipe).
     revealedBlocks: [],
-    trapCount: 0,
+    // Séquence "Palais du Rhin" : prologue joué juste après le choix d'équipe,
+    // avant la première épreuve. `done` passe à true une fois la page 3 validée.
+    palais: {
+      pageIndex: 0,
+      codeOk: false,
+      flagOk: false,
+      done: false,
+    },
   };
 }
 

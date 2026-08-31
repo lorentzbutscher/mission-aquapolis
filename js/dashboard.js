@@ -12,7 +12,6 @@ const TEAM_LABELS = {
 const STATUS_LABELS = {
   not_started: "Pas commencé",
   in_progress: "En cours",
-  trap: "Piège / pénalité",
   finished: "Terminé 🏆",
 };
 const TEAM_HEX = { bleu: "#2563eb", rouge: "#dc2626", jaune: "#eab308", vert: "#16a34a", violet: "#7c3aed" };
@@ -42,7 +41,6 @@ function render(states) {
       </div>
       <p class="muted" style="margin-top:8px;">Épreuve ${Math.min((st.currentEpreuveIndex || 0) + 1, total)} / ${total}</p>
       <p class="muted" id="elapsed-${color}">Temps écoulé : —</p>
-      <p class="muted">Piège(s) déclenché(s) : ${st.trapCount || 0}</p>
     `;
     grid.appendChild(card);
   }

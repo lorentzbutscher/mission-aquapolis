@@ -10,13 +10,21 @@ import {
   vibrate,
   playEndChime,
 } from "./utils.js";
-import { playSuccessSound, playTrapSound, playVictorySound, initSoundToggle, startBackgroundMusic } from "./sound.js";
+import { playSuccessSound, playVictorySound, initSoundToggle, startBackgroundMusic } from "./sound.js";
 
 const $ = (sel) => document.querySelector(sel);
 
 const ACCESS_CODE = "ETIENNE";
 const ACCESS_INTRO_DEFAULT =
   "⚡ Alerte rouge sur les canaux de Strasbourg : le super-vilain Déversoir sème la panique parmi les écluses. Un renfort inattendu vient d'arriver en ville — un héros dont le nom seul suffit à redonner espoir aux agents VNF. Saisissez son nom pour débloquer la mission et rejoindre le combat.";
+
+const PAYS_META = {
+  suisse: { emoji: "🇨🇭", label: "Suisse" },
+  france: { emoji: "🇫🇷", label: "France" },
+  belgique: { emoji: "🇧🇪", label: "Belgique" },
+  allemagne: { emoji: "🇩🇪", label: "Allemagne" },
+  paysbas: { emoji: "🇳🇱", label: "Pays-Bas" },
+};
 
 const MORSE_MAP = {
   A: ".-", B: "-...", C: "-.-.", D: "-..", E: ".", F: "..-.", G: "--.", H: "....",
@@ -31,7 +39,6 @@ let CONTENT = null;
 let TEAM = null;
 let STATE = null;
 let chronoTimer = null;
-let trapTimer = null;
 let convergenceTimer = null;
 let map = null;
 let resultMap = null;
@@ -57,8 +64,6 @@ function persist() {
     currentEpreuveIndex: STATE.currentEpreuveIndex,
     startedAt: STATE.startedAt,
     finishedAt: STATE.finishedAt,
-    currentTrapEndsAt: STATE.currentTrapEndsAt,
-    trapCount: STATE.trapCount,
   });
 }
 
@@ -86,6 +91,17 @@ function currentEpreuve() {
 
 function currentPages() {
   return currentEpreuve().pages || [{ blocks: [] }];
+}
+
+// ---- Palais du Rhin (prologue, avant la première épreuve) -----------------------
+
+function palaisData() {
+  const p = CONTENT.teams[TEAM]?.palaisDuRhin;
+  return p && p.pages ? p : { code: { valeur: "" }, pages: [{ blocks: [] }] };
+}
+
+function palaisPages() {
+  return palaisData().pages || [{ blocks: [] }];
 }
 
 // ---- Écran de code d'accès --------------------------------------------------------
@@ -147,10 +163,12 @@ function selectTeam(color) {
   } else if (STATE.status === "not_started") {
     renderStartView();
     show("view-start");
+  } else if (!STATE.palais?.done) {
+    renderPalaisView();
+    show("view-palais");
   } else {
     renderEpreuveView();
     show("view-epreuve");
-    if (STATE.status === "trap") resumeTrapIfActive();
   }
   startChrono();
 }
@@ -286,7 +304,7 @@ function renderBlocks(page) {
     .forEach((block) => container.appendChild(renderBlock(block, revealedIds)));
 }
 
-function renderBlock(block, revealedIds) {
+function renderBlock(block, revealedIds, opts) {
   const el = document.createElement("div");
   switch (block.type) {
     case "texte": {
@@ -367,6 +385,38 @@ function renderBlock(block, revealedIds) {
       morseBtn.textContent = "📡 Voir l'alphabet morse";
       morseBtn.addEventListener("click", openMorseModal);
       el.appendChild(morseBtn);
+      break;
+    }
+    case "drapeaux": {
+      el.className = "card block-drapeaux";
+      const grid = document.createElement("div");
+      grid.className = "drapeaux-grid";
+      let solved = false;
+      Object.entries(PAYS_META).forEach(([key, meta]) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "drapeau-btn";
+        btn.innerHTML = `<span class="drapeau-flag">${meta.emoji}</span><span class="drapeau-label">${meta.label}</span>`;
+        btn.addEventListener("click", () => {
+          if (solved) return;
+          if (key === block.paysCorrect) {
+            solved = true;
+            grid.querySelectorAll(".drapeau-btn").forEach((b) => (b.disabled = true));
+            btn.classList.add("correct");
+            playSuccessSound();
+            vibrate(120);
+            if (opts?.onDrapeauCorrect) opts.onDrapeauCorrect();
+          } else {
+            btn.classList.remove("wrong");
+            void btn.offsetWidth;
+            btn.classList.add("wrong");
+            vibrate([80, 60, 80]);
+            setTimeout(() => btn.classList.remove("wrong"), 350);
+          }
+        });
+        grid.appendChild(btn);
+      });
+      el.appendChild(grid);
       break;
     }
     case "indice": {
@@ -509,29 +559,82 @@ function onCodeCorrect(ep) {
   $("#card-revelation").style.display = "";
   $("#revelation-text").textContent = ep.revelation?.texte || "Bravo, épreuve réussie !";
   renderResultMap();
-  STATE.wrongAttempts = 0;
   persist();
 }
 
-function onCodeWrong(ep) {
-  STATE.wrongAttempts = (STATE.wrongAttempts || 0) + 1;
+function onCodeWrong() {
   const input = $("#code-input");
   input.classList.remove("shake");
   void input.offsetWidth;
   input.classList.add("shake");
   vibrate([80, 60, 80]);
-
-  const seuil = ep.code?.essaisAvantPiege ?? 2;
   const feedback = $("#code-feedback");
-  if (STATE.wrongAttempts >= seuil && ep.piege) {
-    feedback.textContent = "";
-    STATE.wrongAttempts = 0;
-    triggerTrap(ep);
-  } else {
-    feedback.textContent = "Code incorrect, réessayez.";
-    feedback.className = "code-feedback error";
-  }
+  feedback.textContent = "Code incorrect, réessayez.";
+  feedback.className = "code-feedback error";
+}
+
+// ---- Palais du Rhin (prologue) -----------------------------------------------------
+
+function renderPalaisView() {
+  const pages = palaisPages();
+  if (!STATE.palais) STATE.palais = { pageIndex: 0, codeOk: false, flagOk: false, done: false };
+  let idx = STATE.palais.pageIndex || 0;
+  if (idx >= pages.length) idx = pages.length - 1;
+  if (idx < 0) idx = 0;
+  STATE.palais.pageIndex = idx;
+  const page = pages[idx];
+  const isFirstPage = idx === 0;
+  const isLastPage = idx === pages.length - 1;
+
+  $("#palais-page-indicator").textContent = `Page ${idx + 1}/${pages.length}`;
+  $("#btn-palais-back").style.display = idx > 0 ? "" : "none";
+
+  const container = $("#palais-blocks-container");
+  container.innerHTML = "";
+  (page.blocks || [])
+    .filter((b) => b.visible)
+    .forEach((block) =>
+      container.appendChild(
+        renderBlock(block, [], {
+          onDrapeauCorrect: () => {
+            STATE.palais.flagOk = true;
+            STATE.palais.pageIndex = idx + 1;
+            persist();
+            showToast("✅ Bonne réponse !");
+            setTimeout(renderPalaisView, 500);
+          },
+        })
+      )
+    );
+
+  // Le code ne se saisit que sur la 1ère page, tant qu'il n'est pas validé.
+  $("#palais-card-code").style.display = isFirstPage && !STATE.palais.codeOk ? "" : "none";
+  $("#palais-code-input").value = "";
+  $("#palais-code-feedback").textContent = "";
+  if (isFirstPage && !STATE.palais.codeOk) setTimeout(() => $("#palais-code-input")?.focus(), 50);
+
+  // Le bouton "Continuer" n'apparaît que sur la dernière page.
+  $("#btn-palais-continue").style.display = isLastPage ? "" : "none";
+}
+
+function onPalaisCodeWrong() {
+  const input = $("#palais-code-input");
+  input.classList.remove("shake");
+  void input.offsetWidth;
+  input.classList.add("shake");
+  vibrate([80, 60, 80]);
+  const feedback = $("#palais-code-feedback");
+  feedback.textContent = "Code incorrect, réessayez.";
+  feedback.className = "code-feedback error";
+}
+
+function finishPalais() {
+  STATE.palais.done = true;
+  STATE.currentEpreuveIndex = 0;
+  STATE.currentPageIndex = 0;
   persist();
+  renderEpreuveView();
+  show("view-epreuve");
 }
 
 // ---- Carte sur l'écran résultat (point vers la prochaine épreuve) --------------------
@@ -590,9 +693,7 @@ function closeStopConfirm() {
 
 function abandonGame() {
   clearInterval(chronoTimer);
-  clearInterval(trapTimer);
   clearInterval(convergenceTimer);
-  $("#trap-overlay").style.display = "none";
   closeStopConfirm();
 
   if (TEAM) {
@@ -602,8 +703,6 @@ function abandonGame() {
       currentEpreuveIndex: 0,
       startedAt: null,
       finishedAt: null,
-      currentTrapEndsAt: null,
-      trapCount: 0,
     });
   }
   gameStore.clearSelectedTeam();
@@ -624,55 +723,6 @@ function finishGame() {
   show("view-final");
   playVictorySound();
   vibrate([150, 80, 150, 80, 300]);
-}
-
-// ---- Piège --------------------------------------------------------------------
-
-function triggerTrap(ep) {
-  STATE.status = "trap";
-  const dureeMs = (ep.piege?.dureeMinutes ?? 2) * 60000;
-  STATE.currentTrapEndsAt = Date.now() + dureeMs;
-  STATE.trapCount = (STATE.trapCount || 0) + 1;
-  persist();
-  showTrapOverlay(ep);
-}
-
-function showTrapOverlay(ep) {
-  playTrapSound();
-  vibrate([300, 100, 300, 100, 300]);
-  $("#trap-text").textContent = ep.piege?.texte || "Piège déclenché !";
-  $("#trap-overlay").style.display = "flex";
-  clearInterval(trapTimer);
-  trapTimer = setInterval(() => {
-    const remain = STATE.currentTrapEndsAt - Date.now();
-    if (remain <= 0) {
-      clearInterval(trapTimer);
-      $("#trap-overlay").style.display = "none";
-      STATE.status = "in_progress";
-      STATE.currentTrapEndsAt = null;
-      persist();
-      renderEpreuveView();
-      showToast("✅ Pénalité terminée, vous pouvez continuer !");
-      playSuccessSound();
-      vibrate(150);
-    } else {
-      $("#trap-time").textContent = formatMinSec(remain);
-    }
-  }, 250);
-}
-
-function resumeTrapIfActive() {
-  const ep = currentEpreuve();
-  if (STATE.status === "trap" && STATE.currentTrapEndsAt) {
-    if (STATE.currentTrapEndsAt <= Date.now()) {
-      STATE.status = "in_progress";
-      STATE.currentTrapEndsAt = null;
-      persist();
-      renderEpreuveView();
-    } else {
-      showTrapOverlay(ep);
-    }
-  }
 }
 
 // ---- Finale ---------------------------------------------------------------------
@@ -790,10 +840,40 @@ function initListeners() {
       STATE.currentPageIndex = 0;
       persist();
     }
-    renderEpreuveView();
-    show("view-epreuve");
+    if (!STATE.palais?.done) {
+      renderPalaisView();
+      show("view-palais");
+    } else {
+      renderEpreuveView();
+      show("view-epreuve");
+    }
     startChrono();
   });
+
+  $("#palais-code-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const val = normalizeCode($("#palais-code-input").value);
+    const expected = normalizeCode(palaisData().code?.valeur);
+    if (!expected) return;
+    if (val === expected) {
+      STATE.palais.codeOk = true;
+      STATE.palais.pageIndex = 1;
+      persist();
+      renderPalaisView();
+    } else {
+      onPalaisCodeWrong();
+    }
+  });
+
+  $("#btn-palais-back").addEventListener("click", () => {
+    if (STATE.palais.pageIndex > 0) {
+      STATE.palais.pageIndex -= 1;
+      persist();
+      renderPalaisView();
+    }
+  });
+
+  $("#btn-palais-continue").addEventListener("click", finishPalais);
 
   $("#btn-back-to-start").addEventListener("click", () => {
     renderStartView();
@@ -801,7 +881,6 @@ function initListeners() {
   });
 
   $("#btn-stop-game").addEventListener("click", openStopConfirm);
-  $("#btn-stop-game-trap").addEventListener("click", openStopConfirm);
   $("#btn-stop-cancel").addEventListener("click", closeStopConfirm);
   $("#btn-stop-confirm").addEventListener("click", abandonGame);
 
@@ -847,7 +926,7 @@ function initListeners() {
     const expected = normalizeCode(ep.code?.valeur);
     if (!expected) return;
     if (val === expected) onCodeCorrect(ep);
-    else onCodeWrong(ep);
+    else onCodeWrong();
   });
 
   $("#btn-next-epreuve").addEventListener("click", () => {

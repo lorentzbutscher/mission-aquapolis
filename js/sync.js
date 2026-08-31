@@ -167,7 +167,6 @@ export async function resetTeamState(color) {
     currentEpreuveIndex: 0,
     startedAt: null,
     finishedAt: null,
-    currentTrapEndsAt: null,
     attempts: 0,
     updatedAt: m.firestore.serverTimestamp(),
   });

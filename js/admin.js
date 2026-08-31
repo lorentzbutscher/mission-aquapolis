@@ -19,6 +19,13 @@ const $ = (s) => document.querySelector(s);
 const TEAM_LABELS = { bleu: "Bleue", rouge: "Rouge", jaune: "Jaune", vert: "Verte", violet: "Violette" };
 const FINAL_KEY = "__final__";
 const ALL_TAB_KEYS = [...TEAM_COLORS, FINAL_KEY];
+const PAYS_OPTIONS = [
+  { value: "suisse", label: "🇨🇭 Suisse" },
+  { value: "france", label: "🇫🇷 France" },
+  { value: "belgique", label: "🇧🇪 Belgique" },
+  { value: "allemagne", label: "🇩🇪 Allemagne" },
+  { value: "paysbas", label: "🇳🇱 Pays-Bas" },
+];
 
 let TEAMS_DATA = {}; // clés : bleu/rouge/jaune/vert/violet + "__final__"
 let CONFIG_DATA = {};
@@ -52,8 +59,7 @@ function emptyEpreuve(n) {
   return {
     titre: `Épreuve ${n}`,
     lieu: { lat: 48.5836, lng: 7.7458 },
-    code: { valeur: "", essaisAvantPiege: 2 },
-    piege: { texte: "", dureeMinutes: 2 },
+    code: { valeur: "" },
     revelation: { texte: "" },
     pages: [{ blocks: [] }],
   };
@@ -63,7 +69,57 @@ function emptyTeam(color) {
   const count = color === "jaune" ? 4 : 3;
   const epreuves = [];
   for (let i = 1; i <= count; i++) epreuves.push(emptyEpreuve(i));
-  return { label: `Équipe ${TEAM_LABELS[color]}`, heroName: "", epreuves };
+  return { label: `Équipe ${TEAM_LABELS[color]}`, heroName: "", epreuves, palaisDuRhin: emptyPalais(color) };
+}
+
+// ---- Palais du Rhin : prologue joué par les 5 équipes avant leur épreuve 1 ---------
+
+const PALAIS_AUTRES = {
+  bleu: "Rouges, Jaunes, Verts et Violets",
+  rouge: "Bleus, Jaunes, Verts et Violets",
+  jaune: "Bleus, Rouges, Verts et Violets",
+  vert: "Bleus, Rouges, Jaunes et Violets",
+  violet: "Bleus, Rouges, Jaunes et Verts",
+};
+const PALAIS_COULEUR = { bleu: "Bleus", rouge: "Rouges", jaune: "Jaunes", vert: "Verts", violet: "Violets" };
+const PALAIS_PAYS_CORRECT = { bleu: "france", rouge: "suisse", jaune: "allemagne", vert: "belgique", violet: "paysbas" };
+const PALAIS_PAGE3 = {
+  rouge:
+    "Les Suisses ont vu un convoi suspect qui descendait le Rhin depuis Bâle il y a de cela 2 jours ! La description d'une des personnes à bord pourrait coller avec Déversoir !",
+  bleu:
+    "La France ! Très bien, dans ce cas, allons directement voir la Préfecture qui se trouve sur cette même place pour obtenir leur soutien ! Rendez-vous devant la façade. Puis, pour confirmer votre position, envoyez l'année de fin de construction du bâtiment au CARING au 06 28 47 87 33.",
+  vert:
+    "Les Belges n'ont rien vu ! D'ailleurs on se demande ce qu'ils font pour siéger à la CCNR. Mais le représentant belge a tout de même réussi, en l'échange d'une bière et de quelques frites, à avoir l'info que les Suisses auraient aperçu un convoi suspect qui descendait le Rhin depuis Bâle il y a de cela 2 jours ! La description d'une des personnes à bord pourrait coller avec Déversoir !",
+  jaune:
+    "Les Allemands ont vu un convoi suspect qui remontait le Rhin depuis Coblence il y a de cela 2 jours ! La description d'une des personnes à bord pourrait coller avec Déversoir !",
+  violet:
+    "Les Pays-Bas ont vu un convoi suspect qui remontait le Rhin en partance de Rotterdam il y a de cela 4 jours ! La description d'une des personnes à bord pourrait coller avec Déversoir !",
+};
+
+function emptyPalais(color) {
+  const couleur = PALAIS_COULEUR[color] || "Équipiers";
+  const autres = PALAIS_AUTRES[color] || "";
+  const page1 =
+    `<p>Ah les ${couleur} ! La meilleure équipe ! Pas comme les ${autres}…</p>` +
+    `<p>Mais ne perdons pas de temps, vous avez une mission à accomplir ! Puisque vous êtes place de la République, commençons par prendre des renseignements !</p>` +
+    `<p>Il y a dans le Palais du Rhin une commission qui se réunit régulièrement. Entrez son acronyme dans la zone CODE ci-après pour avoir plus d'informations !</p>`;
+  const page2 =
+    `<p>La Commission centrale pour la navigation du Rhin ! C'est parfait pour démarrer nos recherches ! Chaque équipe va devoir interroger un pays membre !</p>` +
+    `<p>Attention n'interrogez que le bon pays ! Voici un indice pour vous aider à l'identifier : <strong>[Indice à renseigner]</strong></p>`;
+  const page3 = `<p>${PALAIS_PAGE3[color] || ""}</p>`;
+  return {
+    code: { valeur: "CCNR" },
+    pages: [
+      { blocks: [{ id: newBlockId(), type: "texte", visible: true, html: page1 }] },
+      {
+        blocks: [
+          { id: newBlockId(), type: "texte", visible: true, html: page2 },
+          { id: newBlockId(), type: "drapeaux", visible: true, paysCorrect: PALAIS_PAYS_CORRECT[color] || "france" },
+        ],
+      },
+      { blocks: [{ id: newBlockId(), type: "texte", visible: true, html: page3 }] },
+    ],
+  };
 }
 
 function normalizeEpreuve(ep) {
@@ -82,6 +138,7 @@ function blockTypeMeta(type) {
       carte: { icon: "🗺️", label: "Carte" },
       audio: { icon: "🎧", label: "Audio" },
       indice: { icon: "💡", label: "Indice" },
+      drapeaux: { icon: "🚩", label: "Sélecteur de drapeaux" },
     }[type] || { icon: "❓", label: type }
   );
 }
@@ -105,6 +162,8 @@ function blockDefaults(type) {
       return { ...base, url: "", label: "Message audio" };
     case "indice":
       return { ...base, texte: "" };
+    case "drapeaux":
+      return { ...base, paysCorrect: "france" };
     default:
       return base;
   }
@@ -192,6 +251,7 @@ async function loadAllData() {
     team.epreuves = team.epreuves.map(normalizeEpreuve);
     const expectedCount = color === "jaune" ? 4 : 3;
     while (team.epreuves.length < expectedCount) team.epreuves.push(emptyEpreuve(team.epreuves.length + 1));
+    if (!team.palaisDuRhin || !team.palaisDuRhin.pages) team.palaisDuRhin = emptyPalais(color);
     TEAMS_DATA[color] = team;
   }
   TEAMS_DATA[FINAL_KEY] = {
@@ -282,6 +342,21 @@ function renderTeamPanelHtml(color) {
         <div class="field"><label>Nom du super-héros</label><input class="t-hero" value="${escapeHtml(team.heroName || "")}" /></div>
       </div>
     </div>
+
+    <div class="admin-card" style="border-color:#7c3aed;">
+      <h3>🏛️ Palais du Rhin <span class="muted" style="font-weight:400;">(prologue joué juste après le choix d'équipe, avant l'épreuve 1)</span></h3>
+    </div>
+    <div class="epreuve-forms palais-forms">
+      ${renderEpreuveForm(team.palaisDuRhin, "palais", {
+        hideTitre: true,
+        hideLieu: true,
+        hideRevelation: true,
+        alwaysVisible: true,
+        codeHelp: "Ce code débloque la page 2 du Palais du Rhin (page 1 → page 2).",
+        pagesHelp: "Le bloc 🚩 « Sélecteur de drapeaux » (page 2) débloque automatiquement la page suivante quand le bon pays est cliqué. Le code (ci-dessus) ne concerne que la page 1.",
+      })}
+    </div>
+
     <div class="epreuve-tabs">
       ${team.epreuves
         .map((ep, i) => `<div class="epreuve-tab ${i === 0 ? "active" : ""}" data-idx="${i}">${escapeHtml(ep.titre || "Épreuve " + (i + 1))}</div>`)
@@ -311,13 +386,21 @@ function renderFinalPanelHtml() {
   `;
 }
 
-function renderEpreuveForm(ep, i) {
+function renderEpreuveForm(ep, i, opts) {
+  opts = opts || {};
   return `
-  <div class="epreuve-form" data-idx="${i}" style="display:${i === 0 ? "" : "none"};">
-    <div class="admin-card">
+  <div class="epreuve-form" data-idx="${i}" style="display:${i === 0 || opts.alwaysVisible ? "" : "none"};">
+    ${
+      opts.hideTitre
+        ? ""
+        : `<div class="admin-card">
       <div class="field"><label>Titre de l'épreuve</label><input class="ep-titre" value="${escapeHtml(ep.titre || "")}" /></div>
-    </div>
-    <div class="admin-card">
+    </div>`
+    }
+    ${
+      opts.hideLieu
+        ? ""
+        : `<div class="admin-card">
       <h3>📍 Coordonnées GPS <span class="muted" style="font-weight:400;">(pour la carte de l'écran résultat)</span></h3>
       <div class="grid-2">
         <div class="field"><label>Latitude</label><input class="ep-lieu-lat" type="number" step="0.000001" value="${ep.lieu?.lat ?? ""}" /></div>
@@ -325,32 +408,32 @@ function renderEpreuveForm(ep, i) {
       </div>
       <div class="ep-map" style="height:200px;border-radius:12px;overflow:hidden;"></div>
       <p class="muted" style="font-size:12px;margin-top:6px;">Clique sur la carte pour placer le lieu précis.</p>
-    </div>
+    </div>`
+    }
     <div class="admin-card">
       <h3>🔑 Code</h3>
       <div class="grid-2">
         <div class="field"><label>Code à saisir</label><input class="ep-code-valeur" value="${escapeHtml(ep.code?.valeur || "")}" /></div>
-        <div class="field"><label>Essais avant piège</label><input class="ep-code-essais" type="number" min="1" value="${ep.code?.essaisAvantPiege ?? 2}" /></div>
       </div>
+      ${opts.codeHelp ? `<p class="muted" style="font-size:12px;margin-top:6px;">${opts.codeHelp}</p>` : ""}
     </div>
-    <div class="admin-card">
-      <h3>⚠️ Piège</h3>
-      <div class="grid-2">
-        <div class="field"><label>Texte affiché</label><input class="ep-piege-texte" value="${escapeHtml(ep.piege?.texte || "")}" /></div>
-        <div class="field"><label>Durée pénalité (min)</label><input class="ep-piege-duree" type="number" min="1" value="${ep.piege?.dureeMinutes ?? 2}" /></div>
-      </div>
-    </div>
-    <div class="admin-card">
+    ${
+      opts.hideRevelation
+        ? ""
+        : `<div class="admin-card">
       <h3>⭐ Révélation <span class="muted" style="font-weight:400;">(affichée après validation du code)</span></h3>
       <div class="field"><textarea class="ep-revelation">${escapeHtml(ep.revelation?.texte || "")}</textarea></div>
-    </div>
+    </div>`
+    }
 
     <div class="admin-card">
       <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; flex-wrap:wrap; gap:10px;">
-        <h3 style="margin:0;">📄 Pages de l'épreuve</h3>
+        <h3 style="margin:0;">📄 Pages${opts.hideTitre ? " du Palais du Rhin" : " de l'épreuve"}</h3>
         <button type="button" class="btn btn-gold btn-sm add-page-btn">+ Ajouter une page</button>
       </div>
-      <p class="muted" style="font-size:12px; margin-bottom:10px;">Le code de validation n'apparaît côté joueur qu'après la dernière page.</p>
+      <p class="muted" style="font-size:12px; margin-bottom:10px;">${
+        opts.pagesHelp || "Le code de validation n'apparaît côté joueur qu'après la dernière page."
+      }</p>
       <div class="page-tabs"></div>
 
       <div style="display:flex; align-items:center; justify-content:space-between; margin:16px 0 12px;">
@@ -374,6 +457,7 @@ function renderEpreuveForm(ep, i) {
 // ---- Pages ------------------------------------------------------------------------
 
 function getEpreuve(color, epIdx) {
+  if (epIdx === "palais") return TEAMS_DATA[color].palaisDuRhin;
   return TEAMS_DATA[color].epreuves[epIdx];
 }
 
@@ -638,6 +722,19 @@ function renderBlockBody(color, epIdx, block, panel) {
       block.texte = e.target.value;
       renderPreview(color, epIdx, panel);
     });
+  } else if (block.type === "drapeaux") {
+    wrap.innerHTML = `
+      <p class="muted" style="font-size:13px; margin-bottom:8px;">Affiche 5 drapeaux (Suisse, France, Belgique, Allemagne, Pays-Bas) cliquables côté joueur. Choisis ci-dessous le pays correct pour cette équipe.</p>
+      <div class="field"><label>Pays correct</label>
+        <select class="drapeaux-pays">
+          ${PAYS_OPTIONS.map((o) => `<option value="${o.value}" ${block.paysCorrect === o.value ? "selected" : ""}>${o.label}</option>`).join("")}
+        </select>
+      </div>
+    `;
+    wrap.querySelector(".drapeaux-pays").addEventListener("change", (e) => {
+      block.paysCorrect = e.target.value;
+      renderPreview(color, epIdx, panel);
+    });
   }
 
   return wrap;
@@ -700,6 +797,18 @@ function renderPreviewBlock(block) {
   } else if (block.type === "indice") {
     el.className = "card revelation block-indice";
     el.innerHTML = `<div class="card-head"><div class="card-pict">💡</div><div class="card-family">Indice (masqué par défaut côté joueur)</div></div><p>${escapeHtml(block.texte || "")}</p>`;
+  } else if (block.type === "drapeaux") {
+    el.className = "card block-drapeaux";
+    const correct = PAYS_OPTIONS.find((o) => o.value === block.paysCorrect);
+    el.innerHTML = `
+      <p class="muted" style="font-size:13px; margin-bottom:8px;">🚩 Sélecteur de drapeaux — bon pays : <strong>${escapeHtml(correct?.label || "non défini")}</strong></p>
+      <div class="drapeaux-grid">
+        ${PAYS_OPTIONS.map(
+          (o) =>
+            `<div class="drapeau-btn${o.value === block.paysCorrect ? " correct" : ""}"><span class="drapeau-flag">${o.label.split(" ")[0]}</span><span class="drapeau-label">${o.label.split(" ").slice(1).join(" ")}</span></div>`
+        ).join("")}
+      </div>
+    `;
   }
   return el;
 }
@@ -707,7 +816,7 @@ function renderPreviewBlock(block) {
 function wireAddBlockMenu(color, epIdx, panel, form) {
   const btn = form.querySelector(".add-block-btn");
   const menu = form.querySelector(".add-block-menu");
-  const types = ["texte", "photo", "video", "audio", "carte", "indice"];
+  const types = ["texte", "photo", "video", "audio", "carte", "indice", "drapeaux"];
   menu.innerHTML = types
     .map((t) => {
       const meta = blockTypeMeta(t);
@@ -738,7 +847,7 @@ function wireTeamPanel(color, panel) {
   activeEpIdx[color] = 0;
 
   panel.querySelectorAll(".epreuve-form").forEach((form) => {
-    const idx = Number(form.dataset.idx);
+    const idx = form.dataset.idx === "palais" ? "palais" : Number(form.dataset.idx);
     renderPageTabs(color, idx, panel);
     renderBlocksList(color, idx, panel);
     wireAddBlockMenu(color, idx, panel, form);
@@ -752,6 +861,7 @@ function wireTeamPanel(color, panel) {
       activeEpIdx[color] = idx;
       panel.querySelectorAll(".epreuve-tabs > .epreuve-tab").forEach((t) => t.classList.toggle("active", t === tabEl));
       panel.querySelectorAll(".epreuve-form").forEach((f) => {
+        if (f.dataset.idx === "palais") return; // section toujours visible, jamais contrôlée par ces onglets
         f.style.display = Number(f.dataset.idx) === idx ? "" : "none";
       });
       ensureEpMap(color, idx, panel);
@@ -805,7 +915,7 @@ function ensureEpMap(color, idx, panel) {
 }
 
 function readEpreuvesFromForms(color, panel) {
-  const epreuveForms = panel.querySelectorAll(".epreuve-form");
+  const epreuveForms = panel.querySelectorAll('.epreuve-form:not([data-idx="palais"])');
   return Array.from(epreuveForms).map((f, i) => ({
     titre: f.querySelector(".ep-titre").value.trim(),
     lieu: {
@@ -814,11 +924,6 @@ function readEpreuvesFromForms(color, panel) {
     },
     code: {
       valeur: f.querySelector(".ep-code-valeur").value.trim(),
-      essaisAvantPiege: Number(f.querySelector(".ep-code-essais").value) || 2,
-    },
-    piege: {
-      texte: f.querySelector(".ep-piege-texte").value.trim(),
-      dureeMinutes: Number(f.querySelector(".ep-piege-duree").value) || 2,
     },
     revelation: {
       texte: f.querySelector(".ep-revelation").value.trim(),
@@ -829,11 +934,23 @@ function readEpreuvesFromForms(color, panel) {
   }));
 }
 
+function readPalaisFromForm(color, panel) {
+  const f = panel.querySelector('.epreuve-form[data-idx="palais"]');
+  if (!f) return TEAMS_DATA[color].palaisDuRhin || emptyPalais(color);
+  return {
+    code: { valeur: f.querySelector(".ep-code-valeur").value.trim() },
+    pages: (TEAMS_DATA[color].palaisDuRhin?.pages || [{ blocks: [] }]).map((p) => ({
+      blocks: (p.blocks || []).map((b) => ({ ...b })),
+    })),
+  };
+}
+
 async function saveTeamPanel(color, panel) {
   const label = panel.querySelector(".t-label").value.trim();
   const heroName = panel.querySelector(".t-hero").value.trim();
   const epreuves = readEpreuvesFromForms(color, panel);
-  const teamData = { label, heroName, epreuves };
+  const palaisDuRhin = readPalaisFromForm(color, panel);
+  const teamData = { label, heroName, epreuves, palaisDuRhin };
   try {
     await saveTeamContent(color, teamData);
     TEAMS_DATA[color] = teamData;

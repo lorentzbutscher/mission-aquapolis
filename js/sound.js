@@ -1,13 +1,12 @@
 // Sons de l'application : effets ponctuels (fichier fourni sinon bip de
 // secours) + musique de fond en boucle. Tout est piloté par un seul bouton
 // muet, dont l'état est mémorisé (localStorage) et s'applique partout.
-import { playSuccessJingle, playTrapAlarm, playEndChime } from "./utils.js";
+import { playSuccessJingle, playEndChime } from "./utils.js";
 
 const MUTE_KEY = "aquapolis_muted";
 
 const SFX_URLS = {
   success: "./assets/audio/succes.mp3",
-  trap: "./assets/audio/piege.mp3",
   victory: "./assets/audio/victoire.mp3",
 };
 const MUSIC_URL = "./assets/audio/deversoir.mp3";
@@ -53,10 +52,6 @@ function playWithFallback(url, fallbackFn) {
 
 export function playSuccessSound() {
   playWithFallback(SFX_URLS.success, playSuccessJingle);
-}
-
-export function playTrapSound() {
-  playWithFallback(SFX_URLS.trap, playTrapAlarm);
 }
 
 export function playVictorySound() {

@@ -71,11 +71,6 @@ export function playSuccessJingle() {
   setTimeout(() => beep(784, 220), 260);
 }
 
-export function playTrapAlarm() {
-  beep(220, 260, 0.18);
-  setTimeout(() => beep(180, 260, 0.18), 300);
-}
-
 export function playEndChime() {
   beep(880, 300, 0.2);
   setTimeout(() => beep(1046, 400, 0.2), 320);
