@@ -18,18 +18,13 @@
       "heroName": "Capitaine Aqua",
       "epreuves": [
         {
-          "titre": "Épreuve 1",
+          "titre": "Préfecture",
           "lieu": {
             "lat": 48.5839,
             "lng": 7.7455
           },
           "code": {
-            "valeur": "1234",
-            "essaisAvantPiege": 2
-          },
-          "piege": {
-            "texte": "Piège ! Fausse piste : vous avez suivi la mauvaise ruelle.",
-            "dureeMinutes": 2
+            "valeur": "1234"
           },
           "revelation": {
             "texte": "Révélation (test) : le prochain lieu se trouve près de la Place Broglie."
@@ -66,12 +61,7 @@
             "lng": 7.7481
           },
           "code": {
-            "valeur": "0917",
-            "essaisAvantPiege": 2
-          },
-          "piege": {
-            "texte": "Piège ! Un faux QR code vous a fait perdre du temps.",
-            "dureeMinutes": 2
+            "valeur": "0917"
           },
           "revelation": {
             "texte": "Révélation (test) : direction la Place du Marché Gayot."
@@ -108,12 +98,7 @@
             "lng": 7.7464
           },
           "code": {
-            "valeur": "7777",
-            "essaisAvantPiege": 2
-          },
-          "piege": {
-            "texte": "Piège ! Une fausse carte vous a égarés.",
-            "dureeMinutes": 2
+            "valeur": "7777"
           },
           "revelation": {
             "texte": "Révélation (test) : Mission accomplie, direction la Place Benjamin Zix !"
@@ -143,7 +128,50 @@
             }
           ]
         }
-      ]
+      ],
+      "palaisDuRhin": {
+        "code": {
+          "valeur": "CCNR"
+        },
+        "pages": [
+          {
+            "blocks": [
+              {
+                "id": "blk_pr_bleu_1",
+                "type": "texte",
+                "visible": true,
+                "html": "<p>Ah les Bleus ! La meilleure équipe ! Pas comme les Rouges, Jaunes, Verts et Violets…</p><p>Mais ne perdons pas de temps, vous avez une mission à accomplir ! Puisque vous êtes place de la République, commençons par prendre des renseignements !</p><p>Il y a dans le Palais du Rhin une commission qui se réunit régulièrement. Entrez son acronyme dans la zone CODE ci-après pour avoir plus d'informations !</p>"
+              }
+            ]
+          },
+          {
+            "blocks": [
+              {
+                "id": "blk_pr_bleu_2",
+                "type": "texte",
+                "visible": true,
+                "html": "<p>La Commission centrale pour la navigation du Rhin ! C'est parfait pour démarrer nos recherches ! Chaque équipe va devoir interroger un pays membre !</p><p>Attention n'interrogez que le bon pays ! Voici un indice pour vous aider à l'identifier : <strong>[Indice à renseigner]</strong></p>"
+              },
+              {
+                "id": "blk_pr_bleu_3",
+                "type": "drapeaux",
+                "visible": true,
+                "paysCorrect": "france"
+              }
+            ]
+          },
+          {
+            "blocks": [
+              {
+                "id": "blk_pr_bleu_4",
+                "type": "texte",
+                "visible": true,
+                "html": "<p>La France ! Très bien, dans ce cas, allons directement voir la Préfecture qui se trouve sur cette même place pour obtenir leur soutien ! Rendez-vous devant la façade. Puis, pour confirmer votre position, envoyez l'année de fin de construction du bâtiment au CARING au 06 28 47 87 33.</p>"
+              }
+            ]
+          }
+        ]
+      }
     },
     "rouge": {
       "label": "Équipe Rouge",
@@ -156,12 +184,7 @@
             "lng": 7.7507
           },
           "code": {
-            "valeur": "1608",
-            "essaisAvantPiege": 2
-          },
-          "piege": {
-            "texte": "Piège ! Une fausse consigne vous a fait perdre du temps.",
-            "dureeMinutes": 2
+            "valeur": "1608"
           },
           "revelation": {
             "texte": "Révélation (test) : direction le Palais Rohan."
@@ -198,12 +221,7 @@
             "lng": 7.7517
           },
           "code": {
-            "valeur": "2468",
-            "essaisAvantPiege": 2
-          },
-          "piege": {
-            "texte": "Piège ! Un faux plan vous a égarés.",
-            "dureeMinutes": 2
+            "valeur": "2468"
           },
           "revelation": {
             "texte": "Révélation (test) : direction le Quai des Bateliers."
@@ -240,12 +258,7 @@
             "lng": 7.7477
           },
           "code": {
-            "valeur": "3333",
-            "essaisAvantPiege": 2
-          },
-          "piege": {
-            "texte": "Piège ! Une fausse indication vous a ralentis.",
-            "dureeMinutes": 2
+            "valeur": "3333"
           },
           "revelation": {
             "texte": "Révélation (test) : Mission accomplie, direction la Place Benjamin Zix !"
@@ -275,7 +288,50 @@
             }
           ]
         }
-      ]
+      ],
+      "palaisDuRhin": {
+        "code": {
+          "valeur": "CCNR"
+        },
+        "pages": [
+          {
+            "blocks": [
+              {
+                "id": "blk_pr_rouge_1",
+                "type": "texte",
+                "visible": true,
+                "html": "<p>Ah les Rouges ! La meilleure équipe ! Pas comme les Bleus, Jaunes, Verts et Violets…</p><p>Mais ne perdons pas de temps, vous avez une mission à accomplir ! Puisque vous êtes place de la République, commençons par prendre des renseignements !</p><p>Il y a dans le Palais du Rhin une commission qui se réunit régulièrement. Entrez son acronyme dans la zone CODE ci-après pour avoir plus d'informations !</p>"
+              }
+            ]
+          },
+          {
+            "blocks": [
+              {
+                "id": "blk_pr_rouge_2",
+                "type": "texte",
+                "visible": true,
+                "html": "<p>La Commission centrale pour la navigation du Rhin ! C'est parfait pour démarrer nos recherches ! Chaque équipe va devoir interroger un pays membre !</p><p>Attention n'interrogez que le bon pays ! Voici un indice pour vous aider à l'identifier : <strong>[Indice à renseigner]</strong></p>"
+              },
+              {
+                "id": "blk_pr_rouge_3",
+                "type": "drapeaux",
+                "visible": true,
+                "paysCorrect": "suisse"
+              }
+            ]
+          },
+          {
+            "blocks": [
+              {
+                "id": "blk_pr_rouge_4",
+                "type": "texte",
+                "visible": true,
+                "html": "<p>Les Suisses ont vu un convoi suspect qui descendait le Rhin depuis Bâle il y a de cela 2 jours ! La description d'une des personnes à bord pourrait coller avec Déversoir !</p>"
+              }
+            ]
+          }
+        ]
+      }
     },
     "jaune": {
       "label": "Équipe Jaune",
@@ -288,12 +344,7 @@
             "lng": 7.7398
           },
           "code": {
-            "valeur": "4141",
-            "essaisAvantPiege": 2
-          },
-          "piege": {
-            "texte": "Piège ! Une fausse ruelle vous a fait tourner en rond.",
-            "dureeMinutes": 2
+            "valeur": "4141"
           },
           "revelation": {
             "texte": "Révélation (test) : direction le Barrage Vauban."
@@ -330,12 +381,7 @@
             "lng": 7.7392
           },
           "code": {
-            "valeur": "700",
-            "essaisAvantPiege": 2
-          },
-          "piege": {
-            "texte": "Piège ! Une fausse indication vous a ralentis.",
-            "dureeMinutes": 2
+            "valeur": "700"
           },
           "revelation": {
             "texte": "Révélation (test) : direction la Place Saint-Thomas."
@@ -372,12 +418,7 @@
             "lng": 7.7448
           },
           "code": {
-            "valeur": "5959",
-            "essaisAvantPiege": 2
-          },
-          "piege": {
-            "texte": "Piège ! Une fausse piste vous a fait perdre du temps.",
-            "dureeMinutes": 2
+            "valeur": "5959"
           },
           "revelation": {
             "texte": "Révélation (test) : Mission accomplie, direction la Place Benjamin Zix !"
@@ -414,12 +455,7 @@
             "lng": 7.7448
           },
           "code": {
-            "valeur": "2026",
-            "essaisAvantPiege": 2
-          },
-          "piege": {
-            "texte": "Piège ! Une fausse indication vous a ralentis.",
-            "dureeMinutes": 2
+            "valeur": "2026"
           },
           "revelation": {
             "texte": "Révélation (test) : direction l'épreuve finale !"
@@ -443,7 +479,50 @@
             }
           ]
         }
-      ]
+      ],
+      "palaisDuRhin": {
+        "code": {
+          "valeur": "CCNR"
+        },
+        "pages": [
+          {
+            "blocks": [
+              {
+                "id": "blk_pr_jaune_1",
+                "type": "texte",
+                "visible": true,
+                "html": "<p>Ah les Jaunes ! La meilleure équipe ! Pas comme les Bleus, Rouges, Verts et Violets…</p><p>Mais ne perdons pas de temps, vous avez une mission à accomplir ! Puisque vous êtes place de la République, commençons par prendre des renseignements !</p><p>Il y a dans le Palais du Rhin une commission qui se réunit régulièrement. Entrez son acronyme dans la zone CODE ci-après pour avoir plus d'informations !</p>"
+              }
+            ]
+          },
+          {
+            "blocks": [
+              {
+                "id": "blk_pr_jaune_2",
+                "type": "texte",
+                "visible": true,
+                "html": "<p>La Commission centrale pour la navigation du Rhin ! C'est parfait pour démarrer nos recherches ! Chaque équipe va devoir interroger un pays membre !</p><p>Attention n'interrogez que le bon pays ! Voici un indice pour vous aider à l'identifier : <strong>[Indice à renseigner]</strong></p>"
+              },
+              {
+                "id": "blk_pr_jaune_3",
+                "type": "drapeaux",
+                "visible": true,
+                "paysCorrect": "allemagne"
+              }
+            ]
+          },
+          {
+            "blocks": [
+              {
+                "id": "blk_pr_jaune_4",
+                "type": "texte",
+                "visible": true,
+                "html": "<p>Les Allemands ont vu un convoi suspect qui remontait le Rhin depuis Coblence il y a de cela 2 jours ! La description d'une des personnes à bord pourrait coller avec Déversoir !</p>"
+              }
+            ]
+          }
+        ]
+      }
     },
     "vert": {
       "label": "Équipe Verte",
@@ -456,12 +535,7 @@
             "lng": 7.7448
           },
           "code": {
-            "valeur": "6262",
-            "essaisAvantPiege": 2
-          },
-          "piege": {
-            "texte": "Piège ! Une fausse consigne vous a fait perdre du temps.",
-            "dureeMinutes": 2
+            "valeur": "6262"
           },
           "revelation": {
             "texte": "Révélation (test) : direction la Place du Marché Gayot."
@@ -498,12 +572,7 @@
             "lng": 7.7464
           },
           "code": {
-            "valeur": "0808",
-            "essaisAvantPiege": 2
-          },
-          "piege": {
-            "texte": "Piège ! Un faux indice vous a égarés.",
-            "dureeMinutes": 2
+            "valeur": "0808"
           },
           "revelation": {
             "texte": "Révélation (test) : direction la Place Broglie."
@@ -540,12 +609,7 @@
             "lng": 7.7481
           },
           "code": {
-            "valeur": "9191",
-            "essaisAvantPiege": 2
-          },
-          "piege": {
-            "texte": "Piège ! Une fausse piste vous a ralentis.",
-            "dureeMinutes": 2
+            "valeur": "9191"
           },
           "revelation": {
             "texte": "Révélation (test) : Mission accomplie, direction la Place Benjamin Zix !"
@@ -575,25 +639,63 @@
             }
           ]
         }
-      ]
+      ],
+      "palaisDuRhin": {
+        "code": {
+          "valeur": "CCNR"
+        },
+        "pages": [
+          {
+            "blocks": [
+              {
+                "id": "blk_pr_vert_1",
+                "type": "texte",
+                "visible": true,
+                "html": "<p>Ah les Verts ! La meilleure équipe ! Pas comme les Bleus, Rouges, Jaunes et Violets…</p><p>Mais ne perdons pas de temps, vous avez une mission à accomplir ! Puisque vous êtes place de la République, commençons par prendre des renseignements !</p><p>Il y a dans le Palais du Rhin une commission qui se réunit régulièrement. Entrez son acronyme dans la zone CODE ci-après pour avoir plus d'informations !</p>"
+              }
+            ]
+          },
+          {
+            "blocks": [
+              {
+                "id": "blk_pr_vert_2",
+                "type": "texte",
+                "visible": true,
+                "html": "<p>La Commission centrale pour la navigation du Rhin ! C'est parfait pour démarrer nos recherches ! Chaque équipe va devoir interroger un pays membre !</p><p>Attention n'interrogez que le bon pays ! Voici un indice pour vous aider à l'identifier : <strong>[Indice à renseigner]</strong></p>"
+              },
+              {
+                "id": "blk_pr_vert_3",
+                "type": "drapeaux",
+                "visible": true,
+                "paysCorrect": "belgique"
+              }
+            ]
+          },
+          {
+            "blocks": [
+              {
+                "id": "blk_pr_vert_4",
+                "type": "texte",
+                "visible": true,
+                "html": "<p>Les Belges n'ont rien vu ! D'ailleurs on se demande ce qu'ils font pour siéger à la CCNR. Mais le représentant belge a tout de même réussi, en l'échange d'une bière et de quelques frites, à avoir l'info que les Suisses auraient aperçu un convoi suspect qui descendait le Rhin depuis Bâle il y a de cela 2 jours ! La description d'une des personnes à bord pourrait coller avec Déversoir !</p>"
+              }
+            ]
+          }
+        ]
+      }
     },
     "violet": {
       "label": "Équipe Violette",
       "heroName": "Améthyste",
       "epreuves": [
         {
-          "titre": "Épreuve 1",
+          "titre": "Broglie",
           "lieu": {
             "lat": 48.5806,
             "lng": 7.7517
           },
           "code": {
-            "valeur": "1122",
-            "essaisAvantPiege": 2
-          },
-          "piege": {
-            "texte": "Piège ! Une fausse indication vous a ralentis.",
-            "dureeMinutes": 2
+            "valeur": "1122"
           },
           "revelation": {
             "texte": "Révélation (test) : direction la Cathédrale de Strasbourg."
@@ -630,12 +732,7 @@
             "lng": 7.7507
           },
           "code": {
-            "valeur": "142",
-            "essaisAvantPiege": 2
-          },
-          "piege": {
-            "texte": "Piège ! Une fausse piste vous a fait perdre du temps.",
-            "dureeMinutes": 2
+            "valeur": "142"
           },
           "revelation": {
             "texte": "Révélation (test) : direction la Petite France."
@@ -672,12 +769,7 @@
             "lng": 7.7398
           },
           "code": {
-            "valeur": "4444",
-            "essaisAvantPiege": 2
-          },
-          "piege": {
-            "texte": "Piège ! Une fausse ruelle vous a fait tourner en rond.",
-            "dureeMinutes": 2
+            "valeur": "4444"
           },
           "revelation": {
             "texte": "Révélation (test) : Mission accomplie, direction la Place Benjamin Zix !"
@@ -707,7 +799,50 @@
             }
           ]
         }
-      ]
+      ],
+      "palaisDuRhin": {
+        "code": {
+          "valeur": "CCNR"
+        },
+        "pages": [
+          {
+            "blocks": [
+              {
+                "id": "blk_pr_violet_1",
+                "type": "texte",
+                "visible": true,
+                "html": "<p>Ah les Violets ! La meilleure équipe ! Pas comme les Bleus, Rouges, Jaunes et Verts…</p><p>Mais ne perdons pas de temps, vous avez une mission à accomplir ! Puisque vous êtes place de la République, commençons par prendre des renseignements !</p><p>Il y a dans le Palais du Rhin une commission qui se réunit régulièrement. Entrez son acronyme dans la zone CODE ci-après pour avoir plus d'informations !</p>"
+              }
+            ]
+          },
+          {
+            "blocks": [
+              {
+                "id": "blk_pr_violet_2",
+                "type": "texte",
+                "visible": true,
+                "html": "<p>La Commission centrale pour la navigation du Rhin ! C'est parfait pour démarrer nos recherches ! Chaque équipe va devoir interroger un pays membre !</p><p>Attention n'interrogez que le bon pays ! Voici un indice pour vous aider à l'identifier : <strong>[Indice à renseigner]</strong></p>"
+              },
+              {
+                "id": "blk_pr_violet_3",
+                "type": "drapeaux",
+                "visible": true,
+                "paysCorrect": "paysbas"
+              }
+            ]
+          },
+          {
+            "blocks": [
+              {
+                "id": "blk_pr_violet_4",
+                "type": "texte",
+                "visible": true,
+                "html": "<p>Les Pays-Bas ont vu un convoi suspect qui remontait le Rhin en partance de Rotterdam il y a de cela 4 jours ! La description d'une des personnes à bord pourrait coller avec Déversoir !</p>"
+              }
+            ]
+          }
+        ]
+      }
     }
   },
   "finalEpreuve": {
@@ -717,12 +852,7 @@
       "lng": 7.7422
     },
     "code": {
-      "valeur": "ZIX",
-      "essaisAvantPiege": 3
-    },
-    "piege": {
-      "texte": "Piège ! Une fausse indication vous a ralentis.",
-      "dureeMinutes": 2
+      "valeur": "ZIX"
     },
     "revelation": {
       "texte": "Révélation (test) : Bravo ! Rendez-vous Place Benjamin Zix pour la photo de groupe !"

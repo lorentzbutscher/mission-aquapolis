@@ -4,7 +4,7 @@
 // appels Firebase/Firestore ne sont JAMAIS interceptés (on laisse le réseau
 // natif gérer, sync.js gère déjà les échecs proprement).
 
-const CACHE_VERSION = "aquapolis-v11";
+const CACHE_VERSION = "aquapolis-v13";
 
 const APP_SHELL = [
   "./",
@@ -34,7 +34,6 @@ const APP_SHELL = [
   "./assets/team-buttons/vert.webp",
   "./assets/team-buttons/violet.webp",
   "./assets/audio/succes.mp3",
-  "./assets/audio/piege.mp3",
   "./assets/audio/victoire.mp3",
   "./js/sound.js",
   "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css",
