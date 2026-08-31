@@ -215,10 +215,13 @@ body.aq-shell { padding-top: 62px; }
   font-weight: 800; color: #6f819f; padding: 14px 10px 6px;
 }
 .aq-side-item {
+  display: flex; align-items: center; gap: 11px;
   text-align: left; padding: 11px 12px; border-radius: 9px; border: none;
   background: transparent; color: #e8edf7; font-family: inherit;
   font-size: 15px; font-weight: 700; cursor: pointer;
 }
+.aq-dot { width: 11px; height: 11px; border-radius: 3px; flex-shrink: 0; }
+.aq-side-link.active { background: #1a2540; color: #fff; border-left-color: #ffd12e; }
 .aq-side-item:hover { background: #111c33; }
 .aq-side-item.active { background: #1a2540; }
 .aq-side-sub { display: none; flex-direction: column; gap: 2px; padding: 3px 0 6px 14px; }
