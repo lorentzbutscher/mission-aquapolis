@@ -219,11 +219,10 @@ function renderChronoTick() {
   let cls = "";
   if (elapsed >= durationMs - 15 * 60000) cls = "warn";
   if (elapsed >= durationMs) cls = "danger";
+ const remaining = Math.max(0, durationMs - elapsed);
   wrap.innerHTML = `<div class="chrono ${cls}">
-    <div><div class="chrono-label">Temps écoulé</div><div class="chrono-time">${formatHMS(elapsed)}</div></div>
-    <div style="text-align:right"><div class="chrono-label">Objectif</div><div class="chrono-time" style="font-size:16px;">${
-      CONTENT.config.durationMinutes || 120
-    } min</div></div>
+    <div><div class="chrono-label">Temps restant</div><div class="chrono-time">${formatHMS(remaining)}</div></div>
+    <div style="text-align:right"><div class="chrono-label">Écoulé</div><div class="chrono-time" style="font-size:16px;">${formatHMS(elapsed)}</div></div>
   </div>`;
   handleChronoAlerts(elapsed, durationMs, maxMs);
 }
