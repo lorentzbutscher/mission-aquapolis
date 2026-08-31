@@ -153,3 +153,125 @@ h3 { font-size: 21px; }
 .epreuve-tab { min-height: 40px; font-size: 14px; }
 /* Bouton Enregistrer toujours atteignable */
 #btn-save-general, .admin-card .btn-gold { position: sticky; bottom: 16px; z-index: 6; }
+
+
+/* ==========================================================================
+   ADMINISTRATION — enveloppe 3 volets (voir js/admin-ui.js)
+   ========================================================================== */
+
+body.aq-shell { padding-top: 62px; }
+
+#aq-topbar {
+  position: fixed; top: 0; left: 0; right: 0; height: 62px; z-index: 60;
+  display: flex; align-items: center; justify-content: space-between; gap: 20px;
+  padding: 0 22px; background: #0d1526; border-bottom: 1px solid #22304d;
+}
+.aq-top-left { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.aq-top-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.aq-top-title { font-weight: 800; font-size: 16px; color: #e8edf7; white-space: nowrap; }
+.aq-published { font-size: 13px; color: #8497b8; white-space: nowrap; }
+.aq-status {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 5px 12px; border-radius: 999px;
+  background: rgba(74,222,128,.12); border: 1px solid rgba(74,222,128,.35);
+}
+.aq-status-dot { width: 8px; height: 8px; border-radius: 50%; background: #4ade80; }
+.aq-status-text { font-size: 14px; font-weight: 700; color: #4ade80; white-space: nowrap; }
+.aq-status.aq-dirty { background: rgba(255,209,46,.12); border-color: rgba(255,209,46,.4); }
+.aq-status.aq-dirty .aq-status-dot { background: #ffd12e; }
+.aq-status.aq-dirty .aq-status-text { color: #ffd12e; }
+
+.aq-btn {
+  min-height: 40px; padding: 0 16px; border-radius: 10px;
+  border: 1px solid #2b3a5c; background: #16203a; color: #e8edf7;
+  font-family: inherit; font-size: 15px; font-weight: 700; cursor: pointer;
+}
+.aq-btn:hover { border-color: #4b5f8c; }
+.aq-btn-primary { background: #ffd12e; color: #0b1220; border-color: #ffd12e; font-weight: 900; }
+.aq-btn-primary:hover { filter: brightness(1.08); }
+.aq-btn:disabled { opacity: .6; cursor: default; }
+
+.aq-dup-btn { margin-bottom: 14px; }
+
+/* --- Grille : navigation à gauche, éditeur à droite --- */
+@media (min-width: 1100px) {
+  .admin-wrap {
+    max-width: 1560px;
+    display: grid;
+    grid-template-columns: 288px minmax(0, 1fr);
+    gap: 26px;
+    align-items: start;
+  }
+  .admin-wrap > .header,
+  .admin-wrap > p.muted { grid-column: 1 / -1; }
+  #main-tabs { display: none !important; }
+  #aq-sidebar { grid-column: 1; grid-row: 3; position: sticky; top: 78px; max-height: calc(100vh - 100px); overflow-y: auto; }
+  #tab-general, #team-panels { grid-column: 2; grid-row: 3; }
+}
+
+#aq-sidebar { display: flex; flex-direction: column; gap: 3px; padding-bottom: 20px; }
+.aq-side-title {
+  font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
+  font-weight: 800; color: #6f819f; padding: 14px 10px 6px;
+}
+.aq-side-item {
+  text-align: left; padding: 11px 12px; border-radius: 9px; border: none;
+  background: transparent; color: #e8edf7; font-family: inherit;
+  font-size: 15px; font-weight: 700; cursor: pointer;
+}
+.aq-side-item:hover { background: #111c33; }
+.aq-side-item.active { background: #1a2540; }
+.aq-side-sub { display: none; flex-direction: column; gap: 2px; padding: 3px 0 6px 14px; }
+.aq-side-link {
+  text-align: left; padding: 9px 12px; border-radius: 8px;
+  border: none; border-left: 3px solid transparent; background: transparent;
+  color: #93a3c2; font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
+}
+.aq-side-link:hover { background: #111c33; color: #fff; border-left-color: #ffd12e; }
+
+/* --- Aperçu joueur en colonne collante --- */
+@media (min-width: 1400px) {
+  .epreuve-form {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 390px;
+    gap: 22px;
+    align-items: start;
+  }
+  .epreuve-form > * { grid-column: 1; }
+  .epreuve-form > .admin-card:last-child {
+    grid-column: 2;
+    grid-row: 1 / span 40;
+    position: sticky;
+    top: 84px;
+    max-height: calc(100vh - 110px);
+    overflow-y: auto;
+  }
+}
+
+/* --- Blocs repliables --- */
+.block-editor-item.aq-collapsed { background: #0a1324; }
+.aq-block-summary {
+  flex: 1; min-width: 0; font-size: 14px; color: #93a3c2; cursor: pointer;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.aq-block-toggle { flex-shrink: 0; }
+
+/* --- Modale de copie --- */
+.aq-overlay {
+  position: fixed; inset: 0; z-index: 70; background: rgba(4,8,16,.75);
+  display: flex; align-items: center; justify-content: center; padding: 32px;
+}
+.aq-modal {
+  width: 100%; max-width: 470px; border-radius: 16px; background: #0e1729;
+  border: 1px solid #2b3a5c; padding: 24px; display: flex; flex-direction: column; gap: 16px;
+}
+.aq-modal h3 { font-size: 20px; color: #e8edf7; }
+.aq-modal p { font-size: 15px; line-height: 1.6; color: #8497b8; }
+.aq-modal-list { display: flex; flex-direction: column; gap: 8px; }
+.aq-modal-list label {
+  display: flex; align-items: center; gap: 12px; padding: 11px 12px;
+  border-radius: 10px; border: 1px solid #2b3a5c; background: #0a1324;
+  font-size: 16px; font-weight: 700; color: #e8edf7; cursor: pointer;
+}
+.aq-modal-list input { width: 18px; height: 18px; accent-color: #ffd12e; }
+.aq-modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
