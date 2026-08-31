@@ -1,0 +1,155 @@
+/* ==========================================================================
+   Mission Aquapolis — améliorations lisibilité & ergonomie
+   À charger APRÈS css/style.css. Ce fichier ne remplace rien : il surcharge.
+   Pour revenir en arrière, retirer la ligne <link> dans index.html / admin.html.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. Échelle typographique — cible : lecture bras tendu, en marchant, au soleil
+   -------------------------------------------------------------------------- */
+.card p,
+.block-texte,
+.block-texte p,
+.block-texte li { font-size: 19px; line-height: 1.65; text-wrap: pretty; }
+.muted { font-size: 16px; color: rgba(255,255,255,.75); }
+h2 { font-size: 30px; }
+h3 { font-size: 21px; }
+.card-family { font-size: 12px; letter-spacing: .14em; font-weight: 800; opacity: 1; color: #ffd12e; }
+.card.code .card-family { color: #86efac; }
+.card.lieu .card-family { color: #7dd3fc; }
+.card.objet .card-family { color: #c4b5fd; }
+.code-feedback { font-size: 16px; min-height: 22px; }
+.page-indicator { font-size: 15px; }
+.small-link { font-size: 16px; min-height: 44px; }
+.confirm-box p { font-size: 19px; }
+.indice-box p, .morse-box p { font-size: 19px; line-height: 1.6; }
+
+/* --------------------------------------------------------------------------
+   2. Pictogrammes emoji retirés — remplacés par l'étiquette texte
+   (les emoji rendaient mal selon les téléphones et disparaissaient au soleil)
+   -------------------------------------------------------------------------- */
+.card-pict { display: none; }
+.card-head { margin-bottom: 10px; }
+
+/* --------------------------------------------------------------------------
+   3. Chrono collant en haut — la position dans la mission ne quitte plus l'écran
+   -------------------------------------------------------------------------- */
+#chrono-wrap {
+  position: sticky;
+  top: calc(env(safe-area-inset-top) * -1);
+  z-index: 30;
+  padding-top: 6px;
+}
+.chrono {
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: rgba(4,11,23,.88);
+  backdrop-filter: blur(10px);
+  border-color: rgba(255,255,255,.16);
+}
+.chrono-time { font-size: 26px; }
+.chrono-label { font-size: 11px; }
+
+/* --------------------------------------------------------------------------
+   4. Points de progression -> barre segmentée (plus lisible d'un coup d'œil)
+   -------------------------------------------------------------------------- */
+.progress-dots { gap: 6px; }
+.progress-dots .dot {
+  flex: 1;
+  width: auto;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.18);
+}
+.progress-dots .dot.current { background: #ffd12e; box-shadow: none; }
+.progress-dots .dot.done { background: #4ade80; }
+
+/* Libellé de position, injecté par app.js (voir PATCHES.md, patch 3) */
+.mission-position {
+  font-size: 15px;
+  font-weight: 700;
+  color: rgba(255,255,255,.8);
+  margin-top: -6px;
+}
+
+/* --------------------------------------------------------------------------
+   5. Saisie du code ancrée en bas d'écran : une seule action possible
+   -------------------------------------------------------------------------- */
+.card.code {
+  position: sticky;
+  bottom: 0;
+  z-index: 20;
+  margin: 8px -16px calc(-24px - env(safe-area-inset-bottom));
+  padding: 14px 16px calc(16px + env(safe-area-inset-bottom));
+  border-radius: 20px 20px 0 0;
+  border-left: none;
+  border-top: 1px solid rgba(255,255,255,.14);
+  background: rgba(4,11,23,.94);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 -10px 30px rgba(0,0,0,.45);
+}
+.card.code .card-head { margin-bottom: 8px; }
+.code-input { min-height: 60px; font-size: 26px; }
+.code-form .btn { padding: 0 24px; }
+
+/* Le bouton son ne doit plus recouvrir la barre de code */
+.sound-toggle { bottom: calc(104px + env(safe-area-inset-bottom)); }
+
+/* --------------------------------------------------------------------------
+   6. Cibles tactiles : rien sous 48 px
+   -------------------------------------------------------------------------- */
+.btn-sm { min-height: 48px; font-size: 16px; }
+.drapeau-btn { min-height: 100px; }
+.drapeau-label { font-size: 15px; }
+.stop-btn { width: 44px; height: 44px; font-size: 18px; }
+.page-nav .btn { flex: 0 0 auto; }
+
+/* --------------------------------------------------------------------------
+   7. Bloc narratif — le vilain et l'allié prennent la parole
+   Classe posée par app.js sur le 1er bloc texte d'une page (patch 4)
+   -------------------------------------------------------------------------- */
+.block-narration {
+  background: rgba(255,209,46,.12);
+  border: 1px solid rgba(255,209,46,.45);
+  border-left: 6px solid #ffd12e;
+}
+.block-narration::before {
+  content: attr(data-narrateur);
+  display: block;
+  font-size: 12px;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  font-weight: 800;
+  color: #ffd12e;
+  margin-bottom: 8px;
+}
+
+/* --------------------------------------------------------------------------
+   8. Écran de fin : hiérarchie plus nette
+   -------------------------------------------------------------------------- */
+.final-hero .big-emoji { display: none; }
+.countdown-box .time { font-size: 46px; }
+
+/* --------------------------------------------------------------------------
+   9. Administration (desktop) — gains immédiats sans refonte du JS
+   -------------------------------------------------------------------------- */
+.admin-wrap { max-width: 1180px; }
+.admin-body .tabs {
+  position: sticky;
+  top: 0;
+  z-index: 8;
+  margin: 0 -20px 16px;
+  padding: 12px 20px;
+  background: #0b1220;
+  border-bottom: 1px solid #1d2942;
+}
+.admin-body .tab-btn { min-height: 42px; font-size: 15px; }
+.admin-card { padding: 20px 22px; }
+.admin-card h3 { font-size: 18px; letter-spacing: .01em; }
+.field label { font-size: 13px; }
+.field input, .field textarea, .field select { font-size: 16px; padding: 11px 12px; }
+.block-editor-item { transition: border-color .15s ease; }
+.block-editor-item:hover { border-color: #3b4d78; }
+.epreuve-tab { min-height: 40px; font-size: 14px; }
+/* Bouton Enregistrer toujours atteignable */
+#btn-save-general, .admin-card .btn-gold { position: sticky; bottom: 16px; z-index: 6; }
