@@ -27,7 +27,6 @@
   --card-lieu: var(--bleu);
   --card-code: var(--vert);
   --card-objet: var(--violet);
-  --card-piege: var(--rouge);
   --card-revelation: var(--gold);
 
   --team-color: var(--gold);
@@ -77,7 +76,7 @@ img { max-width: 100%; display: block; }
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-   padding: calc(16px + env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom));
+  padding: calc(16px + env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom));
 }
 
 .view { display: none; flex-direction: column; gap: 16px; flex: 1; animation: fadeIn .25s ease; }
@@ -242,8 +241,6 @@ p { line-height: 1.5; margin: 0; }
 .card.objet .card-pict { background: var(--card-objet); color: white; }
 .card.code { border-left: 6px solid var(--card-code); }
 .card.code .card-pict { background: var(--card-code); color: white; }
-.card.piege { border-left: 6px solid var(--card-piege); background: rgba(220,38,38,.14); }
-.card.piege .card-pict { background: var(--card-piege); color: white; }
 .card.revelation { border-left: 6px solid var(--card-revelation); background: rgba(255,209,46,.12); }
 .card.revelation .card-pict { background: var(--card-revelation); color: var(--ink); }
 
@@ -260,6 +257,32 @@ p { line-height: 1.5; margin: 0; }
 /* Navigation entre pages d'une épreuve */
 .page-nav { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .page-indicator { font-size: 13px; font-weight: 700; color: rgba(255,255,255,.7); font-variant-numeric: tabular-nums; }
+
+/* Sélecteur de drapeaux (bloc "drapeaux") */
+.drapeaux-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(88px, 1fr));
+  gap: 10px;
+}
+.drapeau-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 8px;
+  border-radius: var(--radius-md);
+  border: 2px solid rgba(255,255,255,.25);
+  background: rgba(255,255,255,.06);
+  color: var(--white);
+  cursor: pointer;
+  transition: transform .08s ease, border-color .15s ease, background .15s ease;
+}
+.drapeau-btn:active { transform: scale(.96); }
+.drapeau-flag { font-size: 36px; line-height: 1; }
+.drapeau-label { font-size: 13px; font-weight: 700; }
+.drapeau-btn.wrong { animation: shake .3s; border-color: var(--rouge); background: rgba(220,38,38,.18); }
+.drapeau-btn.correct { border-color: #4ade80; background: rgba(74,222,128,.18); }
+.drapeau-btn[disabled] { pointer-events: none; }
 
 /* Lecteur audio (bloc "audio") */
 .audio-player { display: flex; align-items: center; gap: 12px; }
@@ -330,16 +353,6 @@ p { line-height: 1.5; margin: 0; }
 .code-feedback { font-size: 14px; font-weight: 700; min-height: 18px; }
 .code-feedback.error { color: #f87171; }
 .code-feedback.success { color: #4ade80; }
-
-/* Trap overlay */
-.trap-overlay {
-  position: fixed; inset: 0; z-index: 50;
-  background: radial-gradient(circle at 50% 20%, #7f1d1d, #1a0505 75%);
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 18px; padding: 24px; text-align: center;
-}
-.trap-icon { font-size: 54px; }
-.trap-time { font-family: var(--font-display); font-size: 68px; font-weight: 400; font-variant-numeric: tabular-nums; color: var(--gold); }
 
 /* Map modal */
 .map-modal { position: fixed; inset: 0; z-index: 60; background: var(--navy-dark); display: flex; flex-direction: column; }
@@ -418,7 +431,6 @@ p { line-height: 1.5; margin: 0; }
 .status-pill { display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 800; }
 .status-pill.not_started { background: #374151; color: #d1d5db; }
 .status-pill.in_progress { background: #16a34a; color: white; }
-.status-pill.trap { background: #dc2626; color: white; }
 .status-pill.finished { background: #ffd12e; color: #0b1220; }
 
 .login-box { max-width: 380px; margin: 60px auto; text-align: center; }
