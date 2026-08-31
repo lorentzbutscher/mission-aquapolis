@@ -993,3 +993,10 @@ $("#main-tabs").addEventListener("click", (e) => {
     setTimeout(() => ensureEpMap(tab, activeEpIdx[tab] || 0, targetPanel), 60);
   }
 });
+
+// Passerelle pour js/admin-ui.js (copie d'épreuve entre brigades)
+window.__aqAdmin = {
+  get TEAMS_DATA() { return TEAMS_DATA; },
+  FINAL_KEY, TEAM_LABELS, TEAM_COLORS,
+  renderTeamPanels,
+};
