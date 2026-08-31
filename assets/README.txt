@@ -9,12 +9,10 @@ Dépose ici tes visuels exportés depuis Canva (PNG, fond transparent) :
   assets/pictos/lieu.png           → picto carte Lieu (optionnel)
   assets/pictos/code.png           → picto carte Code (optionnel)
   assets/pictos/objet.png          → picto carte Objet (optionnel)
-  assets/pictos/piege.png          → picto carte Piège (optionnel)
   assets/pictos/revelation.png     → picto carte Révélation (optionnel)
   assets/villain.png               → illustration du super-méchant "Déversoir", écran de briefing
   assets/audio/deversoir.mp3       → musique de fond en boucle
   assets/audio/succes.mp3          → son court quand un code est validé
-  assets/audio/piege.mp3           → son court quand un piège se déclenche
   assets/audio/victoire.mp3        → son court à la fin du parcours
 
 Tant que ces fichiers n'existent pas, l'application affiche des émojis (images)
