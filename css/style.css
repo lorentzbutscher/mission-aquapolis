@@ -274,16 +274,35 @@ p { line-height: 1.5; margin: 0; }
   flex-direction: column;
   align-items: center;
   gap: 6px;
-  padding: 14px 8px;
+  padding: 10px 8px;
   border-radius: var(--radius-md);
   border: 2px solid rgba(255,255,255,.25);
   background: rgba(255,255,255,.06);
   color: var(--white);
   cursor: pointer;
+  /* Toute la vignette est cliquable (bouton), pas seulement l'image. */
+  width: 100%;
   transition: transform .08s ease, border-color .15s ease, background .15s ease;
 }
+.drapeau-btn:hover { border-color: rgba(255,255,255,.5); background: rgba(255,255,255,.1); }
+.drapeau-btn:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 .drapeau-btn:active { transform: scale(.96); }
-.drapeau-flag { font-size: 36px; line-height: 1; }
+/* Conteneur de taille fixe et identique pour les 5 drapeaux (ratio 4:3,
+   ex. 120x90 sur mobile) — object-fit: contain pour ne jamais déformer
+   un drapeau par rapport à un autre. */
+.drapeau-flag-wrap {
+  width: 100%;
+  max-width: 120px;
+  aspect-ratio: 4 / 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 8px;
+  background: rgba(255,255,255,.08);
+}
+.drapeau-flag-img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.drapeau-flag-emoji { font-size: 36px; line-height: 1; } /* repli si l'image ne charge pas */
 .drapeau-label { font-size: 13px; font-weight: 700; }
 .drapeau-btn.wrong { animation: shake .3s; border-color: var(--rouge); background: rgba(220,38,38,.18); }
 .drapeau-btn.correct { border-color: #4ade80; background: rgba(74,222,128,.18); }
