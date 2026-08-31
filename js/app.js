@@ -11,6 +11,7 @@ import {
   playEndChime,
 } from "./utils.js";
 import { playSuccessSound, playVictorySound, initSoundToggle, startBackgroundMusic } from "./sound.js";
+import { applyRandomBackground } from "./background.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -52,6 +53,7 @@ function labelFor(color) {
 function show(viewId) {
   document.querySelectorAll(".view").forEach((v) => v.classList.remove("active"));
   document.getElementById(viewId).classList.add("active");
+  applyRandomBackground();
   renderChronoTick();
   $("#btn-stop-game").style.display = STATE && STATE.status !== "not_started" ? "flex" : "none";
   document.body.classList.toggle("on-landing", viewId === "view-team-select");
