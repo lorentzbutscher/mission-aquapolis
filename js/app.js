@@ -293,7 +293,15 @@ function renderPage() {
   $("#code-input").value = "";
   $("#code-feedback").textContent = "";
   if (isLastPage) setTimeout(() => $("#code-input")?.focus(), 50);
-}
+
+  const pos = document.getElementById("mission-position");
+  if (pos) {
+    const total = totalEpreuvesForTeam(TEAM);
+    pos.textContent =
+      `Épreuve ${STATE.currentEpreuveIndex + 1} sur ${total}` +
+      (pages.length > 1 ? ` · page ${STATE.currentPageIndex + 1}/${pages.length}` : "");
+  }
+
 
 function renderBlocks(page) {
   const container = $("#blocks-container");
