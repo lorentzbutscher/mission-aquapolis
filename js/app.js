@@ -431,6 +431,7 @@ function renderBlock(block, revealedIds, opts) {
             btn.classList.add("wrong");
             vibrate([80, 60, 80]);
             setTimeout(() => btn.classList.remove("wrong"), 350);
+            showVillainMockery();
           }
         });
         grid.appendChild(btn);
@@ -861,6 +862,7 @@ function initListeners() {
       void input.offsetWidth;
       input.classList.add("shake");
       vibrate([80, 60, 80]);
+      showVillainMockery();
     }
   });
 
