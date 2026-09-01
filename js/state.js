@@ -21,6 +21,17 @@ export function defaultState() {
       flagOk: false,
       done: false,
     },
+    // Mini-jeu de désamorçage (Épreuve finale). `armedAt`/`endsAt` permettent de
+    // recalculer le temps restant à tout moment (persiste au rechargement, y
+    // compris l'état "game over"). `frozenRemainMs` fige l'affichage du minuteur
+    // une fois désamorcée.
+    bombe: {
+      armedAt: null,
+      endsAt: null,
+      defused: false,
+      gameOver: false,
+      frozenRemainMs: null,
+    },
   };
 }
 

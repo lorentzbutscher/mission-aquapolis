@@ -12,8 +12,22 @@ const SFX_URLS = {
 const MUSIC_URL = "./assets/audio/deversoir.mp3";
 const MUSIC_VOLUME = 0.28;
 
+const BOMBE_LOOP_URLS = {
+  tick: "./assets/audio/bombe/tick_tock_loop.mp3",
+  urgent: "./assets/audio/bombe/urgent_beep_loop.mp3",
+  critical: "./assets/audio/bombe/critical_alarm_loop.mp3",
+};
+const BOMBE_ONESHOT_URLS = {
+  success: "./assets/audio/bombe/defuse_success.mp3",
+  fail: "./assets/audio/bombe/defuse_fail.mp3",
+};
+const BOMBE_LOOP_VOLUME = 0.55;
+const BOMBE_CROSSFADE_MS = 400;
+
 let musicEl = null;
 let musicStarted = false;
+const bombeLoopEls = {};
+let bombeActiveLoopKey = null;
 
 export function isMuted() {
   return localStorage.getItem(MUTE_KEY) === "1";
@@ -22,6 +36,7 @@ export function isMuted() {
 export function setMuted(muted) {
   localStorage.setItem(MUTE_KEY, muted ? "1" : "0");
   if (musicEl) musicEl.muted = muted;
+  Object.values(bombeLoopEls).forEach((el) => (el.muted = muted));
 }
 
 export function toggleMuted() {
@@ -92,6 +107,69 @@ export function startBackgroundMusic() {
         document.addEventListener("keydown", resume, { once: true });
       });
   }
+}
+
+// ---- Désamorçage de la bombe (Épreuve finale) -------------------------------
+// 3 boucles qui s'enchaînent avec un fondu croisé simple selon le temps
+// restant, + 2 sons ponctuels (succès/échec). Respecte le même bouton muet
+// que le reste de l'app (voir setMuted ci-dessus).
+
+function getBombeLoopEl(key) {
+  if (!bombeLoopEls[key]) {
+    const el = new Audio(BOMBE_LOOP_URLS[key]);
+    el.loop = true;
+    el.volume = 0;
+    el.muted = isMuted();
+    bombeLoopEls[key] = el;
+  }
+  return bombeLoopEls[key];
+}
+
+function fadeVolume(el, target, duration) {
+  const start = el.volume;
+  const startTime = performance.now();
+  function step(now) {
+    const t = Math.min(1, (now - startTime) / duration);
+    el.volume = start + (target - start) * t;
+    if (t < 1) requestAnimationFrame(step);
+    else if (target === 0) el.pause();
+  }
+  requestAnimationFrame(step);
+}
+
+// key: "tick" | "urgent" | "critical". Ne fait rien si cette boucle est déjà active.
+export function setBombeLoop(key) {
+  if (bombeActiveLoopKey === key) return;
+  const prevKey = bombeActiveLoopKey;
+  bombeActiveLoopKey = key;
+  const nextEl = getBombeLoopEl(key);
+  nextEl.muted = isMuted();
+  nextEl.currentTime = 0;
+  nextEl.play().catch(() => {});
+  fadeVolume(nextEl, BOMBE_LOOP_VOLUME, BOMBE_CROSSFADE_MS);
+  if (prevKey && bombeLoopEls[prevKey]) fadeVolume(bombeLoopEls[prevKey], 0, BOMBE_CROSSFADE_MS);
+}
+
+// Coupe toutes les boucles (désamorçage réussi, game over, ou abandon de partie).
+export function stopBombeLoops() {
+  Object.values(bombeLoopEls).forEach((el) => el.pause());
+  bombeActiveLoopKey = null;
+}
+
+export function playBombeSuccess() {
+  if (isMuted()) return;
+  new Audio(BOMBE_ONESHOT_URLS.success).play().catch(() => {});
+}
+
+export function playBombeFail() {
+  if (isMuted()) return;
+  new Audio(BOMBE_ONESHOT_URLS.fail).play().catch(() => {});
+}
+
+// Sourdine légère de la musique de fond pendant le désamorçage, pour ne pas
+// couvrir les boucles de tension (pas d'arrêt net, juste un volume réduit).
+export function duckBackgroundMusic(duck) {
+  if (musicEl) musicEl.volume = duck ? MUSIC_VOLUME * 0.15 : MUSIC_VOLUME;
 }
 
 // ---- Bouton muet, partagé sur toutes les pages ------------------------------

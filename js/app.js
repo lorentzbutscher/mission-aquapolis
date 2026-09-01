@@ -9,8 +9,19 @@ import {
   showToast,
   vibrate,
   playEndChime,
+  beep,
 } from "./utils.js";
-import { playSuccessSound, playVictorySound, initSoundToggle, startBackgroundMusic } from "./sound.js";
+import {
+  playSuccessSound,
+  playVictorySound,
+  initSoundToggle,
+  startBackgroundMusic,
+  setBombeLoop,
+  stopBombeLoops,
+  playBombeSuccess,
+  playBombeFail,
+  duckBackgroundMusic,
+} from "./sound.js";
 import { applyRandomBackground } from "./background.js";
 
 const $ = (sel) => document.querySelector(sel);
@@ -98,6 +109,10 @@ function currentPages() {
   return currentEpreuve().pages || [{ blocks: [] }];
 }
 
+function isFinalEpreuve() {
+  return STATE.currentEpreuveIndex >= (CONTENT.teams[TEAM]?.epreuves.length || 0);
+}
+
 // ---- Palais du Rhin (prologue, avant la première épreuve) -----------------------
 
 function palaisData() {
@@ -173,8 +188,7 @@ function selectTeam(color) {
     renderPalaisView();
     show("view-palais");
   } else {
-    renderEpreuveView();
-    show("view-epreuve");
+    showEpreuveOrBombe();
   }
   startChrono();
 }
@@ -273,6 +287,17 @@ function renderEpreuveView() {
   renderPage();
 }
 
+// Reprend directement sur l'écran de la bombe si elle a déjà été armée (ou en
+// game over) avant un rechargement de page ; sinon comportement normal.
+function showEpreuveOrBombe() {
+  if (isFinalEpreuve() && (bombeState().armedAt || bombeState().gameOver)) {
+    enterBombeScreen();
+  } else {
+    renderEpreuveView();
+    show("view-epreuve");
+  }
+}
+
 function renderPage() {
   const pages = currentPages();
   if (STATE.currentPageIndex == null || STATE.currentPageIndex >= pages.length) {
@@ -294,12 +319,17 @@ function renderPage() {
     nav.style.display = "none";
   }
 
-  $("#card-code").style.display = isLastPage ? "" : "none";
+  // Épreuve finale uniquement : sa dernière page remplace le code générique par
+  // le mini-jeu de désamorçage (voir section "Bombe" plus bas). Les autres
+  // épreuves gardent #card-code strictement inchangé.
+  const isBombePage = isLastPage && isFinalEpreuve();
+  $("#card-bombe-launch").style.display = isBombePage ? "" : "none";
+  $("#card-code").style.display = isLastPage && !isBombePage ? "" : "none";
   $("#card-revelation").style.display = "none";
   $("#code-form").style.display = "";
   $("#code-input").value = "";
   $("#code-feedback").textContent = "";
-  if (isLastPage) setTimeout(() => $("#code-input")?.focus(), 50);
+  if (isLastPage && !isBombePage) setTimeout(() => $("#code-input")?.focus(), 50);
 }
 
 function renderBlocks(page) {
@@ -676,6 +706,222 @@ function finishPalais() {
   show("view-epreuve");
 }
 
+// ---- Bombe : mini-jeu de désamorçage (Épreuve finale uniquement) --------------------
+
+const BOMBE_DURATION_MS = 10 * 60000;
+const AZERTY_ROWS = [
+  ["A", "Z", "E", "R", "T", "Y", "U", "I", "O", "P"],
+  ["Q", "S", "D", "F", "G", "H", "J", "K", "L", "M"],
+  ["W", "X", "C", "V", "B", "N"],
+];
+
+let bombeTickTimer = null;
+let bombeInput = "";
+let bombeKeypadBuilt = false;
+
+function bombeState() {
+  if (!STATE.bombe) {
+    STATE.bombe = { armedAt: null, endsAt: null, defused: false, gameOver: false, frozenRemainMs: null };
+  }
+  return STATE.bombe;
+}
+
+function finalBombeCode() {
+  return (CONTENT.finalEpreuve?.code?.valeur || "SEMEH").toUpperCase();
+}
+
+function armBombeAndEnter() {
+  const b = bombeState();
+  b.armedAt = Date.now();
+  b.endsAt = b.armedAt + BOMBE_DURATION_MS;
+  b.defused = false;
+  b.gameOver = false;
+  b.frozenRemainMs = null;
+  persist();
+  enterBombeScreen();
+}
+
+function enterBombeScreen() {
+  bombeInput = "";
+  buildBombeKeypad();
+  show("view-bombe");
+  const b = bombeState();
+  if (!b.defused && !b.gameOver && b.armedAt) {
+    duckBackgroundMusic(true);
+    startBombeTimerLoop();
+  } else {
+    clearInterval(bombeTickTimer);
+    if (b.gameOver) playBombeFail();
+  }
+  renderBombeView();
+}
+
+function startBombeTimerLoop() {
+  clearInterval(bombeTickTimer);
+  renderBombeTick();
+  bombeTickTimer = setInterval(renderBombeTick, 250);
+}
+
+function renderBombeTick() {
+  const b = bombeState();
+  if (b.defused) {
+    clearInterval(bombeTickTimer);
+    return;
+  }
+  const remain = b.endsAt - Date.now();
+  if (remain <= 0) {
+    triggerBombeGameOver();
+    return;
+  }
+  $("#bombe-led").textContent = formatMinSec(remain);
+  if (remain <= 10000) setBombeLoop("critical");
+  else if (remain <= 60000) setBombeLoop("urgent");
+  else setBombeLoop("tick");
+}
+
+function renderBombeView() {
+  const b = bombeState();
+  const led = $("#bombe-led");
+  led.classList.toggle("defused", b.defused);
+  if (b.defused) {
+    led.textContent = formatMinSec(b.frozenRemainMs ?? 0);
+  } else if (b.gameOver) {
+    led.textContent = "00:00";
+  }
+  $("#bombe-gameover").style.display = b.gameOver ? "flex" : "none";
+  $("#bombe-keypad").classList.toggle("disabled", b.gameOver || b.defused);
+  $("#btn-bombe-continue").style.display = b.defused ? "" : "none";
+  renderBombeLcd();
+}
+
+function renderBombeLcd() {
+  const len = finalBombeCode().length;
+  const shown = bombeInput.padEnd(len, "_").split("").join(" ");
+  $("#bombe-lcd").textContent = shown;
+}
+
+function buildBombeKeypad() {
+  if (bombeKeypadBuilt) return;
+  bombeKeypadBuilt = true;
+  const wrap = $("#bombe-keypad");
+  wrap.innerHTML = "";
+  AZERTY_ROWS.forEach((row) => {
+    const rowEl = document.createElement("div");
+    rowEl.className = "bombe-key-row";
+    row.forEach((letter) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "bombe-key";
+      btn.textContent = letter;
+      btn.addEventListener("click", () => bombeKeyPress(letter));
+      rowEl.appendChild(btn);
+    });
+    wrap.appendChild(rowEl);
+  });
+  const actionRow = document.createElement("div");
+  actionRow.className = "bombe-key-row";
+  const clearBtn = document.createElement("button");
+  clearBtn.type = "button";
+  clearBtn.className = "bombe-key bombe-key-clear";
+  clearBtn.textContent = "⌫ EFFACER";
+  clearBtn.addEventListener("click", bombeClearInput);
+  const validateBtn = document.createElement("button");
+  validateBtn.type = "button";
+  validateBtn.className = "bombe-key bombe-key-validate";
+  validateBtn.textContent = "✓ VALIDER";
+  validateBtn.addEventListener("click", bombeValidate);
+  actionRow.appendChild(clearBtn);
+  actionRow.appendChild(validateBtn);
+  wrap.appendChild(actionRow);
+}
+
+function bombeInputLocked() {
+  const b = bombeState();
+  return b.gameOver || b.defused;
+}
+
+function bombeKeyPress(letter) {
+  if (bombeInputLocked()) return;
+  if (bombeInput.length >= finalBombeCode().length) return;
+  bombeInput += letter;
+  renderBombeLcd();
+}
+
+function bombeClearInput() {
+  if (bombeInputLocked()) return;
+  bombeInput = "";
+  renderBombeLcd();
+}
+
+function bombeValidate() {
+  if (bombeInputLocked()) return;
+  if (normalizeCode(bombeInput) === normalizeCode(finalBombeCode())) {
+    defuseBombe();
+  } else {
+    wrongBombeCode();
+  }
+}
+
+function wrongBombeCode() {
+  beep(200, 200, 0.18);
+  vibrate([80, 60, 80]);
+  const wrap = $("#bombe-lcd-wrap");
+  wrap.classList.remove("wrong-flash");
+  void wrap.offsetWidth;
+  wrap.classList.add("wrong-flash");
+  bombeInput = "";
+  setTimeout(() => {
+    wrap.classList.remove("wrong-flash");
+    renderBombeLcd();
+  }, 350);
+}
+
+function defuseBombe() {
+  const b = bombeState();
+  b.defused = true;
+  b.frozenRemainMs = Math.max(0, b.endsAt - Date.now());
+  persist();
+  clearInterval(bombeTickTimer);
+  stopBombeLoops();
+  duckBackgroundMusic(false);
+  playBombeSuccess();
+  vibrate([150, 80, 150]);
+  renderBombeView();
+  setTimeout(finalizeBombeSuccess, 1800);
+}
+
+function finalizeBombeSuccess() {
+  show("view-epreuve");
+  renderEpreuveView();
+  onCodeCorrect(currentEpreuve());
+}
+
+function triggerBombeGameOver() {
+  const b = bombeState();
+  b.gameOver = true;
+  persist();
+  clearInterval(bombeTickTimer);
+  stopBombeLoops();
+  duckBackgroundMusic(false);
+  playBombeFail();
+  vibrate([300, 100, 300, 100, 300]);
+  renderBombeView();
+}
+
+function retryBombe() {
+  const b = bombeState();
+  b.armedAt = Date.now();
+  b.endsAt = b.armedAt + BOMBE_DURATION_MS;
+  b.defused = false;
+  b.gameOver = false;
+  b.frozenRemainMs = null;
+  bombeInput = "";
+  persist();
+  duckBackgroundMusic(true);
+  startBombeTimerLoop();
+  renderBombeView();
+}
+
 // ---- Carte sur l'écran résultat (point vers la prochaine épreuve) --------------------
 
 function renderResultMap() {
@@ -733,6 +979,9 @@ function closeStopConfirm() {
 function abandonGame() {
   clearInterval(chronoTimer);
   clearInterval(convergenceTimer);
+  clearInterval(bombeTickTimer);
+  stopBombeLoops();
+  duckBackgroundMusic(false);
   closeStopConfirm();
 
   if (TEAM) {
@@ -885,8 +1134,7 @@ function initListeners() {
       renderPalaisView();
       show("view-palais");
     } else {
-      renderEpreuveView();
-      show("view-epreuve");
+      showEpreuveOrBombe();
     }
     startChrono();
   });
@@ -999,6 +1247,10 @@ function initListeners() {
 
   $("#btn-final-map").addEventListener("click", openMap);
   $("#btn-close-map").addEventListener("click", closeMap);
+
+  $("#btn-bombe-arm").addEventListener("click", armBombeAndEnter);
+  $("#btn-bombe-retry").addEventListener("click", retryBombe);
+  $("#btn-bombe-continue").addEventListener("click", finalizeBombeSuccess);
 
   window.addEventListener("online", updateSyncBadge);
   window.addEventListener("offline", updateSyncBadge);
