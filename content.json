@@ -893,6 +893,7 @@
           }
         ]
       }
-    ]
+    ],
+    "bombeActive": true
   }
 }
