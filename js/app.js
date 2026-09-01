@@ -290,7 +290,8 @@ function renderEpreuveView() {
 // Reprend directement sur l'écran de la bombe si elle a déjà été armée (ou en
 // game over) avant un rechargement de page ; sinon comportement normal.
 function showEpreuveOrBombe() {
-  if (isFinalEpreuve() && (bombeState().armedAt || bombeState().gameOver)) {
+  const bombeOn = CONTENT.finalEpreuve?.bombeActive !== false;
+  if (bombeOn && isFinalEpreuve() && (bombeState().armedAt || bombeState().gameOver)) {
     enterBombeScreen();
   } else {
     renderEpreuveView();
@@ -322,7 +323,7 @@ function renderPage() {
   // Épreuve finale uniquement : sa dernière page remplace le code générique par
   // le mini-jeu de désamorçage (voir section "Bombe" plus bas). Les autres
   // épreuves gardent #card-code strictement inchangé.
-  const isBombePage = isLastPage && isFinalEpreuve();
+  const isBombePage = isLastPage && isFinalEpreuve() && CONTENT.finalEpreuve?.bombeActive !== false;
   $("#card-bombe-launch").style.display = isBombePage ? "" : "none";
   $("#card-code").style.display = isLastPage && !isBombePage ? "" : "none";
   $("#card-revelation").style.display = "none";

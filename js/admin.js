@@ -398,10 +398,15 @@ function renderTeamPanelHtml(color) {
 
 function renderFinalPanelHtml() {
   const team = TEAMS_DATA[FINAL_KEY];
+  const bombeActive = team.epreuves[0].bombeActive !== false;
   return `
     <div class="admin-card">
       <h3>⭐ Épreuve finale</h3>
       <p class="muted" style="font-size:13px;">Cette épreuve est strictement identique pour les 5 équipes : elle arrive automatiquement après leurs épreuves habituelles et mène toutes les équipes vers le rassemblement final.</p>
+      <label class="block-visible-toggle" style="margin-top:10px; font-size:14px; gap:8px;">
+        <input type="checkbox" id="cfg-bombe-active" ${bombeActive ? "checked" : ""}>
+        🧨 Activer le mini-jeu de désamorçage de la bombe sur la dernière page (sinon : simple zone de code, comme sur les autres épreuves)
+      </label>
     </div>
     <div class="epreuve-forms">
       ${renderEpreuveForm(team.epreuves[0], 0)}
@@ -992,6 +997,7 @@ async function saveTeamPanel(color, panel) {
 async function saveFinalPanel(panel) {
   const epreuves = readEpreuvesFromForms(FINAL_KEY, panel);
   const finalData = epreuves[0];
+  finalData.bombeActive = panel.querySelector("#cfg-bombe-active").checked;
   try {
     await saveFinalEpreuve(finalData);
     TEAMS_DATA[FINAL_KEY].epreuves = [finalData];
