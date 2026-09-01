@@ -18,6 +18,9 @@ const $ = (sel) => document.querySelector(sel);
 const ACCESS_CODE = "ETIENNE";
 const ACCESS_INTRO_DEFAULT =
   "⚡ Alerte rouge sur les canaux de Strasbourg : le super-vilain Déversoir sème la panique parmi les écluses. Un renfort inattendu vient d'arriver en ville — un héros dont le nom seul suffit à redonner espoir aux agents VNF. Saisissez son nom pour débloquer la mission et rejoindre le combat.";
+const BRIEFING_TEXTE_DEFAULT =
+  "Votre équipe doit résoudre <strong>{{count}} épreuves</strong> dans les rues de Strasbourg. Chaque épreuve indique un lieu, parfois un objet à trouver, et un code à valider.";
+const BRIEFING_CONSIGNES_DEFAULT = "Durée cible : 2h00 — maximum 2h30. Restez groupés et prudents dans la circulation.";
 
 const PAYS_META = {
   suisse: { img: "./assets/flags/flag_suisse.png", emoji: "🇨🇭", label: "Suisse" },
@@ -109,7 +112,8 @@ function palaisPages() {
 // ---- Écran de code d'accès --------------------------------------------------------
 
 function initAccessCodeScreen() {
-  $("#access-intro-text").textContent = ACCESS_INTRO_DEFAULT;
+  const cfg = CONTENT?.config?.accessCode || {};
+  $("#access-intro-text").textContent = cfg.texte || ACCESS_INTRO_DEFAULT;
 }
 
 function proceedAfterAccess() {
@@ -186,7 +190,10 @@ function renderStartView() {
   badge.onerror = () => (badge.style.visibility = "hidden");
   badge.style.visibility = "visible";
 
-  $("#start-epreuve-count").textContent = `${totalEpreuvesForTeam(TEAM)} épreuves`;
+  const briefing = CONTENT.config?.briefing || {};
+  const count = totalEpreuvesForTeam(TEAM);
+  $("#briefing-text").innerHTML = (briefing.texte || BRIEFING_TEXTE_DEFAULT).replace(/\{\{count\}\}/g, count);
+  $("#briefing-consignes").textContent = briefing.consignes || BRIEFING_CONSIGNES_DEFAULT;
 
   const startBtn = $("#btn-start-mission");
   startBtn.textContent = STATE.status === "not_started" ? "🚀 Démarrer la mission" : "↩️ Reprendre la mission en cours";
@@ -852,7 +859,8 @@ function initListeners() {
     e.preventDefault();
     const input = $("#access-code-input");
     const val = normalizeCode(input.value);
-    if (val === normalizeCode(ACCESS_CODE)) {
+    const expected = CONTENT?.config?.accessCode?.valeur || ACCESS_CODE;
+    if (val === normalizeCode(expected)) {
       gameStore.setAccessUnlocked();
       $("#access-code-feedback").textContent = "";
       proceedAfterAccess();
@@ -999,6 +1007,7 @@ function initListeners() {
     if (!STATE || STATE.status === "not_started") {
       CONTENT = e.detail;
       renderTeamGrid();
+      if (document.querySelector(".view.active")?.id === "view-access-code") initAccessCodeScreen();
     }
   });
 }
@@ -1010,13 +1019,13 @@ async function boot() {
   initSoundToggle();
   startBackgroundMusic();
   updateSyncBadge();
-  initAccessCodeScreen();
   CONTENT = await loadContent();
   if (!CONTENT) {
     $("#view-loading").innerHTML =
       '<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:20px;"><div style="font-size:48px;">⚠️</div><h2>Chargement impossible</h2><p class="muted">Connectez-vous une première fois à Internet, puis rechargez la page.</p></div>';
     return;
   }
+  initAccessCodeScreen();
   if (!gameStore.isAccessUnlocked()) {
     show("view-access-code");
     return;

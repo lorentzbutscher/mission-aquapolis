@@ -191,6 +191,16 @@ function defaultConfig() {
     eventDate: "2026-09-17",
     durationMinutes: 120,
     maxDurationMinutes: 150,
+    accessCode: {
+      valeur: "ETIENNE",
+      texte:
+        "⚡ Alerte rouge sur les canaux de Strasbourg : le super-vilain Déversoir sème la panique parmi les écluses. Un renfort inattendu vient d'arriver en ville — un héros dont le nom seul suffit à redonner espoir aux agents VNF. Saisissez son nom pour débloquer la mission et rejoindre le combat.",
+    },
+    briefing: {
+      texte:
+        "Votre équipe doit résoudre <strong>{{count}} épreuves</strong> dans les rues de Strasbourg. Chaque épreuve indique un lieu, parfois un objet à trouver, et un code à valider.",
+      consignes: "Durée cible : 2h00 — maximum 2h30. Restez groupés et prudents dans la circulation.",
+    },
     convergence: {
       name: "Place Benjamin Zix",
       detail: "Secteur Ponts Couverts / Maison des Tanneurs",
@@ -268,6 +278,12 @@ function renderGeneral() {
   $("#cfg-eventDate").value = CONFIG_DATA.eventDate || "";
   $("#cfg-duration").value = CONFIG_DATA.durationMinutes ?? 120;
   $("#cfg-maxDuration").value = CONFIG_DATA.maxDurationMinutes ?? 150;
+  const access = CONFIG_DATA.accessCode || {};
+  $("#cfg-access-valeur").value = access.valeur || "";
+  $("#cfg-access-texte").value = access.texte || "";
+  const briefing = CONFIG_DATA.briefing || {};
+  $("#cfg-briefing-texte").value = briefing.texte || "";
+  $("#cfg-briefing-consignes").value = briefing.consignes || "";
   const conv = CONFIG_DATA.convergence || {};
   $("#cfg-conv-name").value = conv.name || "";
   $("#cfg-conv-detail").value = conv.detail || "";
@@ -300,6 +316,14 @@ $("#btn-save-general").addEventListener("click", async () => {
     eventDate: $("#cfg-eventDate").value,
     durationMinutes: Number($("#cfg-duration").value) || 120,
     maxDurationMinutes: Number($("#cfg-maxDuration").value) || 150,
+    accessCode: {
+      valeur: $("#cfg-access-valeur").value.trim(),
+      texte: $("#cfg-access-texte").value.trim(),
+    },
+    briefing: {
+      texte: $("#cfg-briefing-texte").value.trim(),
+      consignes: $("#cfg-briefing-consignes").value.trim(),
+    },
     convergence: {
       name: $("#cfg-conv-name").value.trim(),
       detail: $("#cfg-conv-detail").value.trim(),
@@ -993,10 +1017,3 @@ $("#main-tabs").addEventListener("click", (e) => {
     setTimeout(() => ensureEpMap(tab, activeEpIdx[tab] || 0, targetPanel), 60);
   }
 });
-
-// Passerelle pour js/admin-ui.js (copie d'épreuve entre brigades)
-window.__aqAdmin = {
-  get TEAMS_DATA() { return TEAMS_DATA; },
-  FINAL_KEY, TEAM_LABELS, TEAM_COLORS,
-  renderTeamPanels,
-};
