@@ -590,18 +590,25 @@ p { line-height: 1.5; margin: 0; }
 .bombe-bg { width: 100%; height: auto; display: block; }
 .bombe-stage.no-bg { min-height: 60vw; }
 
-/* Écran LED du minuteur, positionné en % relatifs à l'image de fond — à
-   ajuster une fois la vraie image en place (voir gabarit fourni). */
+/* Écran LED du minuteur — position calée pixel par pixel sur la vraie image
+   (assets/bombe-epreuve-finale.jpg, 2752x1536). Le fond opaque masque le
+   "00:07" figé de la photo ; le texte dynamique le remplace entièrement. */
 .bombe-led {
   position: absolute;
-  top: 6%;
-  left: 27%;
-  width: 46%;
+  top: 34.9%;
+  left: 38.5%;
+  width: 25.5%;
+  height: 22%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0a0a0c;
+  border-radius: 4%;
   text-align: center;
   font-family: "Courier New", monospace;
   font-weight: 900;
-  font-size: clamp(18px, 6.5vw, 32px);
-  letter-spacing: .08em;
+  font-size: clamp(16px, 5.2vw, 30px);
+  letter-spacing: .06em;
   color: #ff2b2b;
   text-shadow: 0 0 6px rgba(255,40,40,.9), 0 0 18px rgba(255,40,40,.55);
   pointer-events: none;
@@ -611,29 +618,38 @@ p { line-height: 1.5; margin: 0; }
   text-shadow: 0 0 6px rgba(74,222,128,.9), 0 0 18px rgba(74,222,128,.55);
 }
 
-/* Écran LCD du clavier physique, positionné en % relatifs à l'image de fond. */
+/* Écran LCD du clavier physique — même principe, calé sur la vraie image.
+   Fond gris-vert + texte sombre pour reproduire le rendu LCD réel (pas de
+   glow : contrairement au LED, ce n'est pas un afficheur lumineux). */
 .bombe-lcd-wrap {
   position: absolute;
-  top: 58%;
-  left: 56%;
-  width: 38%;
+  top: 31.4%;
+  left: 67.7%;
+  width: 13%;
+  height: 9.8%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2%;
+  background: #7a8a70;
+  border-radius: 6%;
   text-align: center;
   pointer-events: none;
 }
 .bombe-lcd-label {
-  font-size: clamp(7px, 1.8vw, 10px);
-  color: #b7ffb0;
-  opacity: .75;
+  font-size: clamp(5px, 1.3vw, 8px);
+  color: #22281c;
   font-family: "Courier New", monospace;
-  letter-spacing: .1em;
+  letter-spacing: .08em;
+  font-weight: 700;
 }
 .bombe-lcd {
   font-family: "Courier New", monospace;
   font-weight: 700;
-  font-size: clamp(12px, 4vw, 20px);
-  letter-spacing: .12em;
-  color: #b7ffb0;
-  text-shadow: 0 0 4px rgba(183,255,176,.8);
+  font-size: clamp(9px, 2.6vw, 15px);
+  letter-spacing: .1em;
+  color: #1a1f16;
 }
 .bombe-lcd-wrap.wrong-flash .bombe-lcd {
   animation: bombeShake .3s;
