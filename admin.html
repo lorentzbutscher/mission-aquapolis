@@ -6,7 +6,6 @@
 <title>Mission Aquapolis — Administration</title>
 <link rel="icon" href="./icons/icon-192.png" />
 <link rel="stylesheet" href="./css/style.css" />
-<link rel="stylesheet" href="./css/aquapolis-ameliorations.css" />
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 </head>
 <body class="admin-body">
@@ -50,6 +49,19 @@
         <div class="field"><label>Durée cible (minutes)</label><input id="cfg-duration" type="number" /></div>
       </div>
       <div class="field"><label>Durée maximum (minutes)</label><input id="cfg-maxDuration" type="number" /></div>
+
+      <h3 style="margin-top:18px;">🦸 Écran de code d'accès (avant le choix d'équipe)</h3>
+      <div class="field"><label>Code à saisir</label><input id="cfg-access-valeur" style="text-transform:uppercase;" /></div>
+      <div class="field"><label>Texte d'introduction</label><textarea id="cfg-access-texte"></textarea></div>
+
+      <h3 style="margin-top:18px;">📋 Écran de briefing (juste avant "Démarrer la mission")</h3>
+      <div class="field">
+        <label>Texte principal</label>
+        <textarea id="cfg-briefing-texte"></textarea>
+        <p class="muted" style="font-size:12px;">Utilise <code>{{count}}</code> à l'endroit où le nombre d'épreuves de l'équipe doit s'afficher (variable selon l'équipe).</p>
+      </div>
+      <div class="field"><label>Consignes (ligne grisée en dessous)</label><textarea id="cfg-briefing-consignes"></textarea></div>
+
       <h3 style="margin-top:18px;">Point de rassemblement final</h3>
       <div class="field"><label>Nom du lieu</label><input id="cfg-conv-name" /></div>
       <div class="field"><label>Détail / secteur</label><input id="cfg-conv-detail" /></div>
@@ -69,6 +81,5 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script type="module" src="./js/admin.js"></script>
-<script type="module" src="./js/admin-ui.js"></script>
 </body>
 </html>

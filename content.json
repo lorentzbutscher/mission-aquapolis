@@ -10,6 +10,14 @@
       "lat": 48.5798,
       "lng": 7.7422,
       "time": "16:30"
+    },
+    "accessCode": {
+      "valeur": "ETIENNE",
+      "texte": "⚡ Alerte rouge sur les canaux de Strasbourg : le super-vilain Déversoir sème la panique parmi les écluses. Un renfort inattendu vient d'arriver en ville — un héros dont le nom seul suffit à redonner espoir aux agents VNF. Saisissez son nom pour débloquer la mission et rejoindre le combat."
+    },
+    "briefing": {
+      "texte": "Votre équipe doit résoudre <strong>{{count}} épreuves</strong> dans les rues de Strasbourg. Chaque épreuve indique un lieu, parfois un objet à trouver, et un code à valider.",
+      "consignes": "Durée cible : 2h00 — maximum 2h30. Restez groupés et prudents dans la circulation."
     }
   },
   "teams": {
