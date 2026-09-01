@@ -534,52 +534,45 @@ p { line-height: 1.5; margin: 0; }
 }
 .sound-toggle:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 rgba(0,0,0,.4); }
 
-/* Illustration du super-méchant sur l'écran de briefing */
-.villain-img {
-  width: 100%;
-  max-width: 280px;
-  margin: 0 auto;
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow);
-  border: 3px solid rgba(255,255,255,.85);
-}
-
-/* Moquerie de Déversoir sur mauvais code (purement visuelle, sans pénalité) */
+/* Moquerie de Déversoir sur mauvaise réponse (purement visuelle, sans pénalité,
+   ne bloque jamais l'interaction : pointer-events reste désactivé même si le
+   visuel occupe tout l'écran). */
 .villain-mockery {
   position: fixed;
-  top: 16%;
-  left: 50%;
-  transform: translateX(-50%);
+  inset: 0;
   z-index: 85;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  justify-content: center;
+  gap: 18px;
+  padding: 24px;
+  background: radial-gradient(circle at 50% 42%, rgba(5,8,16,.6), rgba(5,8,16,.82));
   opacity: 0;
   pointer-events: none;
 }
 .villain-mockery.show { animation: villainMockeryPop 1.8s ease forwards; }
 .villain-mockery-img {
-  width: 92px;
-  height: 92px;
+  width: min(82vw, 420px);
+  height: auto;
+  max-height: 62vh;
   object-fit: contain;
-  filter: drop-shadow(0 6px 14px rgba(0,0,0,.5));
+  filter: drop-shadow(0 12px 30px rgba(0,0,0,.6));
 }
 .villain-mockery-bubble {
   background: var(--gold);
   color: var(--ink);
   font-family: var(--font-display);
-  font-size: 16px;
-  padding: 6px 16px;
+  font-size: clamp(22px, 7vw, 32px);
+  padding: 10px 28px;
   border-radius: 999px;
-  border: 2px solid rgba(255,255,255,.85);
-  box-shadow: 3px 3px 0 rgba(0,0,0,.4);
+  border: 3px solid rgba(255,255,255,.85);
+  box-shadow: 4px 4px 0 rgba(0,0,0,.4);
 }
 @keyframes villainMockeryPop {
-  0%   { opacity: 0; transform: translateX(-50%) scale(.7) rotate(0deg); }
-  12%  { opacity: 1; transform: translateX(-50%) scale(1.08) rotate(-4deg); }
-  20%  { transform: translateX(-50%) scale(1) rotate(4deg); }
-  28%  { transform: translateX(-50%) scale(1) rotate(0deg); }
-  82%  { opacity: 1; transform: translateX(-50%) scale(1) rotate(0deg); }
-  100% { opacity: 0; transform: translateX(-50%) scale(.9) rotate(0deg); }
+  0%   { opacity: 0; transform: scale(.85); }
+  12%  { opacity: 1; transform: scale(1.04); }
+  20%  { transform: scale(1); }
+  82%  { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.02); }
 }
