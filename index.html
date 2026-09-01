@@ -13,7 +13,6 @@
 <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
 <link rel="icon" href="./icons/icon-192.png" />
 <link rel="stylesheet" href="./css/style.css" />
-<link rel="stylesheet" href="./css/aquapolis-ameliorations.css" />
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <!-- Préchargement des 4 fonds d'écran (tirés au hasard à chaque écran, voir js/background.js)
      pour éviter tout flash lors du changement de fond. -->
@@ -112,7 +111,6 @@
   <section class="view" id="view-epreuve">
     <button class="small-link" id="btn-back-to-start" style="align-self:flex-start; padding:4px 0;">← Retour</button>
     <div class="progress-dots" id="progress-dots"></div>
-    <div class="mission-position" id="mission-position"></div>
     <h2 id="epreuve-title">Épreuve 1</h2>
 
     <div id="blocks-container"></div>
@@ -169,6 +167,13 @@
   </section>
 
   <div class="footer-note">Mission Aquapolis · 17 septembre 2026 · Strasbourg</div>
+</div>
+
+<!-- Moquerie de Déversoir sur mauvais code : purement visuelle, aucune pénalité
+     de temps, aucun blocage — le joueur peut retaper immédiatement. -->
+<div class="villain-mockery" id="villain-mockery">
+  <img class="villain-mockery-img" src="./assets/villain.png" alt="" onerror="this.style.display='none';">
+  <div class="villain-mockery-bubble">HAHA !</div>
 </div>
 
 <div class="confirm-overlay" id="stop-confirm-overlay" style="display:none;">
