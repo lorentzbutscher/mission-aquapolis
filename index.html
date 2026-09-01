@@ -132,6 +132,16 @@
       <div class="code-feedback" id="code-feedback"></div>
     </div>
 
+    <!-- Épreuve finale uniquement : remplace #card-code sur la dernière page
+         (voir renderPage() / isFinalEpreuve() dans js/app.js). -->
+    <div class="card code" id="card-bombe-launch" style="display:none; text-align:center;">
+      <div class="card-head" style="justify-content:center;">
+        <div class="card-pict">🧨</div>
+        <div class="card-family">Désamorçage final</div>
+      </div>
+      <button class="btn btn-danger btn-block" id="btn-bombe-arm" style="margin-top:8px;">🧨 Toucher pour armer la bombe</button>
+    </div>
+
     <div class="card revelation" id="card-revelation" style="display:none;">
       <div class="card-head">
         <div class="card-pict">⭐</div>
@@ -144,6 +154,26 @@
       </div>
       <button class="btn btn-gold btn-block" id="btn-next-epreuve" style="margin-top:12px;">Épreuve suivante ➜</button>
     </div>
+  </section>
+
+  <section class="view" id="view-bombe">
+    <div class="bombe-stage" id="bombe-stage">
+      <img class="bombe-bg" src="./assets/bombe-epreuve-finale.jpg" alt="" onerror="this.closest('.bombe-stage').classList.add('no-bg');">
+      <div class="bombe-led" id="bombe-led">10:00</div>
+      <div class="bombe-lcd-wrap" id="bombe-lcd-wrap">
+        <div class="bombe-lcd-label">ENTER CODE</div>
+        <div class="bombe-lcd" id="bombe-lcd">_ _ _ _ _</div>
+      </div>
+
+      <div class="bombe-gameover" id="bombe-gameover" style="display:none;">
+        <div class="bombe-gameover-text">TROP TARD !<br>TOUT EST FICHU,<br>SAUVEZ-VOUS !!!</div>
+        <button class="small-link" id="btn-bombe-retry" style="color:rgba(255,255,255,.65);">Réessayer</button>
+      </div>
+    </div>
+
+    <div class="bombe-keypad" id="bombe-keypad"></div>
+
+    <button class="btn btn-gold btn-block" id="btn-bombe-continue" style="display:none;">Continuer ➜</button>
   </section>
 
   <section class="view" id="view-final">
