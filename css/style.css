@@ -576,3 +576,127 @@ p { line-height: 1.5; margin: 0; }
   82%  { opacity: 1; transform: scale(1); }
   100% { opacity: 0; transform: scale(1.02); }
 }
+
+/* Mini-jeu de désamorçage (Épreuve finale) ----------------------------------- */
+
+.bombe-stage {
+  position: relative;
+  width: 100%;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  background: #0a0a0a; /* évite un flash blanc pendant le chargement de l'image */
+}
+.bombe-bg { width: 100%; height: auto; display: block; }
+.bombe-stage.no-bg { min-height: 60vw; }
+
+/* Écran LED du minuteur, positionné en % relatifs à l'image de fond — à
+   ajuster une fois la vraie image en place (voir gabarit fourni). */
+.bombe-led {
+  position: absolute;
+  top: 6%;
+  left: 27%;
+  width: 46%;
+  text-align: center;
+  font-family: "Courier New", monospace;
+  font-weight: 900;
+  font-size: clamp(18px, 6.5vw, 32px);
+  letter-spacing: .08em;
+  color: #ff2b2b;
+  text-shadow: 0 0 6px rgba(255,40,40,.9), 0 0 18px rgba(255,40,40,.55);
+  pointer-events: none;
+}
+.bombe-led.defused {
+  color: #4ade80;
+  text-shadow: 0 0 6px rgba(74,222,128,.9), 0 0 18px rgba(74,222,128,.55);
+}
+
+/* Écran LCD du clavier physique, positionné en % relatifs à l'image de fond. */
+.bombe-lcd-wrap {
+  position: absolute;
+  top: 58%;
+  left: 56%;
+  width: 38%;
+  text-align: center;
+  pointer-events: none;
+}
+.bombe-lcd-label {
+  font-size: clamp(7px, 1.8vw, 10px);
+  color: #b7ffb0;
+  opacity: .75;
+  font-family: "Courier New", monospace;
+  letter-spacing: .1em;
+}
+.bombe-lcd {
+  font-family: "Courier New", monospace;
+  font-weight: 700;
+  font-size: clamp(12px, 4vw, 20px);
+  letter-spacing: .12em;
+  color: #b7ffb0;
+  text-shadow: 0 0 4px rgba(183,255,176,.8);
+}
+.bombe-lcd-wrap.wrong-flash .bombe-lcd {
+  animation: bombeShake .3s;
+  color: #ff5555;
+  text-shadow: 0 0 6px rgba(255,80,80,.9);
+}
+@keyframes bombeShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  75% { transform: translateX(6px); }
+}
+
+/* Clavier AZERTY simplifié, esthétique métallique/militaire */
+.bombe-keypad { display: flex; flex-direction: column; gap: 7px; margin-top: 14px; }
+.bombe-key-row { display: flex; gap: 6px; }
+.bombe-key {
+  flex: 1;
+  min-width: 0;
+  height: 42px;
+  border-radius: 8px;
+  border: 2px solid rgba(255,255,255,.22);
+  background: linear-gradient(160deg, #545f4e, #333c2f);
+  color: #e5e7eb;
+  font-weight: 800;
+  font-family: var(--font-display);
+  font-size: 15px;
+  cursor: pointer;
+  box-shadow: 2px 2px 0 rgba(0,0,0,.35);
+}
+.bombe-key:active { transform: translate(1px, 1px); box-shadow: none; }
+.bombe-key-clear, .bombe-key-validate {
+  flex: 1.6;
+  font-size: 12px;
+  background: linear-gradient(160deg, var(--rouge), #7f1d1d);
+  border-color: rgba(255,255,255,.4);
+}
+.bombe-keypad.disabled { pointer-events: none; opacity: .35; filter: grayscale(1); }
+
+/* Écran "game over" plein cadre, recouvre la bombe et désactive le clavier */
+.bombe-gameover {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  padding: 20px;
+  text-align: center;
+  animation: bombeGameoverPulse 1s ease-in-out infinite;
+}
+@keyframes bombeGameoverPulse {
+  0%, 100% { background: rgba(58,0,0,.94); }
+  50% { background: rgba(127,0,0,.94); }
+}
+.bombe-gameover-text {
+  font-family: "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+  font-stretch: condensed;
+  font-weight: 900;
+  text-transform: uppercase;
+  font-size: clamp(26px, 9vw, 44px);
+  line-height: 1.15;
+  color: #fff;
+  text-shadow: 0 0 14px rgba(255,0,0,.85);
+}
