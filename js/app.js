@@ -219,10 +219,11 @@ function renderChronoTick() {
   let cls = "";
   if (elapsed >= durationMs - 15 * 60000) cls = "warn";
   if (elapsed >= durationMs) cls = "danger";
-  const remaining = Math.max(0, durationMs - elapsed);
   wrap.innerHTML = `<div class="chrono ${cls}">
-    <div><div class="chrono-label">Temps restant</div><div class="chrono-time">${formatHMS(remaining)}</div></div>
-    <div style="text-align:right"><div class="chrono-label">Écoulé</div><div class="chrono-time" style="font-size:16px;">${formatHMS(elapsed)}</div></div>
+    <div><div class="chrono-label">Temps écoulé</div><div class="chrono-time">${formatHMS(elapsed)}</div></div>
+    <div style="text-align:right"><div class="chrono-label">Objectif</div><div class="chrono-time" style="font-size:16px;">${
+      CONTENT.config.durationMinutes || 120
+    } min</div></div>
   </div>`;
   handleChronoAlerts(elapsed, durationMs, maxMs);
 }
@@ -292,14 +293,6 @@ function renderPage() {
   $("#code-input").value = "";
   $("#code-feedback").textContent = "";
   if (isLastPage) setTimeout(() => $("#code-input")?.focus(), 50);
-
-  const pos = document.getElementById("mission-position");
-  if (pos) {
-    const total = totalEpreuvesForTeam(TEAM);
-    pos.textContent =
-      `Épreuve ${STATE.currentEpreuveIndex + 1} sur ${total}` +
-      (pages.length > 1 ? ` · page ${STATE.currentPageIndex + 1}/${pages.length}` : "");
-  }
 }
 
 function renderBlocks(page) {
@@ -308,15 +301,9 @@ function renderBlocks(page) {
   const idx = STATE.currentEpreuveIndex;
   if (!STATE.revealedBlocks[idx]) STATE.revealedBlocks[idx] = [];
   const revealedIds = STATE.revealedBlocks[idx];
-  const visibles = (page.blocks || []).filter((b) => b.visible);
-  visibles.forEach((block, i) => {
-    const el = renderBlock(block, revealedIds);
-    if (i === 0 && block.type === "texte") {
-      el.classList.add("block-narration");
-      el.dataset.narrateur = block.narrateur || "Transmission";
-    }
-    container.appendChild(el);
-  });
+  (page.blocks || [])
+    .filter((b) => b.visible)
+    .forEach((block) => container.appendChild(renderBlock(block, revealedIds)));
 }
 
 function renderBlock(block, revealedIds, opts) {
@@ -601,8 +588,19 @@ function onCodeWrong() {
   input.classList.add("shake");
   vibrate([80, 60, 80]);
   const feedback = $("#code-feedback");
-  feedback.textContent = "Code incorrect — vérifiez l'orthographe, sans accent.";
+  feedback.textContent = "Code incorrect, réessayez.";
   feedback.className = "code-feedback error";
+  showVillainMockery();
+}
+
+// ---- Moquerie de Déversoir sur mauvais code (visuelle uniquement, sans pénalité) ----
+
+function showVillainMockery() {
+  const el = $("#villain-mockery");
+  if (!el) return;
+  el.classList.remove("show");
+  void el.offsetWidth;
+  el.classList.add("show");
 }
 
 // ---- Palais du Rhin (prologue) -----------------------------------------------------
@@ -658,6 +656,7 @@ function onPalaisCodeWrong() {
   const feedback = $("#palais-code-feedback");
   feedback.textContent = "Code incorrect, réessayez.";
   feedback.className = "code-feedback error";
+  showVillainMockery();
 }
 
 function finishPalais() {
