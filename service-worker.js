@@ -12,6 +12,7 @@ const APP_SHELL = [
   "./manifest.json",
   "./content.json",
   "./css/style.css",
+  "./css/aquapolis-ameliorations.css"
   "./js/app.js",
   "./js/content.js",
   "./js/state.js",
