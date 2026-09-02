@@ -139,7 +139,27 @@
         <div class="card-pict">🧨</div>
         <div class="card-family">Désamorçage final</div>
       </div>
-      <button class="btn btn-danger btn-block" id="btn-bombe-arm" style="margin-top:8px;">🧨 Toucher pour armer la bombe</button>
+      <div class="caisse-wrap">
+        <div class="caisse">
+          <div class="caisse-shadow"></div>
+          <div class="caisse-body"></div>
+          <div class="caisse-lid"></div>
+          <div class="caisse-seam"></div>
+          <div class="caisse-handle"></div>
+          <div class="caisse-latch left"></div>
+          <div class="caisse-latch right"></div>
+          <div class="caisse-stencil">
+            <span class="ref">VNF · 07</span>
+            <span class="warn">SCELLÉ — NE PAS OUVRIR</span>
+          </div>
+          <div class="caisse-leds"><i class="on"></i><i></i></div>
+        </div>
+        <p class="muted" style="font-size:14px;">La charge est à l'intérieur. Dès l'ouverture, dix minutes commencent à courir et seul le code de neutralisation les arrête.</p>
+        <button class="btn btn-danger btn-block" id="btn-bombe-arm">
+          <span class="hold-fill"></span>
+          <span class="hold-label">🔓 Maintenir pour ouvrir la caisse</span>
+        </button>
+      </div>
     </div>
 
     <div class="card revelation" id="card-revelation" style="display:none;">
@@ -166,14 +186,21 @@
       </div>
 
       <div class="bombe-gameover" id="bombe-gameover" style="display:none;">
-        <div class="bombe-gameover-text">TROP TARD !<br>TOUT EST FICHU,<br>SAUVEZ-VOUS !!!</div>
+        <div class="bombe-gameover-text">Strasbourg<br>est sous l'eau</div>
+        <p class="bombe-gameover-sub">La dernière lettre est arrivée trop tard. Le canal a emporté les quais.</p>
         <button class="small-link" id="btn-bombe-retry" style="color:rgba(255,255,255,.65);">Réessayer</button>
+      </div>
+
+      <div class="bombe-win" id="bombe-win" style="display:none;">
+        <div class="bombe-win-time" id="bombe-win-time">00:00</div>
+        <div class="bombe-win-label">minuteur arrêté</div>
+        <div class="bombe-win-text">BRAVO !<br>La bombe est désamorcée,<br>Strasbourg est sauvée !</div>
       </div>
     </div>
 
     <div class="bombe-keypad" id="bombe-keypad"></div>
 
-    <button class="btn btn-gold btn-block" id="btn-bombe-continue" style="display:none;">Continuer ➜</button>
+    <button class="btn btn-gold btn-block" id="btn-bombe-continue" style="display:none;">Mais où est Déversoir ? ➜</button>
   </section>
 
   <section class="view" id="view-final">
