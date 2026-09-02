@@ -811,3 +811,86 @@ p { line-height: 1.5; margin: 0; }
   font-size: clamp(20px, 6.4vw, 32px);
   line-height: 1.2; color: #fff; text-wrap: pretty;
 }
+
+/* Épreuve de la bombe en paysage --------------------------------------------
+   L'app entière reste conçue pour le portrait ; seul l'écran de la bombe
+   profite de toute la largeur quand le téléphone est tourné. En portrait, une
+   invitation à tourner l'appareil recouvre l'écran (le minuteur continue).
+   La classe .on-bombe est posée sur <body> par show() (js/app.js). */
+
+.bombe-rotate { display: none; }
+
+@media (orientation: portrait) {
+  body.on-bombe .bombe-rotate {
+    position: fixed;
+    inset: 0;
+    z-index: 70;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    padding: 32px 28px;
+    text-align: center;
+    background: rgba(7,20,39,.96);
+  }
+  .bombe-rotate-icon {
+    font-size: 64px;
+    animation: bombeRotateTilt 2.4s ease-in-out infinite;
+  }
+  @keyframes bombeRotateTilt {
+    0%, 100% { transform: rotate(0deg); }
+    50% { transform: rotate(-90deg); }
+  }
+  .bombe-rotate-text {
+    font-family: var(--font-display);
+    font-size: clamp(22px, 7vw, 30px);
+    color: var(--white);
+  }
+  .bombe-rotate-sub {
+    font-size: 15px;
+    line-height: 1.6;
+    color: rgba(255,255,255,.7);
+    max-width: 28ch;
+    text-wrap: pretty;
+  }
+}
+
+@media (orientation: landscape) {
+  /* On récupère toute la hauteur : plus d'en-tête, de chrono ni de pied de page. */
+  body.on-bombe .header,
+  body.on-bombe #chrono-wrap,
+  body.on-bombe .footer-note,
+  body.on-bombe .sound-toggle { display: none; }
+
+  body.on-bombe .app {
+    max-width: none;
+    height: 100vh;
+    padding: 10px calc(10px + env(safe-area-inset-right)) 10px calc(10px + env(safe-area-inset-left));
+  }
+
+  /* Photo à gauche, clavier et bouton de suite à droite. */
+  body.on-bombe #view-bombe.active {
+    display: grid;
+    grid-template-columns: 1.12fr 1fr;
+    grid-template-rows: 1fr auto;
+    gap: 10px;
+    align-items: center;
+    height: 100%;
+  }
+  body.on-bombe #view-bombe .bombe-stage {
+    grid-area: 1 / 1 / 3 / 2;
+    align-self: center;
+  }
+  body.on-bombe #view-bombe .bombe-keypad {
+    grid-area: 1 / 2 / 2 / 3;
+    margin-top: 0;
+    align-content: center;
+  }
+  body.on-bombe #view-bombe #btn-bombe-continue { grid-area: 2 / 2 / 3 / 3; }
+
+  body.on-bombe .bombe-key { height: 38px; font-size: 14px; }
+  body.on-bombe .bombe-led { font-size: clamp(16px, 3.4vw, 34px); }
+  body.on-bombe .bombe-lcd { font-size: clamp(9px, 1.7vw, 16px); }
+  body.on-bombe .bombe-lcd-label { font-size: clamp(5px, .9vw, 9px); }
+}
