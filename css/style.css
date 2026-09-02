@@ -716,3 +716,98 @@ p { line-height: 1.5; margin: 0; }
   color: #fff;
   text-shadow: 0 0 14px rgba(255,0,0,.85);
 }
+
+/* Refonte visuelle de l'épreuve de la bombe (caisse scellée, échec, réussite) */
+
+/* ---- Caisse scellée (remplace le bouton "armer" dans #card-bombe-launch) ---- */
+
+.caisse-wrap { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+
+.caisse {
+  position: relative;
+  width: 100%;
+  max-width: 260px;
+  height: 176px;
+  flex: none;
+}
+.caisse-shadow {
+  position: absolute; left: 14px; right: 14px; bottom: 0; height: 24px;
+  border-radius: 50%; background: rgba(0,0,0,.55); filter: blur(9px);
+}
+.caisse-body {
+  position: absolute; left: 0; right: 0; bottom: 10px; height: 134px;
+  border-radius: 10px 10px 14px 14px;
+  background: linear-gradient(#2b3947, #151e28 62%, #0e151d);
+  border: 1px solid #3a4b5c;
+  box-shadow: inset 0 2px 0 rgba(255,255,255,.07), 0 14px 30px rgba(0,0,0,.55);
+}
+.caisse-lid {
+  position: absolute; left: 0; right: 0; top: 4px; height: 58px;
+  border-radius: 12px 12px 4px 4px;
+  background: linear-gradient(#3a4a5a, #222e3b);
+  border: 1px solid #46586a;
+  box-shadow: inset 0 2px 0 rgba(255,255,255,.1);
+}
+.caisse-seam { position: absolute; left: 0; right: 0; top: 60px; height: 5px; background: linear-gradient(#0a0f15, #1b2530); }
+.caisse-handle {
+  position: absolute; left: 50%; top: -8px; width: 92px; height: 16px; margin-left: -46px;
+  border: 3px solid #55677a; border-bottom-color: transparent; border-radius: 8px;
+}
+.caisse-latch {
+  position: absolute; top: 50px; width: 34px; height: 28px; border-radius: 4px;
+  background: linear-gradient(#5d6f82, #2b3742);
+  border: 1px solid #6b7d90;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.18);
+}
+.caisse-latch.left { left: 22px; }
+.caisse-latch.right { right: 22px; }
+.caisse-stencil {
+  position: absolute; left: 0; right: 0; top: 86px;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  font-family: var(--font-display);
+  color: #7f93a7;
+}
+.caisse-stencil .ref { font-size: 15px; letter-spacing: .24em; }
+.caisse-stencil .warn { font-size: 9px; letter-spacing: .18em; font-family: "Courier New", monospace; color: #5d7085; }
+.caisse-leds { position: absolute; left: 14px; bottom: 20px; display: flex; gap: 7px; }
+.caisse-leds i { width: 7px; height: 7px; border-radius: 50%; background: #2f4a3a; }
+.caisse-leds i.on { background: #ffb03a; box-shadow: 0 0 9px rgba(255,176,58,.85); }
+
+/* Bouton "maintenir pour ouvrir" : jauge de remplissage sous le libellé */
+#btn-bombe-arm { position: relative; overflow: hidden; }
+#btn-bombe-arm .hold-fill {
+  position: absolute; left: 0; top: 0; bottom: 0; width: 0%;
+  background: rgba(255,255,255,.28);
+  transition: width .06s linear;
+  pointer-events: none;
+}
+#btn-bombe-arm .hold-label { position: relative; z-index: 1; }
+
+/* ---- Écran d'échec : remplace le libellé "TROP TARD" ---- */
+
+.bombe-gameover-text { font-size: clamp(24px, 8vw, 40px); }
+.bombe-gameover-sub {
+  font-family: "Courier New", monospace;
+  font-size: 13px; line-height: 1.7; color: rgba(255,255,255,.8);
+  max-width: 30ch; margin: -8px auto 0; text-wrap: pretty;
+}
+
+/* ---- Écran de réussite, plein cadre sur la bombe ---- */
+
+.bombe-win {
+  position: absolute; inset: 0; z-index: 10;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 10px; padding: 20px; text-align: center;
+  background: radial-gradient(90% 110% at 50% 40%, rgba(22,163,74,.28), rgba(5,16,12,.95) 70%);
+}
+.bombe-win-time {
+  font-family: "Courier New", monospace; font-weight: 900;
+  font-size: clamp(26px, 8vw, 44px); letter-spacing: .05em;
+  color: #4ade80; text-shadow: 0 0 14px rgba(74,222,128,.7);
+}
+.bombe-win-label { font-size: 10px; letter-spacing: .3em; text-transform: uppercase; color: rgba(255,255,255,.6); }
+.bombe-win-text {
+  font-family: var(--font-display);
+  font-size: clamp(20px, 6.4vw, 32px);
+  line-height: 1.2; color: #fff; text-wrap: pretty;
+}
