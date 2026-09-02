@@ -579,6 +579,8 @@ p { line-height: 1.5; margin: 0; }
 
 /* Mini-jeu de désamorçage (Épreuve finale) ----------------------------------- */
 
+#view-bombe { position: relative; }
+
 .bombe-stage {
   position: relative;
   width: 100%;
@@ -813,9 +815,11 @@ p { line-height: 1.5; margin: 0; }
 }
 
 /* Épreuve de la bombe en paysage --------------------------------------------
-   L'app entière reste conçue pour le portrait ; seul l'écran de la bombe
-   profite de toute la largeur quand le téléphone est tourné. En portrait, une
-   invitation à tourner l'appareil recouvre l'écran (le minuteur continue).
+   L'app entière reste conçue pour le portrait ; l'écran de la bombe, lui, se
+   joue plein écran en paysage : la photo occupe tout le cadre, le minuteur et
+   le code s'affichent DANS les écrans de la charge, et le clavier est posé
+   par-dessus. En portrait, une invitation à tourner l'appareil recouvre
+   l'écran (le minuteur continue de tourner derrière).
    La classe .on-bombe est posée sur <body> par show() (js/app.js). */
 
 .bombe-rotate { display: none; }
@@ -857,7 +861,7 @@ p { line-height: 1.5; margin: 0; }
 }
 
 @media (orientation: landscape) {
-  /* On récupère toute la hauteur : plus d'en-tête, de chrono ni de pied de page. */
+  /* Plein écran : ni en-tête, ni chrono, ni pied de page, ni bouton son. */
   body.on-bombe .header,
   body.on-bombe #chrono-wrap,
   body.on-bombe .footer-note,
@@ -866,31 +870,175 @@ p { line-height: 1.5; margin: 0; }
   body.on-bombe .app {
     max-width: none;
     height: 100vh;
-    padding: 10px calc(10px + env(safe-area-inset-right)) 10px calc(10px + env(safe-area-inset-left));
+    padding: 0;
   }
 
-  /* Photo à gauche, clavier et bouton de suite à droite. */
   body.on-bombe #view-bombe.active {
-    display: grid;
-    grid-template-columns: 1.12fr 1fr;
-    grid-template-rows: 1fr auto;
-    gap: 10px;
-    align-items: center;
-    height: 100%;
+    display: block;
+    position: relative;
+    height: 100vh;
+    overflow: hidden;
+    gap: 0;
+    background: #050a12;
   }
-  body.on-bombe #view-bombe .bombe-stage {
-    grid-area: 1 / 1 / 3 / 2;
-    align-self: center;
-  }
-  body.on-bombe #view-bombe .bombe-keypad {
-    grid-area: 1 / 2 / 2 / 3;
-    margin-top: 0;
-    align-content: center;
-  }
-  body.on-bombe #view-bombe #btn-bombe-continue { grid-area: 2 / 2 / 3 / 3; }
 
-  body.on-bombe .bombe-key { height: 38px; font-size: 14px; }
-  body.on-bombe .bombe-led { font-size: clamp(16px, 3.4vw, 34px); }
-  body.on-bombe .bombe-lcd { font-size: clamp(9px, 1.7vw, 16px); }
-  body.on-bombe .bombe-lcd-label { font-size: clamp(5px, .9vw, 9px); }
+  /* La photo est agrandie au-delà du cadre et recentrée sur la charge, en
+     conservant STRICTEMENT son ratio (1.792) : c'est ce qui garantit que les
+     positions en % de .bombe-led et .bombe-lcd-wrap restent calées sur les
+     vrais écrans de la bombe. Ne pas remplacer par un object-fit: cover. */
+  body.on-bombe #view-bombe .bombe-stage {
+    position: absolute;
+    left: 50%;
+    top: 32%;
+    transform: translate(-50%, -50%);
+    width: max(179.2vh, 135vw);
+    height: auto;
+    border-radius: 0;
+    box-shadow: none;
+    background: none;
+  }
+  body.on-bombe #view-bombe .bombe-bg { filter: brightness(.78) saturate(.9); }
+
+  /* Vignettage : concentre le regard sur la charge et détache le clavier. */
+  body.on-bombe #view-bombe::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+    background:
+      radial-gradient(120% 90% at 50% 30%, transparent 40%, rgba(5,10,18,.55) 78%, rgba(5,10,18,.9) 100%),
+      linear-gradient(transparent 55%, rgba(3,7,13,.94) 92%);
+  }
+
+  /* Clavier translucide posé sur la photo. */
+  body.on-bombe #view-bombe .bombe-keypad {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 3;
+    margin: 0;
+    gap: 6px;
+    padding: 12px calc(14px + env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) calc(14px + env(safe-area-inset-left));
+  }
+  body.on-bombe #view-bombe .bombe-keypad.disabled { display: none; }
+  body.on-bombe #view-bombe .bombe-key-row { gap: 6px; }
+  body.on-bombe #view-bombe .bombe-key {
+    height: clamp(30px, 9vh, 40px);
+    border-radius: 6px;
+    border: 1px solid rgba(255,255,255,.17);
+    background: rgba(255,255,255,.08);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+    box-shadow: none;
+    font-family: "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+    font-weight: 700;
+    font-size: clamp(13px, 2.4vh, 17px);
+    color: #fff;
+  }
+  body.on-bombe #view-bombe .bombe-key:active {
+    transform: none;
+    background: #5cd6e8;
+    color: #050a12;
+  }
+  body.on-bombe #view-bombe .bombe-key-clear {
+    background: none;
+    border-color: rgba(255,255,255,.17);
+    color: rgba(255,255,255,.75);
+    font-size: clamp(10px, 1.8vh, 12px);
+    letter-spacing: .1em;
+  }
+  body.on-bombe #view-bombe .bombe-key-validate {
+    background: #5cd6e8;
+    border-color: #5cd6e8;
+    color: #050a12;
+    font-size: clamp(10px, 1.8vh, 12px);
+    letter-spacing: .1em;
+  }
+
+  /* Afficheurs de la charge : plus grands, calés sur la photo agrandie. */
+  body.on-bombe #view-bombe .bombe-led { font-size: clamp(22px, 18vh, 80px); }
+  body.on-bombe #view-bombe .bombe-lcd { font-size: clamp(9px, 5vh, 24px); }
+  body.on-bombe #view-bombe .bombe-lcd-label { font-size: clamp(5px, 2.2vh, 10px); }
+
+  /* Bouton de suite, en bas à droite. */
+  body.on-bombe #view-bombe #btn-bombe-continue {
+    position: absolute;
+    left: clamp(28px, 6vw, 70px);
+    bottom: calc(22px + env(safe-area-inset-bottom));
+    z-index: 12;
+    width: auto;
+    min-height: 48px;
+    border-radius: 2px;
+    border-width: 0;
+    background: #5cd6e8;
+    color: #050a12;
+    font-family: "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    box-shadow: none;
+  }
+
+  /* Écrans de fin : plein cadre, texte ancré en bas à gauche. */
+  body.on-bombe #view-bombe .bombe-gameover,
+  body.on-bombe #view-bombe .bombe-win {
+    position: absolute;
+    inset: 0;
+    z-index: 11;
+    align-items: flex-start;
+    justify-content: flex-end;
+    text-align: left;
+    gap: 12px;
+    padding: 0 clamp(28px, 6vw, 70px) clamp(28px, 8vh, 52px);
+    animation: none;
+  }
+  body.on-bombe #view-bombe .bombe-gameover {
+    background: linear-gradient(rgba(5,5,5,.5) 0%, rgba(5,5,5,.9) 30%, rgba(5,5,5,.97) 46%);
+  }
+  body.on-bombe #view-bombe .bombe-win {
+    background: linear-gradient(rgba(5,10,18,.45) 0%, rgba(5,10,18,.88) 30%, rgba(5,10,18,.97) 46%);
+    padding-bottom: clamp(86px, 18vh, 124px);
+  }
+  body.on-bombe #view-bombe .bombe-gameover-text,
+  body.on-bombe #view-bombe .bombe-win-text {
+    font-family: "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+    font-stretch: condensed;
+    font-weight: 900;
+    text-transform: uppercase;
+    line-height: .98;
+    letter-spacing: -.01em;
+    color: #fff;
+    text-shadow: none;
+  }
+  body.on-bombe #view-bombe .bombe-gameover-text {
+    font-size: clamp(28px, 11vh, 58px);
+    max-width: 16ch;
+  }
+  body.on-bombe #view-bombe .bombe-win-text {
+    font-size: clamp(20px, 7.4vh, 42px);
+    max-width: 26ch;
+  }
+  body.on-bombe #view-bombe .bombe-gameover-sub {
+    font-size: clamp(12px, 2.4vh, 15px);
+    max-width: 46ch;
+    margin: 0;
+    color: rgba(255,255,255,.75);
+  }
+  body.on-bombe #view-bombe .bombe-win-time {
+    font-size: clamp(18px, 4vh, 28px);
+    letter-spacing: .28em;
+    color: #7fd8e8;
+    text-shadow: none;
+    order: -1;
+  }
+  body.on-bombe #view-bombe .bombe-win-label { letter-spacing: .3em; }
+  body.on-bombe #view-bombe #btn-bombe-retry {
+    padding: 12px 0;
+    font-size: 13px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+  }
 }
