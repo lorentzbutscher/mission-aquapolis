@@ -791,6 +791,8 @@ function renderBombeView() {
     led.textContent = "00:00";
   }
   $("#bombe-gameover").style.display = b.gameOver ? "flex" : "none";
+  $("#bombe-win").style.display = b.defused ? "flex" : "none";
+  if (b.defused) $("#bombe-win-time").textContent = formatMinSec(b.frozenRemainMs ?? 0);
   $("#bombe-keypad").classList.toggle("disabled", b.gameOver || b.defused);
   $("#btn-bombe-continue").style.display = b.defused ? "" : "none";
   renderBombeLcd();
@@ -889,7 +891,6 @@ function defuseBombe() {
   playBombeSuccess();
   vibrate([150, 80, 150]);
   renderBombeView();
-  setTimeout(finalizeBombeSuccess, 1800);
 }
 
 function finalizeBombeSuccess() {
@@ -908,6 +909,47 @@ function triggerBombeGameOver() {
   playBombeFail();
   vibrate([300, 100, 300, 100, 300]);
   renderBombeView();
+}
+
+// Ouverture de la caisse : appui maintenu ~0,9 s (évite l'ouverture accidentelle
+// et donne le geste "on descelle la caisse"). La jauge de progression est le
+// <span class="hold-fill"> du bouton.
+const BOMBE_HOLD_MS = 900;
+
+function wireBombeArmHold() {
+  const btn = $("#btn-bombe-arm");
+  if (!btn) return;
+  const fill = btn.querySelector(".hold-fill");
+  let raf = null;
+  let t0 = 0;
+
+  const reset = () => {
+    if (raf) cancelAnimationFrame(raf);
+    raf = null;
+    if (fill) fill.style.width = "0%";
+  };
+
+  const step = () => {
+    const p = Math.min(1, (Date.now() - t0) / BOMBE_HOLD_MS);
+    if (fill) fill.style.width = p * 100 + "%";
+    if (p >= 1) {
+      reset();
+      vibrate(120);
+      armBombeAndEnter();
+      return;
+    }
+    raf = requestAnimationFrame(step);
+  };
+
+  btn.addEventListener("pointerdown", (e) => {
+    e.preventDefault();
+    reset();
+    t0 = Date.now();
+    raf = requestAnimationFrame(step);
+  });
+  ["pointerup", "pointerleave", "pointercancel"].forEach((ev) =>
+    btn.addEventListener(ev, reset)
+  );
 }
 
 function retryBombe() {
@@ -1250,7 +1292,7 @@ function initListeners() {
   $("#btn-final-map").addEventListener("click", openMap);
   $("#btn-close-map").addEventListener("click", closeMap);
 
-  $("#btn-bombe-arm").addEventListener("click", armBombeAndEnter);
+  wireBombeArmHold();
   $("#btn-bombe-retry").addEventListener("click", retryBombe);
   $("#btn-bombe-continue").addEventListener("click", finalizeBombeSuccess);
 
