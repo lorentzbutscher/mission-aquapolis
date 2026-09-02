@@ -71,6 +71,8 @@ function show(viewId) {
   renderChronoTick();
   $("#btn-stop-game").style.display = STATE && STATE.status !== "not_started" ? "flex" : "none";
   document.body.classList.toggle("on-landing", viewId === "view-team-select");
+  // Écran de la bombe : passe en paysage (voir css "Épreuve de la bombe en paysage").
+  document.body.classList.toggle("on-bombe", viewId === "view-bombe");
 }
 
 function persist() {
