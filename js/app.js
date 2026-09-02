@@ -645,6 +645,7 @@ function showVillainMockery() {
 // ---- Palais du Rhin (prologue) -----------------------------------------------------
 
 function renderPalaisView() {
+  $("#palais-title").textContent = palaisData().titre || "🏛️ Palais du Rhin";
   const pages = palaisPages();
   if (!STATE.palais) STATE.palais = { pageIndex: 0, codeOk: false, flagOk: false, done: false };
   let idx = STATE.palais.pageIndex || 0;

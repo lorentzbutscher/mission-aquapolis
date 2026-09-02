@@ -108,6 +108,7 @@ function emptyPalais(color) {
     `<p>Attention n'interrogez que le bon pays ! Voici un indice pour vous aider à l'identifier : <strong>[Indice à renseigner]</strong></p>`;
   const page3 = `<p>${PALAIS_PAGE3[color] || ""}</p>`;
   return {
+    titre: "🏛️ Palais du Rhin",
     code: { valeur: "CCNR" },
     pages: [
       { blocks: [{ id: newBlockId(), type: "texte", visible: true, html: page1 }] },
@@ -262,6 +263,7 @@ async function loadAllData() {
     const expectedCount = color === "jaune" ? 4 : 3;
     while (team.epreuves.length < expectedCount) team.epreuves.push(emptyEpreuve(team.epreuves.length + 1));
     if (!team.palaisDuRhin || !team.palaisDuRhin.pages) team.palaisDuRhin = emptyPalais(color);
+    if (!team.palaisDuRhin.titre) team.palaisDuRhin.titre = "🏛️ Palais du Rhin";
     TEAMS_DATA[color] = team;
   }
   TEAMS_DATA[FINAL_KEY] = {
@@ -372,7 +374,7 @@ function renderTeamPanelHtml(color) {
     </div>
     <div class="epreuve-forms palais-forms">
       ${renderEpreuveForm(team.palaisDuRhin, "palais", {
-        hideTitre: true,
+        titreLabel: "Titre affiché en haut de l'écran",
         hideLieu: true,
         hideRevelation: true,
         alwaysVisible: true,
@@ -423,7 +425,7 @@ function renderEpreuveForm(ep, i, opts) {
       opts.hideTitre
         ? ""
         : `<div class="admin-card">
-      <div class="field"><label>Titre de l'épreuve</label><input class="ep-titre" value="${escapeHtml(ep.titre || "")}" /></div>
+      <div class="field"><label>${opts.titreLabel || "Titre de l'épreuve"}</label><input class="ep-titre" value="${escapeHtml(ep.titre || "")}" /></div>
     </div>`
     }
     ${
@@ -972,6 +974,7 @@ function readPalaisFromForm(color, panel) {
   const f = panel.querySelector('.epreuve-form[data-idx="palais"]');
   if (!f) return TEAMS_DATA[color].palaisDuRhin || emptyPalais(color);
   return {
+    titre: f.querySelector(".ep-titre").value.trim(),
     code: { valeur: f.querySelector(".ep-code-valeur").value.trim() },
     pages: (TEAMS_DATA[color].palaisDuRhin?.pages || [{ blocks: [] }]).map((p) => ({
       blocks: (p.blocks || []).map((b) => ({ ...b })),
