@@ -4,7 +4,7 @@
 // appels Firebase/Firestore ne sont JAMAIS interceptés (on laisse le réseau
 // natif gérer, sync.js gère déjà les échecs proprement).
 
-const CACHE_VERSION = "aquapolis-v23";
+const CACHE_VERSION = "aquapolis-v24";
 
 const APP_SHELL = [
   "./",
