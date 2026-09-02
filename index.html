@@ -185,17 +185,21 @@
         <div class="bombe-lcd" id="bombe-lcd">_ _ _ _ _</div>
       </div>
 
-      <div class="bombe-gameover" id="bombe-gameover" style="display:none;">
-        <div class="bombe-gameover-text">Strasbourg<br>est sous l'eau</div>
-        <p class="bombe-gameover-sub">La dernière lettre est arrivée trop tard. Le canal a emporté les quais.</p>
-        <button class="small-link" id="btn-bombe-retry" style="color:rgba(255,255,255,.65);">Réessayer</button>
-      </div>
+    </div>
 
-      <div class="bombe-win" id="bombe-win" style="display:none;">
-        <div class="bombe-win-time" id="bombe-win-time">00:00</div>
-        <div class="bombe-win-label">minuteur arrêté</div>
-        <div class="bombe-win-text">BRAVO !<br>La bombe est désamorcée,<br>Strasbourg est sauvée !</div>
-      </div>
+    <!-- Écrans de fin : volontairement HORS de .bombe-stage — en paysage la
+         photo est agrandie au-delà du cadre, un overlay placé dedans serait
+         décalé avec elle. -->
+    <div class="bombe-gameover" id="bombe-gameover" style="display:none;">
+      <div class="bombe-gameover-text">Strasbourg<br>est sous l'eau</div>
+      <p class="bombe-gameover-sub">La dernière lettre est arrivée trop tard. Le canal a emporté les quais.</p>
+      <button class="small-link" id="btn-bombe-retry" style="color:rgba(255,255,255,.65);">Réessayer</button>
+    </div>
+
+    <div class="bombe-win" id="bombe-win" style="display:none;">
+      <div class="bombe-win-time" id="bombe-win-time">00:00</div>
+      <div class="bombe-win-label">minuteur arrêté</div>
+      <div class="bombe-win-text">BRAVO !<br>La bombe est désamorcée,<br>Strasbourg est sauvée !</div>
     </div>
 
     <div class="bombe-keypad" id="bombe-keypad"></div>
