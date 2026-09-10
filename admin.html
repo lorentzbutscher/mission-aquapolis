@@ -6,7 +6,6 @@
 <title>Mission Aquapolis — Administration</title>
 <link rel="icon" href="./icons/icon-192.png" />
 <link rel="stylesheet" href="./css/style.css" />
-<link rel="stylesheet" href="./css/aquapolis-ameliorations.css" />
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 </head>
 <body class="admin-body">
@@ -42,6 +41,12 @@
   </div>
 
   <div id="tab-general" class="tab-panel">
+    <div class="admin-card" style="border-color:#8a6d3b; background:#2a2416;">
+      <h3>🔄 Recharger le contenu Appli</h3>
+      <p class="muted" style="font-size:13px;">Réécrit dans la base les <strong>étapes 2 à 7</strong> des 5 équipes avec le texte exact du plan de référence : drapeaux corrigés, indices pays remplis, phases 4/5/6 et écran de fin. Ne touche pas aux noms d'équipe, à l'épreuve finale, ni au mini-jeu bombe. À faire une fois après un déploiement.</p>
+      <button class="btn btn-gold btn-block" id="btn-reload-appli-content">🔄 Recharger depuis le plan de référence</button>
+      <div class="muted" id="reload-appli-status" style="font-size:12px; margin-top:6px;"></div>
+    </div>
     <div class="admin-card">
       <h3>Paramètres de l'événement</h3>
       <div class="field"><label>Nom de l'événement</label><input id="cfg-eventName" /></div>
@@ -121,6 +126,5 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script type="module" src="./js/admin.js"></script>
-<script type="module" src="./js/admin-ui.js"></script>
 </body>
 </html>
