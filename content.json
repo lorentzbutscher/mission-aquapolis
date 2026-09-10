@@ -16,8 +16,32 @@
       "texte": "⚡ Alerte rouge sur les canaux de Strasbourg : le super-vilain Déversoir sème la panique parmi les écluses. Un renfort inattendu vient d'arriver en ville — un héros dont le nom seul suffit à redonner espoir aux agents VNF. Saisissez son nom pour débloquer la mission et rejoindre le combat."
     },
     "briefing": {
-      "texte": "Votre équipe doit résoudre <strong>{{count}} épreuves</strong> dans les rues de Strasbourg. Chaque épreuve indique un lieu, parfois un objet à trouver, et un code à valider.",
+      "texte": "Votre équipe va progresser dans les rues de Strasbourg au fil de <strong>7 phases</strong>. Chaque phase se débloque en saisissant le bon code — trouvé sur le terrain, par SMS, ou auprès des animateurs.",
       "consignes": "Durée cible : 2h00 — maximum 2h30. Restez groupés et prudents dans la circulation."
+    },
+    "phases": {
+      "phase4": {
+        "code": "1796",
+        "avant": "<p><strong>📍 Place Kléber</strong></p><p>Entrez l'année inscrite sous le Sphinx (au pied de la statue de Kléber) pour confirmer votre position.</p>",
+        "apres": "<p>Place Kléber ! Déversoir aurait été aperçu ici à plusieurs reprises. Nous avons missionné un détective qui a pignon sur rue autour de la place.</p><p>Trouvez-le et interrogez-le en envoyant son nom par SMS au CARING — il a pu voir quelque chose !</p>"
+      },
+      "phase5": {
+        "code": "CARING",
+        "avant": "<p><strong>📩 Communication sécurisée</strong></p><p>Déversoir a piraté nos serveurs et nous a mis sur écoute. Entrez le code reçu par SMS pour rétablir le contact.</p>",
+        "apres": "<p>Voici la destination finale. Code morse sonore : <strong>Z&nbsp;I&nbsp;X</strong>.</p><p>Si vous avez obtenu un indice, il peut peut-être vous servir…</p>"
+      },
+      "phase6": {
+        "code": "ZIX",
+        "avant": "<p><strong>🎯 Localisation de la bombe</strong></p><p>Écoutez le message morse et entrez le code de la destination finale.</p>",
+        "apres": "<p><strong>BOMBE</strong></p><p>Une fois toutes les forces réunies, concertez-vous et désamorcez la bombe ! Entrez le code trouvé sur place. Attention : chaque mauvaise réponse risque de faire exploser la bombe — soyez sûrs de vous !</p>"
+      }
+    },
+    "missionEnd": {
+      "texteBombe": "<p>3… 2… 1…</p><p>Ouf ! Vous avez sauvé Strasbourg d'une explosion massive ! BRAVO, et merci !</p><p>C'est un vrai succès, mais il reste une dernière chose à régler : mettre la main sur Déversoir ! Le Détective Nibel a réussi à localiser sa planque — il s'agit du 2 Quai des Moulins ! Vite, foncez l'attraper avant qu'il ne s'échappe !</p>",
+      "videoUrl": "",
+      "videoType": "",
+      "titre": "MISSION ACCOMPLIE",
+      "texte": "Strasbourg est sauve. La bombe est neutralisée, le Détective Nibel a mis la main sur les affaires de Déversoir au 2 quai des Moulins — mais l'homme s'est échappé, une dernière fois : « I'll be back. »\n\nAujourd'hui, ce sont vos réflexes, votre sang-froid et votre esprit d'équipe qui ont fait la différence. VNF peut compter sur vous.\n\nMerci d'avoir été les héros de cette mission. Déversoir reviendra. VNF aussi."
     }
   },
   "teams": {
@@ -148,7 +172,7 @@
                 "id": "blk_pr_bleu_1",
                 "type": "texte",
                 "visible": true,
-                "html": "<p>Ah les Bleus ! La meilleure équipe ! Pas comme les Rouges, Jaunes, Verts et Violets…</p><p>Mais ne perdons pas de temps, vous avez une mission à accomplir ! Puisque vous êtes place de la République, commençons par prendre des renseignements !</p><p>Il y a dans le Palais du Rhin une commission qui se réunit régulièrement. Entrez son acronyme dans la zone CODE ci-après pour avoir plus d'informations !</p>"
+                "html": "<p>Ah les Bleus ! La meilleure équipe ! Pas comme les Rouges…</p><p>Mais ne perdons pas de temps, vous avez une mission à accomplir ! Puisque vous êtes place de la République, commençons par prendre des renseignements !</p><p>Il y a dans le Palais du Rhin une commission qui se réunit régulièrement. Entrez son acronyme dans la zone CODE ci-après pour avoir plus d'informations !</p>"
               }
             ]
           },
@@ -158,13 +182,13 @@
                 "id": "blk_pr_bleu_2",
                 "type": "texte",
                 "visible": true,
-                "html": "<p>La Commission centrale pour la navigation du Rhin ! C'est parfait pour démarrer nos recherches ! Chaque équipe va devoir interroger un pays membre !</p><p>Attention n'interrogez que le bon pays ! Voici un indice pour vous aider à l'identifier : <strong>[Indice à renseigner]</strong></p>"
+                "html": "<p>La Commission centrale pour la navigation du Rhin ! C'est parfait pour démarrer nos recherches ! Chaque équipe va devoir interroger un pays membre.</p><p>Attention, n'interrogez que le bon pays ! Voici un indice pour vous aider à l'identifier : <strong>dans ce pays, l'artère fluviale de l'Europe s'appelle plutôt Waal ou Merwede !</strong></p>"
               },
               {
                 "id": "blk_pr_bleu_3",
                 "type": "drapeaux",
                 "visible": true,
-                "paysCorrect": "france"
+                "paysCorrect": "paysbas"
               }
             ]
           },
@@ -174,7 +198,7 @@
                 "id": "blk_pr_bleu_4",
                 "type": "texte",
                 "visible": true,
-                "html": "<p>La France ! Très bien, dans ce cas, allons directement voir la Préfecture qui se trouve sur cette même place pour obtenir leur soutien ! Rendez-vous devant la façade. Puis, pour confirmer votre position, envoyez l'année de fin de construction du bâtiment au CARING au 06 28 47 87 33.</p>"
+                "html": "<p>Les Pays-Bas ont vu un convoi suspect qui remontait le Rhin en partance de Rotterdam il y a de cela 4 jours ! La description d'une des personnes à bord pourrait coller avec Déversoir !</p><p>Continuons notre enquête ! Ouvrez maintenant l'enveloppe « PUZZLE » pour connaître votre prochaine destination. Une fois le lieu identifié, rendez-vous sur place, puis envoyez le code obtenu au CARING (06 28 47 87 33).</p>"
               }
             ]
           }
@@ -309,7 +333,7 @@
                 "id": "blk_pr_rouge_1",
                 "type": "texte",
                 "visible": true,
-                "html": "<p>Ah les Rouges ! La meilleure équipe ! Pas comme les Bleus, Jaunes, Verts et Violets…</p><p>Mais ne perdons pas de temps, vous avez une mission à accomplir ! Puisque vous êtes place de la République, commençons par prendre des renseignements !</p><p>Il y a dans le Palais du Rhin une commission qui se réunit régulièrement. Entrez son acronyme dans la zone CODE ci-après pour avoir plus d'informations !</p>"
+                "html": "<p>Ah les Rouges ! La meilleure équipe ! Pas comme les Jaunes…</p><p>Mais ne perdons pas de temps, vous avez une mission à accomplir ! Puisque vous êtes place de la République, commençons par prendre des renseignements !</p><p>Il y a dans le Palais du Rhin une commission qui se réunit régulièrement. Entrez son acronyme dans la zone CODE ci-après pour avoir plus d'informations !</p>"
               }
             ]
           },
@@ -319,7 +343,7 @@
                 "id": "blk_pr_rouge_2",
                 "type": "texte",
                 "visible": true,
-                "html": "<p>La Commission centrale pour la navigation du Rhin ! C'est parfait pour démarrer nos recherches ! Chaque équipe va devoir interroger un pays membre !</p><p>Attention n'interrogez que le bon pays ! Voici un indice pour vous aider à l'identifier : <strong>[Indice à renseigner]</strong></p>"
+                "html": "<p>La Commission centrale pour la navigation du Rhin ! C'est parfait pour démarrer nos recherches ! Chaque équipe va devoir interroger un pays membre.</p><p>Attention, n'interrogez que le bon pays ! Voici un indice pour vous aider à l'identifier : <strong>à la sortie de ce pays, le Rhin a un bassin versant de 36 000 km² !</strong></p>"
               },
               {
                 "id": "blk_pr_rouge_3",
@@ -335,7 +359,7 @@
                 "id": "blk_pr_rouge_4",
                 "type": "texte",
                 "visible": true,
-                "html": "<p>Les Suisses ont vu un convoi suspect qui descendait le Rhin depuis Bâle il y a de cela 2 jours ! La description d'une des personnes à bord pourrait coller avec Déversoir !</p>"
+                "html": "<p>Les Suisses ont vu un convoi suspect qui descendait le Rhin depuis Bâle il y a de cela 2 jours ! La description d'une des personnes à bord pourrait coller avec Déversoir ! Il y aurait des explosifs transportés — la situation est plus grave que prévu.</p><p>Nous allons devoir nous assurer que votre équipe a le niveau requis : vous allez passer des tests. Ouvrez l'enveloppe NDS pour connaître votre prochaine destination !</p>"
               }
             ]
           }
@@ -501,7 +525,7 @@
                 "id": "blk_pr_jaune_1",
                 "type": "texte",
                 "visible": true,
-                "html": "<p>Ah les Jaunes ! La meilleure équipe ! Pas comme les Bleus, Rouges, Verts et Violets…</p><p>Mais ne perdons pas de temps, vous avez une mission à accomplir ! Puisque vous êtes place de la République, commençons par prendre des renseignements !</p><p>Il y a dans le Palais du Rhin une commission qui se réunit régulièrement. Entrez son acronyme dans la zone CODE ci-après pour avoir plus d'informations !</p>"
+                "html": "<p>Ah les Jaunes ! La meilleure équipe ! Pas comme les Verts…</p><p>Mais ne perdons pas de temps, vous avez une mission à accomplir ! Puisque vous êtes place de la République, commençons par prendre des renseignements !</p><p>Il y a dans le Palais du Rhin une commission qui se réunit régulièrement. Entrez son acronyme dans la zone CODE ci-après pour avoir plus d'informations !</p>"
               }
             ]
           },
@@ -511,13 +535,13 @@
                 "id": "blk_pr_jaune_2",
                 "type": "texte",
                 "visible": true,
-                "html": "<p>La Commission centrale pour la navigation du Rhin ! C'est parfait pour démarrer nos recherches ! Chaque équipe va devoir interroger un pays membre !</p><p>Attention n'interrogez que le bon pays ! Voici un indice pour vous aider à l'identifier : <strong>[Indice à renseigner]</strong></p>"
+                "html": "<p>La Commission centrale pour la navigation du Rhin ! C'est parfait pour démarrer nos recherches ! Chaque équipe va devoir interroger un pays membre.</p><p>Attention, n'interrogez que le bon pays ! Voici un indice pour vous aider à l'identifier : <strong>c'est le seul pays qui n'est pas bordé ou traversé par le Rhin !</strong></p>"
               },
               {
                 "id": "blk_pr_jaune_3",
                 "type": "drapeaux",
                 "visible": true,
-                "paysCorrect": "allemagne"
+                "paysCorrect": "belgique"
               }
             ]
           },
@@ -527,7 +551,7 @@
                 "id": "blk_pr_jaune_4",
                 "type": "texte",
                 "visible": true,
-                "html": "<p>Les Allemands ont vu un convoi suspect qui remontait le Rhin depuis Coblence il y a de cela 2 jours ! La description d'une des personnes à bord pourrait coller avec Déversoir !</p>"
+                "html": "<p>Les Belges n'ont rien vu ! D'ailleurs on se demande pourquoi ils siègent à la CCNR… Mais le représentant belge a tout de même réussi, en échange d'une bière et de quelques frites, à obtenir l'info : les Suisses auraient aperçu un convoi suspect qui descendait le Rhin depuis Bâle il y a de cela 2 jours ! La description d'une des personnes à bord pourrait coller avec Déversoir !</p><p>Continuons notre enquête ! Ouvrez maintenant l'enveloppe « PUZZLE » pour connaître votre prochaine destination. Une fois le lieu identifié, rendez-vous sur place, puis envoyez le code obtenu au CARING (06 28 47 87 33).</p>"
               }
             ]
           }
@@ -662,7 +686,7 @@
                 "id": "blk_pr_vert_1",
                 "type": "texte",
                 "visible": true,
-                "html": "<p>Ah les Verts ! La meilleure équipe ! Pas comme les Bleus, Rouges, Jaunes et Violets…</p><p>Mais ne perdons pas de temps, vous avez une mission à accomplir ! Puisque vous êtes place de la République, commençons par prendre des renseignements !</p><p>Il y a dans le Palais du Rhin une commission qui se réunit régulièrement. Entrez son acronyme dans la zone CODE ci-après pour avoir plus d'informations !</p>"
+                "html": "<p>Ah les Verts ! La meilleure équipe ! Pas comme les Violets…</p><p>Mais ne perdons pas de temps, vous avez une mission à accomplir ! Puisque vous êtes place de la République, commençons par prendre des renseignements !</p><p>Il y a dans le Palais du Rhin une commission qui se réunit régulièrement. Entrez son acronyme dans la zone CODE ci-après pour avoir plus d'informations !</p>"
               }
             ]
           },
@@ -672,13 +696,13 @@
                 "id": "blk_pr_vert_2",
                 "type": "texte",
                 "visible": true,
-                "html": "<p>La Commission centrale pour la navigation du Rhin ! C'est parfait pour démarrer nos recherches ! Chaque équipe va devoir interroger un pays membre !</p><p>Attention n'interrogez que le bon pays ! Voici un indice pour vous aider à l'identifier : <strong>[Indice à renseigner]</strong></p>"
+                "html": "<p>La Commission centrale pour la navigation du Rhin ! C'est parfait pour démarrer nos recherches ! Chaque équipe va devoir interroger un pays membre.</p><p>Attention, n'interrogez que le bon pays ! Voici un indice pour vous aider à l'identifier : <strong>le Rhin parcourt ce pays sur 865 km !</strong></p>"
               },
               {
                 "id": "blk_pr_vert_3",
                 "type": "drapeaux",
                 "visible": true,
-                "paysCorrect": "belgique"
+                "paysCorrect": "allemagne"
               }
             ]
           },
@@ -688,7 +712,7 @@
                 "id": "blk_pr_vert_4",
                 "type": "texte",
                 "visible": true,
-                "html": "<p>Les Belges n'ont rien vu ! D'ailleurs on se demande ce qu'ils font pour siéger à la CCNR. Mais le représentant belge a tout de même réussi, en l'échange d'une bière et de quelques frites, à avoir l'info que les Suisses auraient aperçu un convoi suspect qui descendait le Rhin depuis Bâle il y a de cela 2 jours ! La description d'une des personnes à bord pourrait coller avec Déversoir !</p>"
+                "html": "<p>Les Allemands ont vu un convoi suspect qui remontait le Rhin depuis Coblence il y a de cela 2 jours ! La description d'une des personnes à bord pourrait coller avec Déversoir !</p><p>Il va falloir en apprendre davantage ! Envoyez « information » par SMS au CARING (06 28 47 87 33) pour connaître votre prochaine destination.</p>"
               }
             ]
           }
@@ -823,7 +847,7 @@
                 "id": "blk_pr_violet_1",
                 "type": "texte",
                 "visible": true,
-                "html": "<p>Ah les Violets ! La meilleure équipe ! Pas comme les Bleus, Rouges, Jaunes et Verts…</p><p>Mais ne perdons pas de temps, vous avez une mission à accomplir ! Puisque vous êtes place de la République, commençons par prendre des renseignements !</p><p>Il y a dans le Palais du Rhin une commission qui se réunit régulièrement. Entrez son acronyme dans la zone CODE ci-après pour avoir plus d'informations !</p>"
+                "html": "<p>Ah les Violets ! La meilleure équipe ! Pas comme les Bleus…</p><p>Mais ne perdons pas de temps, vous avez une mission à accomplir ! Puisque vous êtes place de la République, commençons par prendre des renseignements !</p><p>Il y a dans le Palais du Rhin une commission qui se réunit régulièrement. Entrez son acronyme dans la zone CODE ci-après pour avoir plus d'informations !</p>"
               }
             ]
           },
@@ -833,13 +857,13 @@
                 "id": "blk_pr_violet_2",
                 "type": "texte",
                 "visible": true,
-                "html": "<p>La Commission centrale pour la navigation du Rhin ! C'est parfait pour démarrer nos recherches ! Chaque équipe va devoir interroger un pays membre !</p><p>Attention n'interrogez que le bon pays ! Voici un indice pour vous aider à l'identifier : <strong>[Indice à renseigner]</strong></p>"
+                "html": "<p>La Commission centrale pour la navigation du Rhin ! C'est parfait pour démarrer nos recherches ! Chaque équipe va devoir interroger un pays membre.</p><p>Attention, n'interrogez que le bon pays ! Voici un indice pour vous aider à l'identifier : <strong>c'est le seul pays qui « avait » une centrale nucléaire implantée le long du Rhin. D'ailleurs, elle a été fermée suite à des tentatives de sabotage de la part de Déversoir !</strong></p>"
               },
               {
                 "id": "blk_pr_violet_3",
                 "type": "drapeaux",
                 "visible": true,
-                "paysCorrect": "paysbas"
+                "paysCorrect": "france"
               }
             ]
           },
@@ -849,7 +873,7 @@
                 "id": "blk_pr_violet_4",
                 "type": "texte",
                 "visible": true,
-                "html": "<p>Les Pays-Bas ont vu un convoi suspect qui remontait le Rhin en partance de Rotterdam il y a de cela 4 jours ! La description d'une des personnes à bord pourrait coller avec Déversoir !</p>"
+                "html": "<p>La France ! Très bien, dans ce cas, allons directement voir la Préfecture qui se trouve sur cette même place pour obtenir leur soutien ! Rendez-vous devant la façade.</p><p>Puis, pour confirmer votre position, envoyez l'année de fin de construction du bâtiment au CARING (06 28 47 87 33).</p>"
               }
             ]
           }
