@@ -23,17 +23,23 @@
       "phase4": {
         "code": "1796",
         "avant": "<p><strong>📍 Place Kléber</strong></p><p>Entrez l'année inscrite sous le Sphinx (au pied de la statue de Kléber) pour confirmer votre position.</p>",
-        "apres": "<p>Place Kléber ! Déversoir aurait été aperçu ici à plusieurs reprises. Nous avons missionné un détective qui a pignon sur rue autour de la place.</p><p>Trouvez-le et interrogez-le en envoyant son nom par SMS au CARING — il a pu voir quelque chose !</p>"
+        "apres": "<p>Place Kléber ! Déversoir aurait été aperçu ici à plusieurs reprises. Nous avons missionné un détective qui a pignon sur rue autour de la place.</p><p>Trouvez-le et interrogez-le en envoyant son nom par SMS au CARING — il a pu voir quelque chose !</p>",
+        "audioUrl": "",
+        "audioLabel": "Message codé"
       },
       "phase5": {
         "code": "CARING",
         "avant": "<p><strong>📩 Communication sécurisée</strong></p><p>Déversoir a piraté nos serveurs et nous a mis sur écoute. Entrez le code reçu par SMS pour rétablir le contact.</p>",
-        "apres": "<p>Voici la destination finale. Code morse sonore : <strong>Z&nbsp;I&nbsp;X</strong>.</p><p>Si vous avez obtenu un indice, il peut peut-être vous servir…</p>"
+        "apres": "<p>Voici la destination finale. Code morse sonore : <strong>Z&nbsp;I&nbsp;X</strong>.</p><p>Si vous avez obtenu un indice, il peut peut-être vous servir…</p>",
+        "audioUrl": "",
+        "audioLabel": "Message codé"
       },
       "phase6": {
         "code": "ZIX",
         "avant": "<p><strong>🎯 Localisation de la bombe</strong></p><p>Écoutez le message morse et entrez le code de la destination finale.</p>",
-        "apres": "<p><strong>BOMBE</strong></p><p>Une fois toutes les forces réunies, concertez-vous et désamorcez la bombe ! Entrez le code trouvé sur place. Attention : chaque mauvaise réponse risque de faire exploser la bombe — soyez sûrs de vous !</p>"
+        "apres": "<p><strong>BOMBE</strong></p><p>Une fois toutes les forces réunies, concertez-vous et désamorcez la bombe ! Entrez le code trouvé sur place. Attention : chaque mauvaise réponse risque de faire exploser la bombe — soyez sûrs de vous !</p>",
+        "audioUrl": "./assets/audio/morse_zix.m4a",
+        "audioLabel": "Message morse — destination finale"
       }
     },
     "missionEnd": {
