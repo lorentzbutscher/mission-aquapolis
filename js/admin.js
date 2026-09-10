@@ -220,6 +220,8 @@ function defaultConfig() {
         avant: "<p><strong>🎯 Localisation de la bombe</strong></p><p>Écoutez le message morse et entrez le code de la destination finale.</p>",
         apres:
           "<p><strong>BOMBE</strong></p><p>Une fois toutes les forces réunies, concertez-vous et désamorcez la bombe ! Entrez le code trouvé sur place. Attention : chaque mauvaise réponse risque de faire exploser la bombe — soyez sûrs de vous !</p>",
+        audioUrl: "./assets/audio/morse_zix.m4a",
+        audioLabel: "Message morse — destination finale",
       },
     },
     missionEnd: {
@@ -320,6 +322,9 @@ function renderGeneral() {
     $(`#cfg-${k}-code`).value = (ph[k] && ph[k].code) || "";
     $(`#cfg-${k}-avant`).value = (ph[k] && ph[k].avant) || "";
     $(`#cfg-${k}-apres`).value = (ph[k] && ph[k].apres) || "";
+    $(`#cfg-${k}-audiolabel`).value = (ph[k] && ph[k].audioLabel) || "";
+    $(`#cfg-${k}-audiourl`).value = (ph[k] && ph[k].audioUrl) || "";
+    $(`#cfg-${k}-audiostatus`).textContent = ph[k] && ph[k].audioUrl ? "✅ Son enregistré" : "";
   }
   const me = CONFIG_DATA.missionEnd || {};
   $("#cfg-missionend-bombe").value = me.texteBombe || "";
@@ -373,16 +378,22 @@ $("#btn-save-general").addEventListener("click", async () => {
         code: $("#cfg-phase4-code").value.trim(),
         avant: $("#cfg-phase4-avant").value.trim(),
         apres: $("#cfg-phase4-apres").value.trim(),
+        audioLabel: $("#cfg-phase4-audiolabel").value.trim(),
+        audioUrl: $("#cfg-phase4-audiourl").value.trim(),
       },
       phase5: {
         code: $("#cfg-phase5-code").value.trim(),
         avant: $("#cfg-phase5-avant").value.trim(),
         apres: $("#cfg-phase5-apres").value.trim(),
+        audioLabel: $("#cfg-phase5-audiolabel").value.trim(),
+        audioUrl: $("#cfg-phase5-audiourl").value.trim(),
       },
       phase6: {
         code: $("#cfg-phase6-code").value.trim(),
         avant: $("#cfg-phase6-avant").value.trim(),
         apres: $("#cfg-phase6-apres").value.trim(),
+        audioLabel: $("#cfg-phase6-audiolabel").value.trim(),
+        audioUrl: $("#cfg-phase6-audiourl").value.trim(),
       },
     },
     missionEnd: {
@@ -407,22 +418,28 @@ $("#btn-save-general").addEventListener("click", async () => {
   }
 });
 
-// Envoi du fichier vidéo de fin vers Firebase Storage → remplit le champ URL.
-$("#cfg-missionend-videofile").addEventListener("change", async (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-  const status = $("#cfg-missionend-videostatus");
-  status.textContent = "Envoi en cours…";
-  try {
-    const url = await uploadBlockImage(file, (p) => {
-      status.textContent = `Envoi en cours… ${Math.round(p * 100)}%`;
-    });
-    $("#cfg-missionend-videourl").value = url;
-    status.textContent = "✅ Vidéo envoyée — n'oubliez pas d'enregistrer.";
-  } catch (err) {
-    status.textContent = "❌ Échec de l'envoi : " + (err.message || "erreur inconnue");
-  }
-});
+// Envoi de fichiers média (vidéo de fin, sons des phases) vers Firebase Storage.
+function wireMediaUpload(fileInputId, urlInputId, statusId, okLabel) {
+  $("#" + fileInputId).addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const status = $("#" + statusId);
+    status.textContent = "Envoi en cours…";
+    try {
+      const url = await uploadBlockImage(file, (p) => {
+        status.textContent = `Envoi en cours… ${Math.round(p * 100)}%`;
+      });
+      $("#" + urlInputId).value = url;
+      status.textContent = okLabel + " — n'oubliez pas d'enregistrer.";
+    } catch (err) {
+      status.textContent = "❌ Échec de l'envoi : " + (err.message || "erreur inconnue");
+    }
+  });
+}
+wireMediaUpload("cfg-missionend-videofile", "cfg-missionend-videourl", "cfg-missionend-videostatus", "✅ Vidéo envoyée");
+wireMediaUpload("cfg-phase4-audiofile", "cfg-phase4-audiourl", "cfg-phase4-audiostatus", "✅ Son envoyé");
+wireMediaUpload("cfg-phase5-audiofile", "cfg-phase5-audiourl", "cfg-phase5-audiostatus", "✅ Son envoyé");
+wireMediaUpload("cfg-phase6-audiofile", "cfg-phase6-audiourl", "cfg-phase6-audiostatus", "✅ Son envoyé");
 
 // ---- Onglets équipe (+ onglet "Épreuve finale") --------------------------------------
 

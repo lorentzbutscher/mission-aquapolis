@@ -770,6 +770,21 @@ function renderGenericPhase(key) {
   $("#phase-title").textContent = "Phase " + num;
   renderPhaseDots();
   $("#phase-avant").innerHTML = cfg.avant || "";
+
+  // Lecteur audio optionnel (ex. message morse « ZIX » sur la phase 6).
+  const audioCard = $("#phase-audio");
+  const audioUrl = (cfg.audioUrl || "").trim();
+  if (audioUrl) {
+    $("#phase-audio-label").textContent = cfg.audioLabel || "Message codé";
+    const pw = $("#phase-audio-player");
+    pw.innerHTML = "";
+    pw.appendChild(buildAudioPlayer(audioUrl));
+    audioCard.style.display = "";
+  } else {
+    $("#phase-audio-player").innerHTML = "";
+    audioCard.style.display = "none";
+  }
+
   $("#phase-card-code").style.display = "";
   $("#phase-code-form").style.display = "";
   $("#phase-code-input").value = "";
@@ -1325,6 +1340,8 @@ function initListeners() {
     persist();
     renderPhaseFlow();
   });
+
+  $("#btn-phase-morse").addEventListener("click", openMorseModal);
 
   $("#btn-mission-end-reveal").addEventListener("click", () => {
     $("#mission-end-hero").style.display = "";
