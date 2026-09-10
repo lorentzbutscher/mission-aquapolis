@@ -367,3 +367,31 @@ body.aq-shell { padding-top: 62px; }
 /* --- Écran de code d'accès --- */
 #access-intro-text { font-size: 19px; line-height: 1.65; }
 .access-code-input { font-size: 24px; }
+
+
+/* ==========================================================================
+   11. ADMIN v2 — pages de réglages, menu enrichi
+   ========================================================================== */
+
+/* Une section de réglages à la fois (l'onglet Général comptait 8 sous-parties
+   dans un seul formulaire). Découpage assuré par js/admin-ui.js. */
+.aq-sec { display: none; }
+.aq-sec.active { display: block; animation: aqSecIn .18s ease; }
+@keyframes aqSecIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.aq-sec > h3:first-child { margin-top: 0 !important; }
+.aq-sec > .admin-card { margin-bottom: 0; }
+
+#btn-save-general { position: sticky; bottom: 16px; z-index: 6; }
+
+.aq-side-link {
+  display: block; width: 100%; text-align: left;
+  padding: 9px 12px; border-radius: 8px;
+  border: none; border-left: 3px solid transparent; background: transparent;
+  color: #93a3c2; font-family: inherit; font-size: 14px; font-weight: 600;
+  line-height: 1.35; cursor: pointer;
+}
+.aq-side-link:hover { background: #111c33; color: #fff; }
+.aq-side-link.current,
+.aq-side-item.current { background: #1a2540; color: #fff; border-left-color: #ffd12e; }
+.aq-side-gen { margin-left: 0; }
+.aq-side-item { border-left: 3px solid transparent; }
