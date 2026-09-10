@@ -461,7 +461,9 @@ function boot() {
   // inline l'emporte sur la feuille, la grille 2 colonnes ne prendrait pas.
   const screen = document.getElementById("admin-screen");
   const applyGrid = () => {
-    if (screen.style.display !== "none" && screen.style.display !== "grid") screen.style.display = "grid";
+    const d = screen.style.display;
+    if (d && d !== "none" && d !== "grid") screen.style.display = "grid";
+    else if (!d && getComputedStyle(screen).display !== "none") screen.style.display = "grid";
   };
   applyGrid();
   new MutationObserver(applyGrid).observe(screen, { attributes: true, attributeFilter: ["style"] });
@@ -485,10 +487,44 @@ function boot() {
   }
 }
 
-const ready = setInterval(() => {
+// --------------------------------------------------------------- amorçage
+// L'écran d'admin est masqué par style inline jusqu'à la connexion Firebase.
+// On observe l'attribut style au lieu d'interroger sa valeur en boucle, et on
+// pose un marqueur sur <body> pour pouvoir vérifier d'un coup d'œil que ce
+// script a bien démarré (Application > Elements : <body data-aq-ui="on">).
+let booted = false;
+
+function tryBoot(why) {
+  if (booted) return;
   const screen = document.getElementById("admin-screen");
-  if (screen && screen.style.display !== "none" && document.getElementById("cfg-eventName")) {
-    clearInterval(ready);
+  if (!screen || !document.getElementById("cfg-eventName")) return;
+  const cs = getComputedStyle(screen);
+  if (cs.display === "none" || cs.visibility === "hidden") return;
+  booted = true;
+  try {
     boot();
+    document.body.dataset.aqUi = "on";
+    console.log("[admin-ui] interface v2 active (" + why + ")");
+  } catch (err) {
+    document.body.dataset.aqUi = "erreur";
+    console.error("[admin-ui] échec du démarrage :", err);
   }
-}, 200);
+}
+
+function watch() {
+  const screen = document.getElementById("admin-screen");
+  if (!screen) return setTimeout(watch, 150);
+  console.log("[admin-ui] script chargé, en attente de la connexion");
+  tryBoot("déjà visible");
+  new MutationObserver(() => tryBoot("écran affiché"))
+    .observe(screen, { attributes: true, attributeFilter: ["style", "class", "hidden"] });
+  // Filet : certaines séquences de connexion n'écrivent pas le style inline.
+  const poll = setInterval(() => {
+    tryBoot("scrutation");
+    if (booted) clearInterval(poll);
+  }, 400);
+  setTimeout(() => clearInterval(poll), 60000);
+}
+
+if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", watch);
+else watch();
