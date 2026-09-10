@@ -6,7 +6,6 @@
 <title>Mission Aquapolis — Administration</title>
 <link rel="icon" href="./icons/icon-192.png" />
 <link rel="stylesheet" href="./css/style.css" />
-<link rel="stylesheet" href="./css/aquapolis-ameliorations.css" />
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 </head>
 <body class="admin-body">
@@ -59,9 +58,42 @@
       <div class="field">
         <label>Texte principal</label>
         <textarea id="cfg-briefing-texte"></textarea>
-        <p class="muted" style="font-size:12px;">Utilise <code>{{count}}</code> à l'endroit où le nombre d'épreuves de l'équipe doit s'afficher (variable selon l'équipe).</p>
       </div>
       <div class="field"><label>Consignes (ligne grisée en dessous)</label><textarea id="cfg-briefing-consignes"></textarea></div>
+
+      <h3 style="margin-top:18px;">🔐 Phases 4, 5 et 6 <span class="muted" style="font-weight:400;">(identiques pour les 5 équipes)</span></h3>
+      <p class="muted" style="font-size:12px;">Chaque phase affiche un texte, puis un champ code, puis un texte de révélation après validation.</p>
+
+      <div class="admin-card" style="background:#0e1730;">
+        <h4 style="margin:0 0 8px;">Phase 4 — année sous le Sphinx (Kléber)</h4>
+        <div class="field"><label>Code</label><input id="cfg-phase4-code" style="text-transform:uppercase;" /></div>
+        <div class="field"><label>Texte avant (consigne + champ code)</label><textarea id="cfg-phase4-avant"></textarea></div>
+        <div class="field"><label>Texte après validation</label><textarea id="cfg-phase4-apres"></textarea></div>
+      </div>
+      <div class="admin-card" style="background:#0e1730;">
+        <h4 style="margin:0 0 8px;">Phase 5 — code de rendez-vous (SMS)</h4>
+        <div class="field"><label>Code</label><input id="cfg-phase5-code" style="text-transform:uppercase;" /></div>
+        <div class="field"><label>Texte avant</label><textarea id="cfg-phase5-avant"></textarea></div>
+        <div class="field"><label>Texte après validation</label><textarea id="cfg-phase5-apres"></textarea></div>
+      </div>
+      <div class="admin-card" style="background:#0e1730;">
+        <h4 style="margin:0 0 8px;">Phase 6 — localisation de la bombe</h4>
+        <div class="field"><label>Code</label><input id="cfg-phase6-code" style="text-transform:uppercase;" /></div>
+        <div class="field"><label>Texte avant</label><textarea id="cfg-phase6-avant"></textarea></div>
+        <div class="field"><label>Texte après validation (mène au mini-jeu bombe)</label><textarea id="cfg-phase6-apres"></textarea></div>
+        <p class="muted" style="font-size:12px;">Le code de <strong>désamorçage</strong> de la bombe (SEMEH) se règle dans l'onglet « Épreuve finale ».</p>
+      </div>
+
+      <h3 style="margin-top:18px;">🏁 Écran de fin (phase 7)</h3>
+      <div class="field"><label>Texte "3…2…1… Ouf" (juste après le désamorçage)</label><textarea id="cfg-missionend-bombe"></textarea></div>
+      <div class="field">
+        <label>Vidéo Déversoir</label>
+        <input id="cfg-missionend-videourl" placeholder="Lien YouTube, ou envoie un fichier ci-dessous" />
+        <input type="file" accept="video/*" id="cfg-missionend-videofile" style="margin-top:6px;">
+        <div class="muted" id="cfg-missionend-videostatus" style="font-size:12px;"></div>
+      </div>
+      <div class="field"><label>Titre de l'écran de fin</label><input id="cfg-missionend-titre" /></div>
+      <div class="field"><label>Texte de l'écran de fin</label><textarea id="cfg-missionend-texte" style="min-height:140px;"></textarea></div>
 
       <h3 style="margin-top:18px;">Point de rassemblement final</h3>
       <div class="field"><label>Nom du lieu</label><input id="cfg-conv-name" /></div>
@@ -82,6 +114,5 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script type="module" src="./js/admin.js"></script>
-<script type="module" src="./js/admin-ui.js"></script>
 </body>
 </html>
