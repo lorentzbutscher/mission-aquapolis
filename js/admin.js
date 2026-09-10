@@ -74,39 +74,40 @@ function emptyTeam(color) {
 
 // ---- Palais du Rhin : prologue joué par les 5 équipes avant leur épreuve 1 ---------
 
-const PALAIS_AUTRES = {
-  bleu: "Rouges, Jaunes, Verts et Violets",
-  rouge: "Bleus, Jaunes, Verts et Violets",
-  jaune: "Bleus, Rouges, Verts et Violets",
-  vert: "Bleus, Rouges, Jaunes et Violets",
-  violet: "Bleus, Rouges, Jaunes et Verts",
-};
-const PALAIS_COULEUR = { bleu: "Bleus", rouge: "Rouges", jaune: "Jaunes", vert: "Verts", violet: "Violets" };
-const PALAIS_PAYS_CORRECT = { bleu: "france", rouge: "suisse", jaune: "allemagne", vert: "belgique", violet: "paysbas" };
-const PALAIS_PAGE3 = {
-  rouge:
-    "Les Suisses ont vu un convoi suspect qui descendait le Rhin depuis Bâle il y a de cela 2 jours ! La description d'une des personnes à bord pourrait coller avec Déversoir !",
-  bleu:
-    "La France ! Très bien, dans ce cas, allons directement voir la Préfecture qui se trouve sur cette même place pour obtenir leur soutien ! Rendez-vous devant la façade. Puis, pour confirmer votre position, envoyez l'année de fin de construction du bâtiment au CARING au 06 28 47 87 33.",
-  vert:
-    "Les Belges n'ont rien vu ! D'ailleurs on se demande ce qu'ils font pour siéger à la CCNR. Mais le représentant belge a tout de même réussi, en l'échange d'une bière et de quelques frites, à avoir l'info que les Suisses auraient aperçu un convoi suspect qui descendait le Rhin depuis Bâle il y a de cela 2 jours ! La description d'une des personnes à bord pourrait coller avec Déversoir !",
-  jaune:
-    "Les Allemands ont vu un convoi suspect qui remontait le Rhin depuis Coblence il y a de cela 2 jours ! La description d'une des personnes à bord pourrait coller avec Déversoir !",
+// Mapping et textes du Palais du Rhin — alignés sur journee_SEMEH_plan_global_v2.xlsx
+const PALAIS_PLURIEL = { bleu: "Bleus", rouge: "Rouges", jaune: "Jaunes", vert: "Verts", violet: "Violets" };
+const PALAIS_SUIVANT = { bleu: "Rouges", rouge: "Jaunes", jaune: "Verts", vert: "Violets", violet: "Bleus" };
+const PALAIS_PAYS_CORRECT = { bleu: "paysbas", rouge: "suisse", jaune: "belgique", vert: "allemagne", violet: "france" };
+const PALAIS_INDICE = {
+  bleu: "dans ce pays, l'artère fluviale de l'Europe s'appelle plutôt Waal ou Merwede !",
+  rouge: "à la sortie de ce pays, le Rhin a un bassin versant de 36 000 km² !",
+  jaune: "c'est le seul pays qui n'est pas bordé ou traversé par le Rhin !",
+  vert: "le Rhin parcourt ce pays sur 865 km !",
   violet:
-    "Les Pays-Bas ont vu un convoi suspect qui remontait le Rhin en partance de Rotterdam il y a de cela 4 jours ! La description d'une des personnes à bord pourrait coller avec Déversoir !",
+    "c'est le seul pays qui « avait » une centrale nucléaire implantée le long du Rhin. D'ailleurs, elle a été fermée suite à des tentatives de sabotage de la part de Déversoir !",
+};
+const PALAIS_PAGE3 = {
+  bleu:
+    "<p>Les Pays-Bas ont vu un convoi suspect qui remontait le Rhin en partance de Rotterdam il y a de cela 4 jours ! La description d'une des personnes à bord pourrait coller avec Déversoir !</p><p>Continuons notre enquête ! Ouvrez maintenant l'enveloppe « PUZZLE » pour connaître votre prochaine destination. Une fois le lieu identifié, rendez-vous sur place, puis envoyez le code obtenu au CARING (06 28 47 87 33).</p>",
+  rouge:
+    "<p>Les Suisses ont vu un convoi suspect qui descendait le Rhin depuis Bâle il y a de cela 2 jours ! La description d'une des personnes à bord pourrait coller avec Déversoir ! Il y aurait des explosifs transportés — la situation est plus grave que prévu.</p><p>Nous allons devoir nous assurer que votre équipe a le niveau requis : vous allez passer des tests. Ouvrez l'enveloppe NDS pour connaître votre prochaine destination !</p>",
+  jaune:
+    "<p>Les Belges n'ont rien vu ! D'ailleurs on se demande pourquoi ils siègent à la CCNR… Mais le représentant belge a tout de même réussi, en échange d'une bière et de quelques frites, à obtenir l'info : les Suisses auraient aperçu un convoi suspect qui descendait le Rhin depuis Bâle il y a de cela 2 jours ! La description d'une des personnes à bord pourrait coller avec Déversoir !</p><p>Continuons notre enquête ! Ouvrez maintenant l'enveloppe « PUZZLE » pour connaître votre prochaine destination. Une fois le lieu identifié, rendez-vous sur place, puis envoyez le code obtenu au CARING (06 28 47 87 33).</p>",
+  vert:
+    "<p>Les Allemands ont vu un convoi suspect qui remontait le Rhin depuis Coblence il y a de cela 2 jours ! La description d'une des personnes à bord pourrait coller avec Déversoir !</p><p>Il va falloir en apprendre davantage ! Envoyez « information » par SMS au CARING (06 28 47 87 33) pour connaître votre prochaine destination.</p>",
+  violet:
+    "<p>La France ! Très bien, dans ce cas, allons directement voir la Préfecture qui se trouve sur cette même place pour obtenir leur soutien ! Rendez-vous devant la façade.</p><p>Puis, pour confirmer votre position, envoyez l'année de fin de construction du bâtiment au CARING (06 28 47 87 33).</p>",
 };
 
 function emptyPalais(color) {
-  const couleur = PALAIS_COULEUR[color] || "Équipiers";
-  const autres = PALAIS_AUTRES[color] || "";
   const page1 =
-    `<p>Ah les ${couleur} ! La meilleure équipe ! Pas comme les ${autres}…</p>` +
+    `<p>Ah les ${PALAIS_PLURIEL[color] || "Héros"} ! La meilleure équipe ! Pas comme les ${PALAIS_SUIVANT[color] || "autres"}…</p>` +
     `<p>Mais ne perdons pas de temps, vous avez une mission à accomplir ! Puisque vous êtes place de la République, commençons par prendre des renseignements !</p>` +
     `<p>Il y a dans le Palais du Rhin une commission qui se réunit régulièrement. Entrez son acronyme dans la zone CODE ci-après pour avoir plus d'informations !</p>`;
   const page2 =
-    `<p>La Commission centrale pour la navigation du Rhin ! C'est parfait pour démarrer nos recherches ! Chaque équipe va devoir interroger un pays membre !</p>` +
-    `<p>Attention n'interrogez que le bon pays ! Voici un indice pour vous aider à l'identifier : <strong>[Indice à renseigner]</strong></p>`;
-  const page3 = `<p>${PALAIS_PAGE3[color] || ""}</p>`;
+    `<p>La Commission centrale pour la navigation du Rhin ! C'est parfait pour démarrer nos recherches ! Chaque équipe va devoir interroger un pays membre.</p>` +
+    `<p>Attention, n'interrogez que le bon pays ! Voici un indice pour vous aider à l'identifier : <strong>${PALAIS_INDICE[color] || "[Indice à renseigner]"}</strong></p>`;
+  const page3 = PALAIS_PAGE3[color] || "<p></p>";
   return {
     titre: "🏛️ Palais du Rhin",
     code: { valeur: "CCNR" },
@@ -115,7 +116,7 @@ function emptyPalais(color) {
       {
         blocks: [
           { id: newBlockId(), type: "texte", visible: true, html: page2 },
-          { id: newBlockId(), type: "drapeaux", visible: true, paysCorrect: PALAIS_PAYS_CORRECT[color] || "france" },
+          { id: newBlockId(), type: "drapeaux", visible: true, paysCorrect: PALAIS_PAYS_CORRECT[color] || "paysbas" },
         ],
       },
       { blocks: [{ id: newBlockId(), type: "texte", visible: true, html: page3 }] },
@@ -199,8 +200,35 @@ function defaultConfig() {
     },
     briefing: {
       texte:
-        "Votre équipe doit résoudre <strong>{{count}} épreuves</strong> dans les rues de Strasbourg. Chaque épreuve indique un lieu, parfois un objet à trouver, et un code à valider.",
+        "Votre équipe va progresser dans les rues de Strasbourg au fil de <strong>7 phases</strong>. Chaque phase se débloque en saisissant le bon code — trouvé sur le terrain, par SMS, ou auprès des animateurs.",
       consignes: "Durée cible : 2h00 — maximum 2h30. Restez groupés et prudents dans la circulation.",
+    },
+    phases: {
+      phase4: {
+        code: "1796",
+        avant: "<p><strong>📍 Place Kléber</strong></p><p>Entrez l'année inscrite sous le Sphinx (au pied de la statue de Kléber) pour confirmer votre position.</p>",
+        apres:
+          "<p>Place Kléber ! Déversoir aurait été aperçu ici à plusieurs reprises. Nous avons missionné un détective qui a pignon sur rue autour de la place.</p><p>Trouvez-le et interrogez-le en envoyant son nom par SMS au CARING — il a pu voir quelque chose !</p>",
+      },
+      phase5: {
+        code: "CARING",
+        avant: "<p><strong>📩 Communication sécurisée</strong></p><p>Déversoir a piraté nos serveurs et nous a mis sur écoute. Entrez le code reçu par SMS pour rétablir le contact.</p>",
+        apres: "<p>Voici la destination finale. Code morse sonore : <strong>Z&nbsp;I&nbsp;X</strong>.</p><p>Si vous avez obtenu un indice, il peut peut-être vous servir…</p>",
+      },
+      phase6: {
+        code: "ZIX",
+        avant: "<p><strong>🎯 Localisation de la bombe</strong></p><p>Écoutez le message morse et entrez le code de la destination finale.</p>",
+        apres:
+          "<p><strong>BOMBE</strong></p><p>Une fois toutes les forces réunies, concertez-vous et désamorcez la bombe ! Entrez le code trouvé sur place. Attention : chaque mauvaise réponse risque de faire exploser la bombe — soyez sûrs de vous !</p>",
+      },
+    },
+    missionEnd: {
+      texteBombe:
+        "<p>3… 2… 1…</p><p>Ouf ! Vous avez sauvé Strasbourg d'une explosion massive ! BRAVO, et merci !</p><p>C'est un vrai succès, mais il reste une dernière chose à régler : mettre la main sur Déversoir ! Le Détective Nibel a réussi à localiser sa planque — il s'agit du 2 Quai des Moulins ! Vite, foncez l'attraper avant qu'il ne s'échappe !</p>",
+      videoUrl: "",
+      titre: "MISSION ACCOMPLIE",
+      texte:
+        "Strasbourg est sauve. La bombe est neutralisée, le Détective Nibel a mis la main sur les affaires de Déversoir au 2 quai des Moulins — mais l'homme s'est échappé, une dernière fois : « I'll be back. »\n\nAujourd'hui, ce sont vos réflexes, votre sang-froid et votre esprit d'équipe qui ont fait la différence. VNF peut compter sur vous.\n\nMerci d'avoir été les héros de cette mission. Déversoir reviendra. VNF aussi.",
     },
     convergence: {
       name: "Place Benjamin Zix",
@@ -286,6 +314,20 @@ function renderGeneral() {
   const briefing = CONFIG_DATA.briefing || {};
   $("#cfg-briefing-texte").value = briefing.texte || "";
   $("#cfg-briefing-consignes").value = briefing.consignes || "";
+
+  const ph = CONFIG_DATA.phases || {};
+  for (const k of ["phase4", "phase5", "phase6"]) {
+    $(`#cfg-${k}-code`).value = (ph[k] && ph[k].code) || "";
+    $(`#cfg-${k}-avant`).value = (ph[k] && ph[k].avant) || "";
+    $(`#cfg-${k}-apres`).value = (ph[k] && ph[k].apres) || "";
+  }
+  const me = CONFIG_DATA.missionEnd || {};
+  $("#cfg-missionend-bombe").value = me.texteBombe || "";
+  $("#cfg-missionend-videourl").value = me.videoUrl || "";
+  $("#cfg-missionend-titre").value = me.titre || "";
+  $("#cfg-missionend-texte").value = me.texte || "";
+  $("#cfg-missionend-videostatus").textContent = me.videoUrl ? "✅ Vidéo enregistrée" : "";
+
   const conv = CONFIG_DATA.convergence || {};
   $("#cfg-conv-name").value = conv.name || "";
   $("#cfg-conv-detail").value = conv.detail || "";
@@ -326,6 +368,29 @@ $("#btn-save-general").addEventListener("click", async () => {
       texte: $("#cfg-briefing-texte").value.trim(),
       consignes: $("#cfg-briefing-consignes").value.trim(),
     },
+    phases: {
+      phase4: {
+        code: $("#cfg-phase4-code").value.trim(),
+        avant: $("#cfg-phase4-avant").value.trim(),
+        apres: $("#cfg-phase4-apres").value.trim(),
+      },
+      phase5: {
+        code: $("#cfg-phase5-code").value.trim(),
+        avant: $("#cfg-phase5-avant").value.trim(),
+        apres: $("#cfg-phase5-apres").value.trim(),
+      },
+      phase6: {
+        code: $("#cfg-phase6-code").value.trim(),
+        avant: $("#cfg-phase6-avant").value.trim(),
+        apres: $("#cfg-phase6-apres").value.trim(),
+      },
+    },
+    missionEnd: {
+      texteBombe: $("#cfg-missionend-bombe").value.trim(),
+      videoUrl: $("#cfg-missionend-videourl").value.trim(),
+      titre: $("#cfg-missionend-titre").value.trim(),
+      texte: $("#cfg-missionend-texte").value.trim(),
+    },
     convergence: {
       name: $("#cfg-conv-name").value.trim(),
       detail: $("#cfg-conv-detail").value.trim(),
@@ -339,6 +404,23 @@ $("#btn-save-general").addEventListener("click", async () => {
     flash("Paramètres généraux enregistrés ✅");
   } catch (err) {
     flash("Erreur : " + err.message, true);
+  }
+});
+
+// Envoi du fichier vidéo de fin vers Firebase Storage → remplit le champ URL.
+$("#cfg-missionend-videofile").addEventListener("change", async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const status = $("#cfg-missionend-videostatus");
+  status.textContent = "Envoi en cours…";
+  try {
+    const url = await uploadBlockImage(file, (p) => {
+      status.textContent = `Envoi en cours… ${Math.round(p * 100)}%`;
+    });
+    $("#cfg-missionend-videourl").value = url;
+    status.textContent = "✅ Vidéo envoyée — n'oubliez pas d'enregistrer.";
+  } catch (err) {
+    status.textContent = "❌ Échec de l'envoi : " + (err.message || "erreur inconnue");
   }
 });
 
@@ -378,9 +460,13 @@ function renderTeamPanelHtml(color) {
         hideLieu: true,
         hideRevelation: true,
         alwaysVisible: true,
-        codeHelp: "Ce code débloque la page 2 du Palais du Rhin (page 1 → page 2).",
-        pagesHelp: "Le bloc 🚩 « Sélecteur de drapeaux » (page 2) débloque automatiquement la page suivante quand le bon pays est cliqué. Le code (ci-dessus) ne concerne que la page 1.",
+        codeHelp: "Phase 2 — code CCNR. Débloque la page 2 (sélecteur de drapeaux, phase 3).",
+        pagesHelp: "Page 1 = intro + code CCNR (phase 2). Page 2 = indice + drapeaux (phase 3). Page 3 = texte « convoi suspect » propre à l'équipe.",
       })}
+    </div>
+
+    <div class="admin-card" style="border-color:#8a6d3b; background:#2a2416;">
+      <p class="muted" style="font-size:12px; margin:0;">⚠️ Les « épreuves numérotées » ci-dessous <strong>ne sont plus utilisées</strong> dans le jeu depuis le passage au déroulé en 7 phases. Les phases 4 à 7 se règlent dans l'onglet <strong>Général</strong>. Cette section est conservée pour archive.</p>
     </div>
 
     <div class="epreuve-tabs">

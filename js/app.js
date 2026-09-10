@@ -30,8 +30,18 @@ const ACCESS_CODE = "ETIENNE";
 const ACCESS_INTRO_DEFAULT =
   "⚡ Alerte rouge sur les canaux de Strasbourg : le super-vilain Déversoir sème la panique parmi les écluses. Un renfort inattendu vient d'arriver en ville — un héros dont le nom seul suffit à redonner espoir aux agents VNF. Saisissez son nom pour débloquer la mission et rejoindre le combat.";
 const BRIEFING_TEXTE_DEFAULT =
-  "Votre équipe doit résoudre <strong>{{count}} épreuves</strong> dans les rues de Strasbourg. Chaque épreuve indique un lieu, parfois un objet à trouver, et un code à valider.";
+  "Votre équipe va progresser dans les rues de Strasbourg au fil de <strong>7 phases</strong>. Chaque phase se débloque en saisissant le bon code — trouvé sur le terrain, par SMS, ou auprès des animateurs.";
 const BRIEFING_CONSIGNES_DEFAULT = "Durée cible : 2h00 — maximum 2h30. Restez groupés et prudents dans la circulation.";
+const CODE_ERROR_MSG = "Code invalide. Déversoir a peut-être intercepté vos communications… réessayez !";
+
+// Déroulé verrouillé — l'écran affiché dépend de STATE.phaseIndex (0-6).
+const PHASE_TOTAL = 7;
+const PHASE_KEYS = ["phase4", "phase5", "phase6"]; // phaseIndex 2/3/4 -> config.phases.*
+const PHASE_DEFAULTS = {
+  phase4: { code: "1796", avant: "<p>Entrez le code de la phase 4.</p>", apres: "" },
+  phase5: { code: "CARING", avant: "<p>Entrez le code de la phase 5.</p>", apres: "" },
+  phase6: { code: "ZIX", avant: "<p>Entrez le code de la phase 6.</p>", apres: "" },
+};
 
 const PAYS_META = {
   suisse: { img: "./assets/flags/flag_suisse.png", emoji: "🇨🇭", label: "Suisse" },
@@ -71,8 +81,6 @@ function show(viewId) {
   renderChronoTick();
   $("#btn-stop-game").style.display = STATE && STATE.status !== "not_started" ? "flex" : "none";
   document.body.classList.toggle("on-landing", viewId === "view-team-select");
-  // Écran de la bombe : passe en paysage (voir css "Épreuve de la bombe en paysage").
-  document.body.classList.toggle("on-bombe", viewId === "view-bombe");
 }
 
 function persist() {
@@ -180,17 +188,14 @@ function selectTeam(color) {
     return;
   }
 
-  if (STATE.status === "finished") {
-    renderFinalView();
-    show("view-final");
+  if (STATE.status === "finished" || STATE.phaseIndex >= 6) {
+    renderMissionEnd();
+    show("view-mission-end");
   } else if (STATE.status === "not_started") {
     renderStartView();
     show("view-start");
-  } else if (!STATE.palais?.done) {
-    renderPalaisView();
-    show("view-palais");
   } else {
-    showEpreuveOrBombe();
+    renderPhaseFlow();
   }
   startChrono();
 }
@@ -231,7 +236,8 @@ function renderChronoTick() {
     STATE.status !== "not_started" &&
     activeView !== "view-team-select" &&
     activeView !== "view-loading" &&
-    activeView !== "view-access-code";
+    activeView !== "view-access-code" &&
+    activeView !== "view-mission-end";
   if (!visible || !STATE.startedAt) {
     wrap.innerHTML = "";
     return;
@@ -289,17 +295,6 @@ function renderEpreuveView() {
   renderPage();
 }
 
-// Reprend directement sur l'écran de la bombe si elle a déjà été armée (ou en
-// game over) avant un rechargement de page ; sinon comportement normal.
-function showEpreuveOrBombe() {
-  const bombeOn = CONTENT.finalEpreuve?.bombeActive !== false;
-  if (bombeOn && isFinalEpreuve() && (bombeState().armedAt || bombeState().gameOver)) {
-    enterBombeScreen();
-  } else {
-    renderEpreuveView();
-    show("view-epreuve");
-  }
-}
 
 function renderPage() {
   const pages = currentPages();
@@ -696,18 +691,177 @@ function onPalaisCodeWrong() {
   input.classList.add("shake");
   vibrate([80, 60, 80]);
   const feedback = $("#palais-code-feedback");
-  feedback.textContent = "Code incorrect, réessayez.";
+  feedback.textContent = CODE_ERROR_MSG;
   feedback.className = "code-feedback error";
   showVillainMockery();
 }
 
 function finishPalais() {
   STATE.palais.done = true;
-  STATE.currentEpreuveIndex = 0;
-  STATE.currentPageIndex = 0;
+  STATE.phaseIndex = Math.max(STATE.phaseIndex || 0, 2);
   persist();
-  renderEpreuveView();
-  show("view-epreuve");
+  renderPhaseFlow();
+}
+
+// ---- Déroulé verrouillé : routeur central + écran générique de phase --------------
+
+// Aiguille vers le bon écran selon STATE.phaseIndex (0-6). Aucune phase en avance
+// n'est accessible : on ne rend jamais que l'écran de la phase courante.
+function renderPhaseFlow() {
+  let pi = STATE.phaseIndex || 0;
+  if (pi < 0) pi = 0;
+  if (pi > 6) pi = 6;
+  STATE.phaseIndex = pi;
+
+  if (pi >= 6) {
+    renderMissionEnd();
+    show("view-mission-end");
+    return;
+  }
+  if (pi <= 1) {
+    // Phases 2-3 : Palais du Rhin (sa propre sous-navigation de pages).
+    if (pi === 0) {
+      STATE.palais.pageIndex = 0;
+      STATE.palais.codeOk = false;
+      STATE.palais.flagOk = false;
+    } else if (!STATE.palais.codeOk) {
+      STATE.palais.codeOk = true;
+      STATE.palais.pageIndex = Math.max(STATE.palais.pageIndex || 0, 1);
+    }
+    renderPalaisView();
+    show("view-palais");
+    return;
+  }
+  if (pi === 5) {
+    // Phase 6 validée (ZIX) → mini-jeu de désamorçage (inchangé).
+    const b = bombeState();
+    if (b.armedAt || b.gameOver || b.defused) enterBombeScreen();
+    else armBombeAndEnter();
+    return;
+  }
+  // Phases 4 / 5 / 6 → écran générique piloté par les données.
+  renderGenericPhase(PHASE_KEYS[pi - 2]);
+  show("view-phase");
+}
+
+function phaseCfg(key) {
+  return { ...PHASE_DEFAULTS[key], ...(CONTENT.config?.phases?.[key] || {}) };
+}
+
+function currentPhaseKey() {
+  return PHASE_KEYS[(STATE.phaseIndex || 0) - 2];
+}
+
+function renderPhaseDots() {
+  const dots = $("#phase-dots");
+  if (!dots) return;
+  dots.innerHTML = "";
+  const cur = STATE.phaseIndex || 0;
+  for (let i = 0; i < PHASE_TOTAL; i++) {
+    const d = document.createElement("div");
+    d.className = "dot" + (i < cur ? " done" : "") + (i === cur ? " current" : "");
+    dots.appendChild(d);
+  }
+}
+
+function renderGenericPhase(key) {
+  const cfg = phaseCfg(key);
+  const num = 4 + PHASE_KEYS.indexOf(key); // phase4/5/6 → n° 4/5/6
+  $("#phase-title").textContent = "Phase " + num;
+  renderPhaseDots();
+  $("#phase-avant").innerHTML = cfg.avant || "";
+  $("#phase-card-code").style.display = "";
+  $("#phase-code-form").style.display = "";
+  $("#phase-code-input").value = "";
+  $("#phase-code-feedback").textContent = "";
+  $("#phase-apres").style.display = "none";
+  $("#phase-apres-text").innerHTML = cfg.apres || "";
+  setTimeout(() => $("#phase-code-input")?.focus(), 50);
+}
+
+function onPhaseCodeCorrect() {
+  const key = currentPhaseKey();
+  const cfg = phaseCfg(key);
+  STATE.lastCode = normalizeCode(cfg.code || "");
+  persist();
+  playSuccessSound();
+  vibrate(120);
+  $("#phase-code-feedback").textContent = "";
+  $("#phase-card-code").style.display = "none";
+  $("#phase-apres-text").innerHTML = cfg.apres || "";
+  $("#phase-apres").style.display = "";
+  $("#btn-phase-continue").textContent = key === "phase6" ? "🧨 Armer la bombe" : "Continuer ➜";
+}
+
+function onPhaseCodeWrong() {
+  const input = $("#phase-code-input");
+  input.classList.remove("shake");
+  void input.offsetWidth;
+  input.classList.add("shake");
+  vibrate([80, 60, 80]);
+  const fb = $("#phase-code-feedback");
+  fb.textContent = CODE_ERROR_MSG;
+  fb.className = "code-feedback error";
+  showVillainMockery();
+}
+
+// ---- Phase 7 : séquence de fin (vidéo Déversoir + écran MISSION ACCOMPLIE) ---------
+
+function parseYouTubeId(url) {
+  if (!url) return "";
+  const pats = [
+    /youtu\.be\/([A-Za-z0-9_-]{6,})/,
+    /youtube\.com\/watch\?v=([A-Za-z0-9_-]{6,})/,
+    /youtube\.com\/embed\/([A-Za-z0-9_-]{6,})/,
+    /youtube-nocookie\.com\/embed\/([A-Za-z0-9_-]{6,})/,
+    /youtube\.com\/shorts\/([A-Za-z0-9_-]{6,})/,
+  ];
+  for (const re of pats) {
+    const m = url.match(re);
+    if (m) return m[1];
+  }
+  return "";
+}
+
+function renderMissionEnd() {
+  STATE.status = "finished";
+  STATE.finishedAt = STATE.finishedAt || Date.now();
+  STATE.phaseIndex = 6;
+  persist();
+
+  const cfg = CONTENT.config?.missionEnd || {};
+  $("#mission-end-bombe").innerHTML = cfg.texteBombe || "";
+
+  const vwrap = $("#mission-end-video-wrap");
+  vwrap.innerHTML = "";
+  vwrap.style.display = "none";
+  const url = (cfg.videoUrl || "").trim();
+  if (url) {
+    const box = document.createElement("div");
+    box.className = "mission-end-video";
+    const ytId = parseYouTubeId(url);
+    if (ytId) {
+      const iframe = document.createElement("iframe");
+      iframe.src = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(ytId)}?rel=0`;
+      iframe.title = "Vidéo Déversoir";
+      iframe.allow = "autoplay; encrypted-media; picture-in-picture";
+      iframe.allowFullscreen = true;
+      box.appendChild(iframe);
+    } else {
+      const v = document.createElement("video");
+      v.src = url;
+      v.controls = true;
+      v.setAttribute("playsinline", "");
+      box.appendChild(v);
+    }
+    vwrap.appendChild(box);
+    vwrap.style.display = "";
+  }
+
+  $("#mission-end-title").textContent = cfg.titre || "MISSION ACCOMPLIE";
+  $("#mission-end-text").textContent = cfg.texte || "";
+  $("#mission-end-hero").style.display = "none";
+  $("#btn-mission-end-reveal").style.display = "";
 }
 
 // ---- Bombe : mini-jeu de désamorçage (Épreuve finale uniquement) --------------------
@@ -793,8 +947,6 @@ function renderBombeView() {
     led.textContent = "00:00";
   }
   $("#bombe-gameover").style.display = b.gameOver ? "flex" : "none";
-  $("#bombe-win").style.display = b.defused ? "flex" : "none";
-  if (b.defused) $("#bombe-win-time").textContent = formatMinSec(b.frozenRemainMs ?? 0);
   $("#bombe-keypad").classList.toggle("disabled", b.gameOver || b.defused);
   $("#btn-bombe-continue").style.display = b.defused ? "" : "none";
   renderBombeLcd();
@@ -893,12 +1045,14 @@ function defuseBombe() {
   playBombeSuccess();
   vibrate([150, 80, 150]);
   renderBombeView();
+  setTimeout(finalizeBombeSuccess, 1800);
 }
 
 function finalizeBombeSuccess() {
-  show("view-epreuve");
-  renderEpreuveView();
-  onCodeCorrect(currentEpreuve());
+  STATE.phaseIndex = 6;
+  persist();
+  renderMissionEnd();
+  show("view-mission-end");
 }
 
 function triggerBombeGameOver() {
@@ -911,47 +1065,6 @@ function triggerBombeGameOver() {
   playBombeFail();
   vibrate([300, 100, 300, 100, 300]);
   renderBombeView();
-}
-
-// Ouverture de la caisse : appui maintenu ~0,9 s (évite l'ouverture accidentelle
-// et donne le geste "on descelle la caisse"). La jauge de progression est le
-// <span class="hold-fill"> du bouton.
-const BOMBE_HOLD_MS = 900;
-
-function wireBombeArmHold() {
-  const btn = $("#btn-bombe-arm");
-  if (!btn) return;
-  const fill = btn.querySelector(".hold-fill");
-  let raf = null;
-  let t0 = 0;
-
-  const reset = () => {
-    if (raf) cancelAnimationFrame(raf);
-    raf = null;
-    if (fill) fill.style.width = "0%";
-  };
-
-  const step = () => {
-    const p = Math.min(1, (Date.now() - t0) / BOMBE_HOLD_MS);
-    if (fill) fill.style.width = p * 100 + "%";
-    if (p >= 1) {
-      reset();
-      vibrate(120);
-      armBombeAndEnter();
-      return;
-    }
-    raf = requestAnimationFrame(step);
-  };
-
-  btn.addEventListener("pointerdown", (e) => {
-    e.preventDefault();
-    reset();
-    t0 = Date.now();
-    raf = requestAnimationFrame(step);
-  });
-  ["pointerup", "pointerleave", "pointercancel"].forEach((ev) =>
-    btn.addEventListener(ev, reset)
-  );
 }
 
 function retryBombe() {
@@ -1173,15 +1286,9 @@ function initListeners() {
     if (STATE.status === "not_started") {
       STATE.status = "in_progress";
       STATE.startedAt = Date.now();
-      STATE.currentPageIndex = 0;
       persist();
     }
-    if (!STATE.palais?.done) {
-      renderPalaisView();
-      show("view-palais");
-    } else {
-      showEpreuveOrBombe();
-    }
+    renderPhaseFlow();
     startChrono();
   });
 
@@ -1193,11 +1300,48 @@ function initListeners() {
     if (val === expected) {
       STATE.palais.codeOk = true;
       STATE.palais.pageIndex = 1;
+      STATE.phaseIndex = Math.max(STATE.phaseIndex || 0, 1);
+      STATE.lastCode = expected;
       persist();
       renderPalaisView();
     } else {
       onPalaisCodeWrong();
     }
+  });
+
+  $("#phase-code-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const key = currentPhaseKey();
+    if (!key) return;
+    const val = normalizeCode($("#phase-code-input").value);
+    const expected = normalizeCode(phaseCfg(key).code || "");
+    if (!expected) return;
+    if (val === expected) onPhaseCodeCorrect();
+    else onPhaseCodeWrong();
+  });
+
+  $("#btn-phase-continue").addEventListener("click", () => {
+    STATE.phaseIndex = (STATE.phaseIndex || 0) + 1;
+    persist();
+    renderPhaseFlow();
+  });
+
+  $("#btn-mission-end-reveal").addEventListener("click", () => {
+    $("#mission-end-hero").style.display = "";
+    $("#btn-mission-end-reveal").style.display = "none";
+    playVictorySound();
+    vibrate([150, 80, 150, 80, 300]);
+  });
+
+  $("#btn-mission-end-back").addEventListener("click", () => {
+    if (!confirm("Retour animateur — revenir à la sélection d'équipe ?")) return;
+    gameStore.clearSelectedTeam();
+    TEAM = null;
+    STATE = null;
+    delete document.body.dataset.team;
+    clearInterval(chronoTimer);
+    renderTeamGrid();
+    show("view-team-select");
   });
 
   $("#btn-palais-back").addEventListener("click", () => {
@@ -1294,7 +1438,7 @@ function initListeners() {
   $("#btn-final-map").addEventListener("click", openMap);
   $("#btn-close-map").addEventListener("click", closeMap);
 
-  wireBombeArmHold();
+  $("#btn-bombe-arm").addEventListener("click", armBombeAndEnter);
   $("#btn-bombe-retry").addEventListener("click", retryBombe);
   $("#btn-bombe-continue").addEventListener("click", finalizeBombeSuccess);
 

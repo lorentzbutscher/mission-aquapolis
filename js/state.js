@@ -5,16 +5,23 @@ const ACCESS_KEY = "aquapolis_access_unlocked";
 export function defaultState() {
   return {
     status: "not_started", // not_started | in_progress | finished
+    // Déroulé verrouillé en 7 phases (identique pour les 5 équipes) :
+    //   0 → phase 2 (CCNR, Palais p.1)      3 → phase 5 (CARING)
+    //   1 → phase 3 (drapeau, Palais p.2/3) 4 → phase 6 (ZIX → bombe)
+    //   2 → phase 4 (1796, Kléber)          5 → mini-jeu bombe (SEMEH)
+    //                                       6 → écran de fin (phase 7)
+    // phaseIndex = nombre de portes de code déjà franchies. Une phase reste
+    // verrouillée tant que la précédente n'est pas validée.
+    phaseIndex: 0,
+    lastCode: "", // dernier code validé (info ; pas de re-vérification au rechargement)
+    // Anciens champs du moteur "épreuves numérotées" — conservés pour
+    // compatibilité de lecture d'anciens états, mais le flow ne les utilise plus.
     currentEpreuveIndex: 0,
     currentPageIndex: 0,
     startedAt: null,
     finishedAt: null,
-    // Un tableau d'identifiants de blocs "indice" révélés, par épreuve
-    // (ex. revealedBlocks[0] = ["blk_2"] pour l'épreuve 1). Rempli à la volée,
-    // sa taille n'est pas fixée d'avance (le nombre d'épreuves varie par équipe).
     revealedBlocks: [],
-    // Séquence "Palais du Rhin" : prologue joué juste après le choix d'équipe,
-    // avant la première épreuve. `done` passe à true une fois la page 3 validée.
+    // Sous-état interne du Palais du Rhin (phases 2-3) : quelle sous-page afficher.
     palais: {
       pageIndex: 0,
       codeOk: false,
