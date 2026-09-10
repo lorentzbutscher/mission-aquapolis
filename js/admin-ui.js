@@ -1,14 +1,20 @@
 // ============================================================================
-// admin-ui.js — refonte ergonomique de l'espace d'administration
-// Chargé APRÈS js/admin.js. Ne remplace rien : reconstruit l'enveloppe autour
-// de l'interface existante (onglets, éditeur de blocs, cartes, Firebase intacts).
-// Pour désactiver : retirer la balise <script> correspondante dans admin.html.
+// admin-ui.js — v2 — refonte ergonomique de l'espace d'administration
+// Chargé APRÈS js/admin.js. Ne réécrit rien : reconstruit l'enveloppe autour de
+// l'interface existante. Toute la logique Firebase, l'éditeur riche, les envois
+// de fichiers, les cartes Leaflet et le bouton « Recharger le contenu » sont
+// laissés intacts.
+//
+// v2 : découpe l'onglet Général (devenu un formulaire de 8 sections) en pages
+// navigables, et intègre les écrans ajoutés depuis (accès, briefing,
+// phases 4/5/6, écran de fin, rassemblement, maintenance).
+//
+// Pour désactiver : retirer la balise <script> dans admin.html.
 // ============================================================================
 
 const A = () => window.__aqAdmin;
 
-// Pastilles de couleur du menu — mêmes teintes que les brigades côté joueur
-const DOT_COLORS = {
+const DOT = {
   general: "#8497b8",
   __final__: "#ffd12e",
   bleu: "#2563eb",
@@ -20,17 +26,18 @@ const DOT_COLORS = {
 
 let dirty = 0;
 let lastPublished = null;
-let statusEl = null;
-let statusDot = null;
-let publishedEl = null;
+let statusEl, statusWrap, publishedEl;
+let generalSections = [];
 
-// ---- Barre supérieure : état brouillon / publié ----------------------------
+const strip = (s) => s.replace(/^[^\p{L}\d]+/u, "").trim();
+
+// ---------------------------------------------------------------- barre haute
 
 function buildTopbar() {
   if (document.getElementById("aq-topbar")) return;
   const bar = document.createElement("div");
   bar.id = "aq-topbar";
-  bar.innerHTML = `
+  bar.innerHTML = \`
     <div class="aq-top-left">
       <span class="aq-top-title">Mission Aquapolis — administration</span>
       <span class="aq-status"><span class="aq-status-dot"></span><span class="aq-status-text">Tout est publié</span></span>
@@ -39,21 +46,18 @@ function buildTopbar() {
     <div class="aq-top-right">
       <button type="button" class="aq-btn" id="aq-discard">Annuler les modifications</button>
       <button type="button" class="aq-btn aq-btn-primary" id="aq-publish">Publier</button>
-    </div>`;
+    </div>\`;
   document.body.appendChild(bar);
   document.body.classList.add("aq-shell");
 
   statusEl = bar.querySelector(".aq-status-text");
-  statusDot = bar.querySelector(".aq-status");
+  statusWrap = bar.querySelector(".aq-status");
   publishedEl = bar.querySelector(".aq-published");
 
   bar.querySelector("#aq-discard").addEventListener("click", () => {
     if (!dirty) return;
-    if (confirm("Annuler toutes les modifications non publiées et recharger la dernière version enregistrée ?")) {
-      location.reload();
-    }
+    if (confirm("Annuler toutes les modifications non publiées et recharger la dernière version enregistrée ?")) location.reload();
   });
-
   bar.querySelector("#aq-publish").addEventListener("click", publishAll);
   renderStatus();
 }
@@ -63,7 +67,7 @@ function renderStatus() {
   statusEl.textContent = dirty
     ? dirty + " modification" + (dirty > 1 ? "s" : "") + " en brouillon"
     : "Tout est publié";
-  statusDot.classList.toggle("aq-dirty", dirty > 0);
+  statusWrap.classList.toggle("aq-dirty", dirty > 0);
   publishedEl.textContent = lastPublished ? "Dernière publication : " + lastPublished : "";
 }
 
@@ -82,7 +86,7 @@ async function publishAll() {
   ].filter(Boolean);
   for (const b of buttons) {
     b.click();
-    await new Promise((r) => setTimeout(r, 700));
+    await new Promise((r) => setTimeout(r, 800));
   }
   dirty = 0;
   lastPublished = new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
@@ -91,12 +95,93 @@ async function publishAll() {
   btn.textContent = "Publier";
 }
 
-// ---- Colonne de navigation --------------------------------------------------
+// -------------------------------------------- découpe de l'onglet « Général »
+// L'onglet Général est une seule .admin-card contenant 8 sous-parties séparées
+// par des <h3>. On les enveloppe pour n'en afficher qu'une à la fois.
+
+function splitGeneral() {
+  const anchor = document.getElementById("cfg-eventName");
+  if (!anchor) return [];
+  const card = anchor.closest(".admin-card");
+  if (card.dataset.aqSplit) return [...card.querySelectorAll(":scope > .aq-sec")];
+  card.dataset.aqSplit = "1";
+
+  const save = document.getElementById("btn-save-general");
+  const nodes = [...card.children].filter((n) => n !== save);
+  const secs = [];
+  let cur = null;
+
+  const open = (label) => {
+    cur = document.createElement("div");
+    cur.className = "aq-sec";
+    cur.dataset.label = label;
+    card.appendChild(cur);
+    secs.push(cur);
+    return cur;
+  };
+
+  nodes.forEach((node) => {
+    if (node.tagName === "H3") open(strip(node.textContent));
+    if (!cur) open("Paramètres");
+    cur.appendChild(node);
+  });
+
+  if (save) card.appendChild(save);
+
+  // La section « Phases 4, 5 et 6 » contient trois sous-cartes : une page chacune.
+  const phaseSec = secs.find((s) => /phases/i.test(s.dataset.label));
+  if (phaseSec) {
+    const subs = [...phaseSec.querySelectorAll(":scope > .admin-card")];
+    if (subs.length > 1) {
+      const idx = secs.indexOf(phaseSec);
+      const made = subs.map((sub) => {
+        const s = document.createElement("div");
+        s.className = "aq-sec";
+        const h4 = sub.querySelector("h4");
+        s.dataset.label = h4 ? strip(h4.textContent) : "Phase";
+        s.appendChild(sub);
+        card.appendChild(s);
+        return s;
+      });
+      // l'intitulé et la note d'intro restent en tête de la première phase
+      [...phaseSec.childNodes].forEach((n) => made[0].insertBefore(n, made[0].firstChild));
+      phaseSec.remove();
+      secs.splice(idx, 1, ...made);
+    }
+  }
+
+  // La carte de maintenance (« Recharger le contenu Appli ») devient sa page.
+  const reload = document.getElementById("btn-reload-appli-content");
+  if (reload) {
+    const rc = reload.closest(".admin-card");
+    const s = document.createElement("div");
+    s.className = "aq-sec";
+    s.dataset.label = "Maintenance du contenu";
+    rc.parentNode.insertBefore(s, rc);
+    s.appendChild(rc);
+    secs.push(s);
+  }
+
+  return secs;
+}
+
+function showGeneralSection(sec) {
+  generalSections.forEach((s) => s.classList.toggle("active", s === sec));
+  const save = document.getElementById("btn-save-general");
+  if (save) {
+    const isMaint = sec && /maintenance/i.test(sec.dataset.label || "");
+    save.style.display = isMaint ? "none" : "";
+  }
+}
+
+// ------------------------------------------------------------------- colonne
 
 function buildSidebar() {
   const screen = document.getElementById("admin-screen");
   const tabs = document.getElementById("main-tabs");
   if (!screen || !tabs) return;
+
+  generalSections = splitGeneral();
 
   let side = document.getElementById("aq-sidebar");
   if (!side) {
@@ -106,101 +191,66 @@ function buildSidebar() {
   }
   side.innerHTML = "";
 
-  const groupTitle = (t) => {
+  const title = (t) => {
     const d = document.createElement("div");
     d.className = "aq-side-title";
     d.textContent = t;
-    return d;
+    side.appendChild(d);
   };
 
-  side.appendChild(groupTitle("Réglages"));
-  [...tabs.querySelectorAll(".tab-btn")].forEach((btn) => {
-    const key = btn.dataset.tab;
-    const isTeam = !["general", "__final__"].includes(key);
-    if (isTeam) return;
-    side.appendChild(makeItem(btn.textContent.replace(/^[^\p{L}]+/u, "").trim(), btn, "aq-side-item", DOT_COLORS[key]));
+  const generalBtn = tabs.querySelector('.tab-btn[data-tab="general"]');
+  const finalBtn = tabs.querySelector('.tab-btn[data-tab="__final__"]');
+
+  title("Réglages généraux");
+  generalSections.forEach((sec) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "aq-side-link aq-side-gen";
+    b.textContent = sec.dataset.label;
+    b.addEventListener("click", () => {
+      generalBtn.click();
+      showGeneralSection(sec);
+      mark(b);
+      window.scrollTo({ top: 0 });
+    });
+    side.appendChild(b);
   });
 
-  side.appendChild(groupTitle("Brigades"));
+  title("Contenu des brigades");
   [...tabs.querySelectorAll(".tab-btn")].forEach((btn) => {
     const key = btn.dataset.tab;
-    if (["general", "__final__"].includes(key)) return;
-    const item = makeItem("Brigade " + btn.textContent.replace(/^[^\p{L}]+/u, "").trim(), btn, "aq-side-item aq-side-team", DOT_COLORS[key]);
-    item.dataset.team = key;
+    if (key === "general" || key === "__final__") return;
+    const item = makeItem("Brigade " + strip(btn.textContent), btn, DOT[key]);
     side.appendChild(item);
-
     const sub = document.createElement("div");
     sub.className = "aq-side-sub";
     sub.dataset.for = key;
     side.appendChild(sub);
-    fillSubItems(key, btn, sub);
+    fillSub(key, btn, sub);
   });
 
-  highlightActive();
-}
-
-// Affiche soit le prologue « Palais du Rhin », soit les épreuves — jamais les deux
-// empilés : c'est ce qui donnait l'impression que le menu ne réagissait pas.
-function showSection(panel, what) {
-  const palaisForms = panel.querySelector(".palais-forms");
-  if (!palaisForms) return;
-  const palaisHead = palaisForms.previousElementSibling;
-  const showPalais = what === "palais";
-  palaisForms.style.display = showPalais ? "" : "none";
-  if (palaisHead && palaisHead.classList.contains("admin-card")) {
-    palaisHead.style.display = showPalais ? "" : "none";
+  if (finalBtn) {
+    title("Épreuve finale");
+    side.appendChild(makeItem(strip(finalBtn.textContent), finalBtn, DOT.__final__));
   }
-  panel.querySelector(".epreuve-tabs") &&
-    (panel.querySelector(".epreuve-tabs").style.display = showPalais ? "none" : "");
-  panel.querySelectorAll(".epreuve-forms:not(.palais-forms)").forEach((el) => {
-    el.style.display = showPalais ? "none" : "";
-  });
+
+  if (generalSections.length) {
+    showGeneralSection(generalSections[0]);
+    mark(side.querySelector(".aq-side-gen"));
+  }
+  highlightTeam();
 }
 
-function fillSubItems(key, tabBtn, sub) {
-  const panel = document.getElementById("tab-" + key);
-  if (!panel) return;
-  sub.innerHTML = "";
-
-  const markLink = (el) => {
-    sub.querySelectorAll(".aq-side-link").forEach((l) => l.classList.remove("active"));
-    el.classList.add("active");
-  };
-
-  const palais = document.createElement("button");
-  palais.type = "button";
-  palais.className = "aq-side-link";
-  palais.textContent = "Palais du Rhin (prologue)";
-  palais.addEventListener("click", () => {
-    tabBtn.click();
-    showSection(panel, "palais");
-    highlightActive(key);
-    markLink(palais);
-    window.scrollTo({ top: 0 });
-  });
-  sub.appendChild(palais);
-
-  panel.querySelectorAll(".epreuve-tabs > .epreuve-tab").forEach((tab, i) => {
-    const link = document.createElement("button");
-    link.type = "button";
-    link.className = "aq-side-link";
-    link.textContent = "Épreuve " + (i + 1) + " — " + tab.textContent;
-    link.addEventListener("click", () => {
-      tabBtn.click();
-      tab.click();
-      showSection(panel, "epreuves");
-      highlightActive(key);
-      markLink(link);
-      window.scrollTo({ top: 0 });
-    });
-    sub.appendChild(link);
-  });
+function mark(el) {
+  document.querySelectorAll("#aq-sidebar .aq-side-link, #aq-sidebar .aq-side-item")
+    .forEach((n) => n.classList.remove("current"));
+  if (el) el.classList.add("current");
 }
 
-function makeItem(label, tabBtn, cls, color) {
+function makeItem(label, tabBtn, color) {
   const b = document.createElement("button");
   b.type = "button";
-  b.className = cls;
+  b.className = "aq-side-item";
   if (color) {
     const dot = document.createElement("span");
     dot.className = "aq-dot";
@@ -211,35 +261,76 @@ function makeItem(label, tabBtn, cls, color) {
   b.addEventListener("click", () => {
     tabBtn.click();
     const panel = document.getElementById("tab-" + tabBtn.dataset.tab);
-    if (panel) showSection(panel, "palais");
-    highlightActive(tabBtn.dataset.tab);
+    if (panel) showTeamSection(panel, "palais");
+    highlightTeam(tabBtn.dataset.tab);
+    mark(b);
     window.scrollTo({ top: 0 });
   });
   return b;
 }
 
-function highlightActive(key) {
-  const active = key || document.querySelector("#main-tabs .tab-btn.active")?.dataset.tab;
-  document.querySelectorAll("#aq-sidebar .aq-side-item").forEach((el) => {
-    const own = el.dataset.team || null;
-    el.classList.remove("active");
+// Prologue et épreuves étaient empilés : le menu semblait ne pas répondre.
+function showTeamSection(panel, what) {
+  const palais = panel.querySelector(".palais-forms");
+  if (!palais) return;
+  const head = palais.previousElementSibling;
+  const isPalais = what === "palais";
+  palais.style.display = isPalais ? "" : "none";
+  if (head && head.classList.contains("admin-card")) head.style.display = isPalais ? "" : "none";
+  const epTabs = panel.querySelector(".epreuve-tabs");
+  if (epTabs) epTabs.style.display = isPalais ? "none" : "";
+  panel.querySelectorAll(".epreuve-forms:not(.palais-forms)").forEach((el) => {
+    el.style.display = isPalais ? "none" : "";
   });
+}
+
+function fillSub(key, tabBtn, sub) {
+  const panel = document.getElementById("tab-" + key);
+  if (!panel) return;
+  sub.innerHTML = "";
+
+  if (panel.querySelector(".palais-forms")) {
+    const p = document.createElement("button");
+    p.type = "button";
+    p.className = "aq-side-link";
+    p.textContent = "Palais du Rhin (prologue)";
+    p.addEventListener("click", () => {
+      tabBtn.click();
+      showTeamSection(panel, "palais");
+      highlightTeam(key);
+      mark(p);
+      window.scrollTo({ top: 0 });
+    });
+    sub.appendChild(p);
+  }
+
+  panel.querySelectorAll(".epreuve-tabs > .epreuve-tab").forEach((tab, i) => {
+    const link = document.createElement("button");
+    link.type = "button";
+    link.className = "aq-side-link";
+    link.textContent = "Étape " + (i + 1) + " — " + tab.textContent;
+    link.addEventListener("click", () => {
+      tabBtn.click();
+      tab.click();
+      showTeamSection(panel, "epreuves");
+      highlightTeam(key);
+      mark(link);
+      window.scrollTo({ top: 0 });
+    });
+    sub.appendChild(link);
+  });
+}
+
+function highlightTeam(key) {
+  const active = key || document.querySelector("#main-tabs .tab-btn.active")?.dataset.tab;
   document.querySelectorAll("#aq-sidebar .aq-side-sub").forEach((el) => {
     el.style.display = el.dataset.for === active ? "flex" : "none";
   });
-  const items = [...document.querySelectorAll("#aq-sidebar .aq-side-item")];
-  const tabButtons = [...document.querySelectorAll("#main-tabs .tab-btn")];
-  const idx = tabButtons.findIndex((b) => b.dataset.tab === active);
-  if (idx >= 0) {
-    const label = tabButtons[idx].textContent.replace(/^[^\p{L}]+/u, "").trim();
-    const match = items.find((el) => el.textContent.endsWith(label));
-    if (match) match.classList.add("active");
-  }
 }
 
-// ---- Blocs repliables --------------------------------------------------------
+// ----------------------------------------------------------- blocs repliables
 
-function blockSummary(item) {
+function summary(item) {
   const rte = item.querySelector(".rte-editor");
   if (rte) return (rte.innerText || "").trim().slice(0, 70);
   const ta = item.querySelector("textarea");
@@ -255,7 +346,7 @@ function enhanceBlocks() {
   document.querySelectorAll(".block-editor-item").forEach((item) => {
     if (item.dataset.aqEnhanced) {
       const s = item.querySelector(".aq-block-summary");
-      if (s && item.classList.contains("aq-collapsed")) s.textContent = blockSummary(item);
+      if (s && item.classList.contains("aq-collapsed")) s.textContent = summary(item);
       return;
     }
     item.dataset.aqEnhanced = "1";
@@ -263,9 +354,9 @@ function enhanceBlocks() {
     const body = item.querySelector(".block-editor-body");
     if (!head || !body) return;
 
-    const summary = document.createElement("span");
-    summary.className = "aq-block-summary";
-    summary.textContent = blockSummary(item);
+    const sum = document.createElement("span");
+    sum.className = "aq-block-summary";
+    sum.textContent = summary(item);
 
     const toggle = document.createElement("button");
     toggle.type = "button";
@@ -275,24 +366,24 @@ function enhanceBlocks() {
 
     head.insertBefore(toggle, head.firstChild);
     const spacer = head.querySelector("span[style*='flex']");
-    if (spacer) head.insertBefore(summary, spacer);
-    else head.appendChild(summary);
+    if (spacer) head.insertBefore(sum, spacer);
+    else head.appendChild(sum);
 
-    const setCollapsed = (c) => {
+    const set = (c) => {
       item.classList.toggle("aq-collapsed", c);
       body.style.display = c ? "none" : "";
       toggle.textContent = c ? "▸" : "▾";
-      if (c) summary.textContent = blockSummary(item);
+      if (c) sum.textContent = summary(item);
     };
-    toggle.addEventListener("click", () => setCollapsed(!item.classList.contains("aq-collapsed")));
-    summary.addEventListener("click", () => setCollapsed(!item.classList.contains("aq-collapsed")));
-    setCollapsed(true);
+    toggle.addEventListener("click", () => set(!item.classList.contains("aq-collapsed")));
+    sum.addEventListener("click", () => set(!item.classList.contains("aq-collapsed")));
+    set(true);
   });
 }
 
-// ---- Copier une épreuve vers d'autres brigades --------------------------------
+// -------------------------------------------- copier une étape vers d'autres
 
-function injectDuplicateButtons() {
+function injectDupButtons() {
   document.querySelectorAll("#team-panels .tab-panel").forEach((panel) => {
     const key = panel.id.replace("tab-", "");
     if (key === "__final__") return;
@@ -303,45 +394,45 @@ function injectDuplicateButtons() {
       const btn = document.createElement("button");
       btn.type = "button";
       btn.className = "aq-btn aq-dup-btn";
-      btn.textContent = "Copier cette épreuve vers d'autres brigades…";
-      btn.addEventListener("click", () => openDuplicate(key, idx));
+      btn.textContent = "Copier cette étape vers d'autres brigades…";
+      btn.addEventListener("click", () => openDup(key, idx));
       form.insertBefore(btn, form.firstChild);
     });
   });
 }
 
-function openDuplicate(srcColor, epIdx) {
+function openDup(srcColor, epIdx) {
   const api = A();
   if (!api) {
-    alert("Fonction indisponible : le patch de js/admin.js n'a pas été appliqué.");
+    alert("Fonction indisponible : la passerelle window.__aqAdmin manque dans js/admin.js.");
     return;
   }
   const labels = api.TEAM_LABELS;
   const others = api.TEAM_COLORS.filter((c) => c !== srcColor);
-  const srcTitle = api.TEAMS_DATA[srcColor]?.epreuves[epIdx]?.titre || "Épreuve " + (epIdx + 1);
+  const srcTitle = api.TEAMS_DATA[srcColor]?.epreuves[epIdx]?.titre || "Étape " + (epIdx + 1);
 
-  const overlay = document.createElement("div");
-  overlay.className = "aq-overlay";
-  overlay.innerHTML = `
+  const ov = document.createElement("div");
+  ov.className = "aq-overlay";
+  ov.innerHTML = \`
     <div class="aq-modal">
-      <h3>Copier « ${srcTitle} » vers…</h3>
-      <p>Le contenu, les pages, le code et la révélation sont dupliqués dans l'épreuve ${epIdx + 1} des brigades cochées. Leur contenu actuel est remplacé. Le résultat reste en brouillon : tant que vous n'avez pas publié, « Annuler les modifications » le supprime.</p>
+      <h3>Copier « \${srcTitle} » vers…</h3>
+      <p>Le contenu, les pages, le code et la révélation sont dupliqués dans l'étape \${epIdx + 1} des brigades cochées. Leur contenu actuel est remplacé. Le résultat reste en brouillon : tant que vous n'avez pas publié, « Annuler les modifications » le supprime.</p>
       <div class="aq-modal-list">
-        ${others.map((c) => `<label><input type="checkbox" value="${c}" /> Brigade ${labels[c]}</label>`).join("")}
+        \${others.map((c) => \`<label><input type="checkbox" value="\${c}" /> Brigade \${labels[c]}</label>\`).join("")}
       </div>
       <div class="aq-modal-actions">
         <button type="button" class="aq-btn" data-act="cancel">Annuler</button>
         <button type="button" class="aq-btn aq-btn-primary" data-act="ok">Copier</button>
       </div>
-    </div>`;
-  document.body.appendChild(overlay);
+    </div>\`;
+  document.body.appendChild(ov);
 
-  const close = () => overlay.remove();
-  overlay.querySelector("[data-act='cancel']").addEventListener("click", close);
-  overlay.addEventListener("click", (e) => { if (e.target === overlay) close(); });
-  overlay.querySelector("[data-act='ok']").addEventListener("click", () => {
-    const targets = [...overlay.querySelectorAll("input:checked")].map((i) => i.value);
-    if (!targets.length) { close(); return; }
+  const close = () => ov.remove();
+  ov.querySelector("[data-act='cancel']").addEventListener("click", close);
+  ov.addEventListener("click", (e) => { if (e.target === ov) close(); });
+  ov.querySelector("[data-act='ok']").addEventListener("click", () => {
+    const targets = [...ov.querySelectorAll("input:checked")].map((i) => i.value);
+    if (!targets.length) return close();
     const src = JSON.parse(JSON.stringify(api.TEAMS_DATA[srcColor].epreuves[epIdx]));
     delete src._activePage;
     targets.forEach((c) => {
@@ -353,56 +444,50 @@ function openDuplicate(srcColor, epIdx) {
     api.renderTeamPanels();
     setTimeout(() => {
       buildSidebar();
-      injectDuplicateButtons();
+      injectDupButtons();
       enhanceBlocks();
-      document.querySelector(`#main-tabs .tab-btn[data-tab="${srcColor}"]`)?.click();
-      highlightActive(srcColor);
+      document.querySelector(\`#main-tabs .tab-btn[data-tab="\${srcColor}"]\`)?.click();
+      highlightTeam(srcColor);
       targets.forEach(() => markDirty());
-      alert("Épreuve copiée vers " + targets.length + " brigade" + (targets.length > 1 ? "s" : "") + ". Cliquez sur « Publier » pour l'envoyer aux téléphones.");
+      alert("Étape copiée vers " + targets.length + " brigade" + (targets.length > 1 ? "s" : "") + ". Cliquez sur « Publier » pour l'envoyer aux téléphones.");
     }, 60);
   });
 }
 
-// ---- Démarrage ---------------------------------------------------------------
+// -------------------------------------------------------------------- départ
 
 function boot() {
-  // admin.js applique display:block en style inline sur #admin-screen : un style
-  // inline l'emporte sur la feuille, la grille 2 colonnes ne s'appliquerait pas.
-  const screenEl = document.getElementById("admin-screen");
+  // admin.js applique display:block en style inline sur #admin-screen ; un style
+  // inline l'emporte sur la feuille, la grille 2 colonnes ne prendrait pas.
+  const screen = document.getElementById("admin-screen");
   const applyGrid = () => {
-    if (screenEl.style.display !== "none" && screenEl.style.display !== "grid") {
-      screenEl.style.display = "grid";
-    }
+    if (screen.style.display !== "none" && screen.style.display !== "grid") screen.style.display = "grid";
   };
   applyGrid();
-  new MutationObserver(applyGrid).observe(screenEl, { attributes: true, attributeFilter: ["style"] });
+  new MutationObserver(applyGrid).observe(screen, { attributes: true, attributeFilter: ["style"] });
 
   buildTopbar();
   buildSidebar();
-  injectDuplicateButtons();
+  injectDupButtons();
   enhanceBlocks();
 
-  document.addEventListener("input", (e) => {
-    if (e.target.closest("#admin-screen")) markDirty();
-  });
-  document.addEventListener("change", (e) => {
-    if (e.target.closest("#admin-screen")) markDirty();
-  });
-  document.getElementById("main-tabs")?.addEventListener("click", () => setTimeout(() => highlightActive(), 30));
+  const onEdit = (e) => { if (e.target.closest("#admin-screen")) markDirty(); };
+  document.addEventListener("input", onEdit);
+  document.addEventListener("change", onEdit);
+  document.getElementById("main-tabs")?.addEventListener("click", () => setTimeout(() => highlightTeam(), 30));
 
-  const obs = new MutationObserver(() => {
-    clearTimeout(window.__aqObsT);
-    window.__aqObsT = setTimeout(() => {
-      injectDuplicateButtons();
-      enhanceBlocks();
-    }, 120);
-  });
-  obs.observe(document.getElementById("team-panels"), { childList: true, subtree: true });
+  const panels = document.getElementById("team-panels");
+  if (panels) {
+    new MutationObserver(() => {
+      clearTimeout(window.__aqT);
+      window.__aqT = setTimeout(() => { injectDupButtons(); enhanceBlocks(); }, 120);
+    }).observe(panels, { childList: true, subtree: true });
+  }
 }
 
 const ready = setInterval(() => {
   const screen = document.getElementById("admin-screen");
-  if (screen && screen.style.display !== "none" && document.querySelector("#team-panels .tab-panel")) {
+  if (screen && screen.style.display !== "none" && document.getElementById("cfg-eventName")) {
     clearInterval(ready);
     boot();
   }
