@@ -278,3 +278,92 @@ body.aq-shell { padding-top: 62px; }
 }
 .aq-modal-list input { width: 18px; height: 18px; accent-color: #ffd12e; }
 .aq-modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+
+
+/* ==========================================================================
+   10. NOUVEAUX ÉCRANS — phases, bombe, fin de mission
+   ========================================================================== */
+
+/* --- Écran générique des phases 4/5/6 --- */
+#phase-avant, #phase-apres-text { font-size: 19px; line-height: 1.65; text-wrap: pretty; }
+#phase-avant p, #phase-apres-text p { font-size: 19px; line-height: 1.65; }
+#phase-audio-label { font-size: 13px; letter-spacing: .12em; color: #86efac; }
+.audio-time { font-size: 13px; }
+.audio-play-btn { width: 56px; height: 56px; font-size: 21px; }
+
+/* --- Écran de fin de mission (phase 7) ---
+   Le titre était coloré en couleur d'équipe : illisible en bleu et violet sur
+   fond marine (~2,5:1). Texte blanc + halo de la couleur d'équipe. */
+.mission-end-hero h1 {
+  color: var(--white);
+  text-shadow:
+    0 0 22px color-mix(in srgb, var(--team-color) 85%, transparent),
+    0 0 44px color-mix(in srgb, var(--team-color) 55%, transparent),
+    3px 3px 0 rgba(0,0,0,.55);
+}
+.mission-end-hero p { font-size: 19px; line-height: 1.65; }
+.mission-end-hero .big-emoji { display: none; }
+#mission-end-bombe { font-size: 20px; line-height: 1.6; text-align: center; }
+
+/* --- Mini-jeu de désamorçage --- */
+
+/* Afficheur déporté : le LCD de la photo fait 9-15 px, illisible sous stress.
+   Celui-ci reprend le même contenu, en grand, au-dessus du clavier.
+   Alimenté par app.js — voir PATCHES-PHASES.md. */
+.bombe-readout {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 14px;
+  padding: 14px 18px;
+  border-radius: var(--radius-md);
+  background: rgba(0,0,0,.55);
+  border: 2px solid rgba(255,255,255,.2);
+}
+.bombe-readout-label {
+  font-size: 12px;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  font-weight: 800;
+  color: rgba(255,255,255,.65);
+}
+.bombe-readout-code {
+  font-family: "Courier New", monospace;
+  font-weight: 900;
+  font-size: 34px;
+  letter-spacing: .3em;
+  color: #ff6b6b;
+  text-shadow: 0 0 10px rgba(255,60,60,.7);
+  font-variant-numeric: tabular-nums;
+}
+.bombe-readout-timer {
+  font-family: "Courier New", monospace;
+  font-weight: 900;
+  font-size: 30px;
+  color: #ff2b2b;
+  text-shadow: 0 0 10px rgba(255,40,40,.8);
+  font-variant-numeric: tabular-nums;
+}
+.bombe-readout.defused .bombe-readout-code,
+.bombe-readout.defused .bombe-readout-timer {
+  color: #4ade80;
+  text-shadow: 0 0 10px rgba(74,222,128,.8);
+}
+.bombe-readout.wrong-flash { animation: bombeShake .3s; border-color: var(--rouge); }
+
+/* Clavier : 42 px -> 50 px, et les deux touches décisives cessent d'être
+   les plus petites du clavier. */
+.bombe-key { height: 50px; font-size: 17px; }
+.bombe-key-clear, .bombe-key-validate { font-size: 15px; letter-spacing: .04em; }
+.bombe-key-validate { background: linear-gradient(160deg, #16a34a, #14532d); }
+
+/* --- Table morse : 4 colonnes à 13 px -> 3 colonnes à 15 px --- */
+.morse-table { grid-template-columns: repeat(3, 1fr); gap: 10px; font-size: 15px; }
+.morse-cell { padding: 9px 6px; }
+.morse-cell .letter { font-size: 19px; }
+.morse-cell .code { font-size: 15px; }
+
+/* --- Écran de code d'accès --- */
+#access-intro-text { font-size: 19px; line-height: 1.65; }
+.access-code-input { font-size: 24px; }
