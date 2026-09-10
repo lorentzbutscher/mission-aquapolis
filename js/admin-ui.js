@@ -37,7 +37,7 @@ function buildTopbar() {
   if (document.getElementById("aq-topbar")) return;
   const bar = document.createElement("div");
   bar.id = "aq-topbar";
-  bar.innerHTML = \`
+  bar.innerHTML = `
     <div class="aq-top-left">
       <span class="aq-top-title">Mission Aquapolis — administration</span>
       <span class="aq-status"><span class="aq-status-dot"></span><span class="aq-status-text">Tout est publié</span></span>
@@ -46,7 +46,7 @@ function buildTopbar() {
     <div class="aq-top-right">
       <button type="button" class="aq-btn" id="aq-discard">Annuler les modifications</button>
       <button type="button" class="aq-btn aq-btn-primary" id="aq-publish">Publier</button>
-    </div>\`;
+    </div>`;
   document.body.appendChild(bar);
   document.body.classList.add("aq-shell");
 
@@ -413,18 +413,18 @@ function openDup(srcColor, epIdx) {
 
   const ov = document.createElement("div");
   ov.className = "aq-overlay";
-  ov.innerHTML = \`
+  ov.innerHTML = `
     <div class="aq-modal">
-      <h3>Copier « \${srcTitle} » vers…</h3>
-      <p>Le contenu, les pages, le code et la révélation sont dupliqués dans l'étape \${epIdx + 1} des brigades cochées. Leur contenu actuel est remplacé. Le résultat reste en brouillon : tant que vous n'avez pas publié, « Annuler les modifications » le supprime.</p>
+      <h3>Copier « ${srcTitle} » vers…</h3>
+      <p>Le contenu, les pages, le code et la révélation sont dupliqués dans l'étape ${epIdx + 1} des brigades cochées. Leur contenu actuel est remplacé. Le résultat reste en brouillon : tant que vous n'avez pas publié, « Annuler les modifications » le supprime.</p>
       <div class="aq-modal-list">
-        \${others.map((c) => \`<label><input type="checkbox" value="\${c}" /> Brigade \${labels[c]}</label>\`).join("")}
+        ${others.map((c) => `<label><input type="checkbox" value="${c}" /> Brigade ${labels[c]}</label>`).join("")}
       </div>
       <div class="aq-modal-actions">
         <button type="button" class="aq-btn" data-act="cancel">Annuler</button>
         <button type="button" class="aq-btn aq-btn-primary" data-act="ok">Copier</button>
       </div>
-    </div>\`;
+    </div>`;
   document.body.appendChild(ov);
 
   const close = () => ov.remove();
@@ -446,7 +446,7 @@ function openDup(srcColor, epIdx) {
       buildSidebar();
       injectDupButtons();
       enhanceBlocks();
-      document.querySelector(\`#main-tabs .tab-btn[data-tab="\${srcColor}"]\`)?.click();
+      document.querySelector(`#main-tabs .tab-btn[data-tab="${srcColor}"]`)?.click();
       highlightTeam(srcColor);
       targets.forEach(() => markDirty());
       alert("Étape copiée vers " + targets.length + " brigade" + (targets.length > 1 ? "s" : "") + ". Cliquez sur « Publier » pour l'envoyer aux téléphones.");
