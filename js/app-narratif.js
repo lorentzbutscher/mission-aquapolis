@@ -69,14 +69,14 @@ function parseHMS(t) {
 
 function buildCrue() {
   if ($("#aq-crue")) return;
-  const wrap = $("#chrono-wrap");
-  if (!wrap) return;
+  // Surtout pas dans #chrono-wrap : app.js le réécrit chaque seconde, la jauge
+  // serait effacée puis recréée en boucle (clignotement).
   const el = document.createElement("div");
   el.id = "aq-crue";
   el.innerHTML =
     '<div class="aq-crue-label">Niveau<br />de la crue</div>' +
     '<div class="aq-crue-tube"><div class="aq-crue-fill"></div></div>';
-  wrap.appendChild(el);
+  document.body.appendChild(el);
 
   const veil = document.createElement("div");
   veil.id = "aq-crue-veil";
@@ -85,8 +85,16 @@ function buildCrue() {
 }
 
 function updateCrue() {
+  const el = $("#aq-crue");
+  const veil = $("#aq-crue-veil");
   const times = document.querySelectorAll("#chrono-wrap .chrono-time");
-  if (times.length < 2) return;
+  if (times.length < 2) {
+    if (el && el.style.display !== "none") el.style.display = "none";
+    if (veil && veil.style.display !== "none") veil.style.display = "none";
+    return;
+  }
+  if (el && el.style.display === "none") el.style.display = "";
+  if (veil && veil.style.display === "none") veil.style.display = "";
   const elapsed = parseHMS(times[0].textContent);
   const target = parseHMS(times[1].textContent);
   if (elapsed == null || !target) return;
