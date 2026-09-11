@@ -2,6 +2,7 @@ Dépose ici tes visuels exportés depuis Canva (PNG, fond transparent) :
 
   assets/logo.png                  → logo de l'événement (carré, ~512x512px conseillé)
   assets/vnf_mystere_badge.png     → badge circulaire, écran de saisie du code "ETIENNE"
+  assets/mascotte-whisper.png      → petit personnage des popups humoristiques (PNG fond transparent)
   assets/badges/bleu.png           → badge super-héros équipe Bleue
   assets/badges/rouge.png          → badge super-héros équipe Rouge
   assets/badges/jaune.png          → badge super-héros équipe Jaune
@@ -12,6 +13,7 @@ Dépose ici tes visuels exportés depuis Canva (PNG, fond transparent) :
   assets/pictos/objet.png          → picto carte Objet (optionnel)
   assets/pictos/revelation.png     → picto carte Révélation (optionnel)
   assets/villain.png               → illustration du super-méchant "Déversoir", écran de briefing
+  assets/audio/morse_zix.m4a      → message morse « ZIX » (phase 6, avant le mini-jeu bombe)
   assets/audio/deversoir.mp3       → musique de fond en boucle
   assets/audio/succes.mp3          → son court quand un code est validé
   assets/audio/victoire.mp3        → son court à la fin du parcours
@@ -26,6 +28,13 @@ Dépose ici tes visuels exportés depuis Canva (PNG, fond transparent) :
   assets/flags/flag_belgique.png     → drapeau Belgique
   assets/flags/flag_allemagne.png    → drapeau Allemagne
   assets/flags/flag_pays_bas.png     → drapeau Pays-Bas
+
+  assets/bombe-epreuve-finale.jpg    → fond du mini-jeu de désamorçage (Épreuve finale)
+  assets/audio/bombe/tick_tock_loop.mp3      → boucle tic-tac (> 1 min restante)
+  assets/audio/bombe/urgent_beep_loop.mp3    → boucle bips (entre 1 min et 10 s)
+  assets/audio/bombe/critical_alarm_loop.mp3 → boucle alarme (10 dernières secondes)
+  assets/audio/bombe/defuse_success.mp3      → son joué une fois, code correct
+  assets/audio/bombe/defuse_fail.mp3         → son joué une fois, minuteur à 00:00
 
 Tant que ces fichiers n'existent pas, l'application affiche des émojis (images)
 ou des bips synthétiques (sons) à la place — aucune erreur, aucun blocage. Tu
