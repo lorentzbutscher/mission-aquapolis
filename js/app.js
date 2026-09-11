@@ -23,6 +23,7 @@ import {
   duckBackgroundMusic,
 } from "./sound.js";
 import { applyRandomBackground } from "./background.js";
+import { startMascotPopups } from "./mascot.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -226,6 +227,10 @@ function startChrono() {
   clearInterval(chronoTimer);
   renderChronoTick();
   chronoTimer = setInterval(renderChronoTick, 1000);
+  // Point d'intégration unique des popups mascotte (voir js/mascot.js) : se
+  // déclenche une fois le chrono global de la mission lancé, module 100%
+  // indépendant du reste (pas de lecture/écriture de STATE ici).
+  startMascotPopups();
 }
 
 function renderChronoTick() {
