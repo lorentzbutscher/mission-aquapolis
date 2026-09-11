@@ -34,9 +34,9 @@ const MASCOT_MESSAGES = [
 ];
 
 // Fenêtre d'apparition aléatoire entre deux popups (en ms).
-const MIN_DELAY_MS = 45_000;
-const MAX_DELAY_MS = 90_000;
-const AUTO_DISMISS_MS = 5000;
+const MIN_DELAY_MS = 3000;
+const MAX_DELAY_MS = 3500;
+const AUTO_DISMISS_MS = 10_000;
 
 // Écrans où le popup a le droit de s'afficher. Jamais "view-bombe" (mini-jeu),
 // ni les écrans hors mission (accès, sélection équipe, chargement, fin).
