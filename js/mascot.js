@@ -21,15 +21,19 @@ const MASCOT_IMG_SRC = "./assets/mascotte-whisper.png";
 // Messages piochés aléatoirement (jamais deux fois de suite le même).
 // Modifiable librement — un texte par ligne.
 const MASCOT_MESSAGES = [
-  "Psss… Déversoir a oublié son parapluie aujourd'hui. Il ne va pas être content.",
+  "Psss… Déversoir a oublié son parapluie aujourd'hui. Il ne va pas être content."
+  "Vous comprenez les mails du CSP vous ?",
+  "Mon rêve c'était d'être agent VNF, mon conseiller d'Orientation voulait que je travaille à RHA. J'ai préféré devenir un super villain.",
+  "Mon premier n'a pas de cheveux, mon second aime vapoter, mon troisième porte des lunettes: Je suis ?.",
   "Petit conseil de héros : hydratez-vous. Sauver Strasbourg, ça creuse.",
   "Entre nous, les autres équipes ont l'air un peu perdues. Mais chut, motus.",
-  "Déversoir déteste trois choses : les héros, la pluie, et les ronds-points.",
+  "Déversoir déteste trois choses : les héros, le PSG, et les ronds-points.",
   "On me souffle que le winstub du coin fait une excellente tarte flambée. Pour après.",
   "Rappel : marcher plus vite ne rend pas le message morse plus facile à décoder.",
   "Un espion VNF a vu Déversoir chercher la sortie du Palais du Rhin pendant 10 minutes.",
   "Ce message s'autodétruira dans 5 secondes. Enfin, façon de parler.",
   "Si vous entendez « EISH », courez. Ou pas. C'est vous les héros.",
+  "Psss… Saviez que EISH est une expression familière en afrique du sud ?"
   "Astuce : un bon agent VNF ne lâche jamais son équipe. Ni son parapluie.",
 ];
 
