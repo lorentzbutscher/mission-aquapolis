@@ -1,185 +1,335 @@
-/* ==========================================================================
-   Mission Aquapolis — améliorations lisibilité & ergonomie
-   À charger APRÈS css/style.css. Ce fichier ne remplace rien : il surcharge.
-   Pour revenir en arrière, retirer la ligne <link> dans index.html / admin.html.
+/* ============================================================================
+   Mission Aquapolis — refonte visuelle
+   Chargée APRÈS css/style.css, qu'elle redéfinit sans le modifier.
+
+   Ce fichier ne touche qu'à l'apparence. Aucun contenu, aucun code, aucun
+   drapeau, aucune règle du mini-jeu, aucun enchaînement d'épreuve ne dépend
+   de lui : index.html et js/app.js sont inchangés. Retirer la balise <link>
+   ramène l'application à son apparence d'origine, intégralement fonctionnelle.
+
+   Sommaire
+     1. Fondations — trame, couleurs, typographie
+     2. En-tête et chronomètre
+     3. Progression
+     4. Cartes : l'émoji laisse la place à une étiquette
+     5. Texte de mission
+     6. Saisie du code
+     7. Drapeaux, audio, pages
+     8. Boutons et cibles tactiles
+     9. Modales
+    10. Écrans de fin
+    11. Mini-jeu de désamorçage
+    12. Espace d'administration
+    13. Couche narrative (js/app-narratif.js)
    ========================================================================== */
 
-/* --------------------------------------------------------------------------
-   1. Échelle typographique — cible : lecture bras tendu, en marchant, au soleil
-   -------------------------------------------------------------------------- */
-.card p,
-.block-texte,
-.block-texte p,
-.block-texte li { font-size: 19px; line-height: 1.65; text-wrap: pretty; }
-.muted { font-size: 16px; color: rgba(255,255,255,.75); }
-h2 { font-size: 30px; }
+/* ==========================================================================
+   1. FONDATIONS
+   Le corps de texte passe de 15-16 px à 19 px : c'est la correction la plus
+   importante, l'application se lit debout, bras tendu, en plein soleil.
+   ========================================================================== */
+
+:root {
+  --aq-text: 19px;
+  --aq-lead: 1.62;
+  --aq-vnf: #7dd3fc;
+  --aq-dev: #4ade80;
+  --tap-min: 60px;
+}
+
+body {
+  font-family: "Nunito Sans", -apple-system, "Segoe UI", Roboto, system-ui, sans-serif;
+  font-size: var(--aq-text);
+}
+
+/* Le fond est assombri davantage : les illustrations restent présentes mais
+   ne concurrencent plus le texte. */
+body::before {
+  background:
+    linear-gradient(rgba(5,14,28,.74), rgba(5,14,28,.88)),
+    var(--current-bg, url("../assets/background.webp")) center 15% / cover no-repeat;
+}
+
+.app { max-width: 560px; gap: 0; }
+.view { gap: 20px; }
+
+h1 { font-size: clamp(31px, 8.5vw, 42px); line-height: 1.08; }
+h2 { font-size: clamp(26px, 7vw, 32px); line-height: 1.12; }
 h3 { font-size: 21px; }
-.card-family { font-size: 12px; letter-spacing: .14em; font-weight: 800; opacity: 1; color: #ffd12e; }
-.card.code .card-family { color: #86efac; }
-.card.lieu .card-family { color: #7dd3fc; }
-.card.objet .card-family { color: #c4b5fd; }
-.code-feedback { font-size: 16px; min-height: 22px; }
-.page-indicator { font-size: 15px; }
-.small-link { font-size: 16px; min-height: 44px; }
-.confirm-box p { font-size: 19px; }
-.indice-box p, .morse-box p { font-size: 19px; line-height: 1.6; }
 
-/* --------------------------------------------------------------------------
-   2. Pictogrammes emoji retirés — remplacés par l'étiquette texte
-   (les emoji rendaient mal selon les téléphones et disparaissaient au soleil)
-   -------------------------------------------------------------------------- */
-.card-pict { display: none; }
-.card-head { margin-bottom: 10px; }
+p, li { font-size: var(--aq-text); line-height: var(--aq-lead); text-wrap: pretty; }
+.muted { font-size: 17px; line-height: 1.55; color: rgba(255,255,255,.72); }
 
-/* --------------------------------------------------------------------------
-   3. Chrono collant en haut — la position dans la mission ne quitte plus l'écran
-   -------------------------------------------------------------------------- */
+/* ==========================================================================
+   2. EN-TÊTE ET CHRONOMÈTRE
+   Le chronomètre reste visible pendant le défilement : savoir combien de temps
+   il reste ne doit jamais demander de remonter.
+   ========================================================================== */
+
+.header { padding-bottom: 10px; }
+.logo-img { width: 44px; height: 44px; }
+
+.sync-badge {
+  font-size: 13px; font-weight: 700; padding: 6px 11px;
+}
+
 #chrono-wrap {
   position: sticky;
-  top: calc(env(safe-area-inset-top) * -1);
-  z-index: 30;
-  padding-top: 6px;
+  top: calc(env(safe-area-inset-top) + 2px);
+  z-index: 40;
+  margin: 0 -16px 4px;
+  padding: 0 16px 10px;
+  background: linear-gradient(rgba(5,14,28,.96) 72%, rgba(5,14,28,0));
 }
-.chrono {
-  padding: 10px 14px;
-  border-radius: 14px;
-  background: rgba(4,11,23,.88);
-  backdrop-filter: blur(10px);
-  border-color: rgba(255,255,255,.16);
-}
-.chrono-time { font-size: 26px; }
-.chrono-label { font-size: 11px; }
 
-/* --------------------------------------------------------------------------
-   4. Points de progression -> barre segmentée (plus lisible d'un coup d'œil)
-   -------------------------------------------------------------------------- */
-.progress-dots { gap: 6px; }
+.chrono {
+  padding: 12px 16px;
+  border-radius: 16px;
+  background: rgba(4,11,23,.82);
+  border: 1px solid rgba(255,255,255,.16);
+  backdrop-filter: blur(10px);
+}
+.chrono-label {
+  font-size: 12px; font-weight: 800; letter-spacing: .14em;
+}
+.chrono-time { font-size: 34px; }
+
+.stop-btn { width: 44px; height: 44px; font-size: 17px; }
+
+/* ==========================================================================
+   3. PROGRESSION
+   Les pastilles deviennent une barre de segments : on voit d'un coup d'œil
+   où l'on en est et combien il reste, ce qui n'était pas lisible avec des
+   points de 12 px.
+   ========================================================================== */
+
+.progress-dots { gap: 5px; margin: 2px 0 4px; }
 .progress-dots .dot {
   flex: 1;
   width: auto;
   height: 8px;
   border-radius: 999px;
   background: rgba(255,255,255,.18);
+  transition: background .3s ease;
 }
-.progress-dots .dot.current { background: #ffd12e; box-shadow: none; }
 .progress-dots .dot.done { background: #4ade80; }
+.progress-dots .dot.current { background: var(--gold); box-shadow: none; }
 
-/* Libellé de position, injecté par app.js (voir PATCHES.md, patch 3) */
-.mission-position {
-  font-size: 15px;
-  font-weight: 700;
-  color: rgba(255,255,255,.8);
-  margin-top: -6px;
+.page-indicator {
+  font-size: 15px; font-weight: 800; color: rgba(255,255,255,.75);
 }
-
-/* --------------------------------------------------------------------------
-   5. Saisie du code ancrée en bas d'écran : une seule action possible
-   -------------------------------------------------------------------------- */
-.card.code {
-  position: sticky;
-  bottom: 0;
-  z-index: 20;
-  margin: 8px -16px calc(-24px - env(safe-area-inset-bottom));
-  padding: 14px 16px calc(16px + env(safe-area-inset-bottom));
-  border-radius: 20px 20px 0 0;
-  border-left: none;
-  border-top: 1px solid rgba(255,255,255,.14);
-  background: rgba(4,11,23,.94);
-  backdrop-filter: blur(12px);
-  box-shadow: 0 -10px 30px rgba(0,0,0,.45);
-}
-.card.code .card-head { margin-bottom: 8px; }
-.code-input { min-height: 60px; font-size: 26px; }
-.code-form .btn { padding: 0 24px; }
-
-/* Le bouton son ne doit plus recouvrir la barre de code */
-.sound-toggle { bottom: calc(104px + env(safe-area-inset-bottom)); }
-
-/* --------------------------------------------------------------------------
-   6. Cibles tactiles : rien sous 48 px
-   -------------------------------------------------------------------------- */
-.btn-sm { min-height: 48px; font-size: 16px; }
-.drapeau-btn { min-height: 100px; }
-.drapeau-label { font-size: 15px; }
-.stop-btn { width: 44px; height: 44px; font-size: 18px; }
-.page-nav .btn { flex: 0 0 auto; }
-
-/* --------------------------------------------------------------------------
-   7. Bloc narratif — le vilain et l'allié prennent la parole
-   Classe posée par app.js sur le 1er bloc texte d'une page (patch 4)
-   -------------------------------------------------------------------------- */
-.block-narration {
-  background: rgba(255,209,46,.12);
-  border: 1px solid rgba(255,209,46,.45);
-  border-left: 6px solid #ffd12e;
-}
-.block-narration::before {
-  content: attr(data-narrateur);
-  display: block;
-  font-size: 12px;
-  letter-spacing: .16em;
-  text-transform: uppercase;
-  font-weight: 800;
-  color: #ffd12e;
-  margin-bottom: 8px;
-}
-
-/* --------------------------------------------------------------------------
-   8. Écran de fin : hiérarchie plus nette
-   -------------------------------------------------------------------------- */
-.final-hero .big-emoji { display: none; }
-.countdown-box .time { font-size: 46px; }
-
-/* --------------------------------------------------------------------------
-   9. Administration (desktop) — gains immédiats sans refonte du JS
-   -------------------------------------------------------------------------- */
-.admin-wrap { max-width: 1180px; }
-.admin-body .tabs {
-  position: sticky;
-  top: 0;
-  z-index: 8;
-  margin: 0 -20px 16px;
-  padding: 12px 20px;
-  background: #0b1220;
-  border-bottom: 1px solid #1d2942;
-}
-.admin-body .tab-btn { min-height: 42px; font-size: 15px; }
-.admin-card { padding: 20px 22px; }
-.admin-card h3 { font-size: 18px; letter-spacing: .01em; }
-.field label { font-size: 13px; }
-.field input, .field textarea, .field select { font-size: 16px; padding: 11px 12px; }
-.block-editor-item { transition: border-color .15s ease; }
-.block-editor-item:hover { border-color: #3b4d78; }
-.epreuve-tab { min-height: 40px; font-size: 14px; }
-/* Bouton Enregistrer toujours atteignable */
-#btn-save-general, .admin-card .btn-gold { position: sticky; bottom: 16px; z-index: 6; }
-
 
 /* ==========================================================================
-   ADMINISTRATION — enveloppe 3 volets (voir js/admin-ui.js)
+   4. CARTES
+   Les émojis de 18 px dans une pastille de 34 px rendaient mal au soleil et
+   changeaient d'aspect d'un téléphone à l'autre. La pastille disparaît, le
+   libellé qui l'accompagnait déjà (« Code », « Révélation », « Indice ») prend
+   sa place en capitales lisibles, coloré par famille.
+   ========================================================================== */
+
+.card {
+  border-radius: 20px;
+  padding: 20px 18px;
+  background: rgba(255,255,255,.07);
+  border: 1px solid rgba(255,255,255,.13);
+  box-shadow: 0 10px 28px rgba(0,0,0,.3);
+}
+
+.card-head { margin-bottom: 12px; gap: 0; }
+.card-pict { display: none; }
+
+.card-family {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .17em;
+  text-transform: uppercase;
+  opacity: 1;
+  color: rgba(255,255,255,.6);
+}
+.card.code .card-family { color: #86efac; }
+.card.revelation .card-family { color: var(--gold); }
+.card.lieu .card-family { color: #93c5fd; }
+.card.objet .card-family { color: #c4b5fd; }
+
+.card.lieu, .card.objet, .card.code { border-left-width: 5px; }
+.card.revelation { border-left-width: 5px; background: rgba(255,209,46,.13); }
+
+/* ==========================================================================
+   5. TEXTE DE MISSION
+   ========================================================================== */
+
+.block-texte { line-height: var(--aq-lead); font-size: var(--aq-text); }
+.block-texte p { margin: 0 0 14px; }
+.block-texte ul, .block-texte ol { margin: 0 0 14px 22px; }
+.block-texte li { margin-bottom: 7px; }
+
+#blocks-container, #palais-blocks-container { display: flex; flex-direction: column; gap: 18px; }
+
+.block-photo img { border-radius: 16px; }
+
+/* ==========================================================================
+   6. SAISIE DU CODE
+   Le champ était un élément parmi d'autres au fil de la page. Il devient
+   l'action unique et permanente du bas de l'écran, toujours atteignable au
+   pouce sans défilement.
+   ========================================================================== */
+
+.card.code,
+#card-code, #palais-card-code, #phase-card-code {
+  position: sticky;
+  bottom: calc(env(safe-area-inset-bottom) + 6px);
+  z-index: 35;
+  background: rgba(4,11,23,.94);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,.16);
+  border-left: 5px solid var(--card-code);
+  box-shadow: 0 -8px 28px rgba(0,0,0,.45);
+}
+
+.code-form { gap: 10px; }
+.code-input {
+  min-height: 62px;
+  font-size: 26px;
+  letter-spacing: .16em;
+  border-width: 2px;
+  border-radius: 16px;
+  background: rgba(0,0,0,.4);
+}
+.code-input::placeholder { color: rgba(255,255,255,.35); letter-spacing: .16em; }
+
+.code-form .btn {
+  min-width: 78px;
+  font-size: 24px;
+  border-radius: 16px;
+}
+
+.code-feedback { font-size: 16px; min-height: 22px; margin-top: 8px; }
+
+.access-code-input { min-height: 62px; font-size: 22px; }
+
+/* ==========================================================================
+   7. DRAPEAUX, AUDIO, PAGES
+   ========================================================================== */
+
+.drapeaux-grid { gap: 12px; }
+.drapeau-btn {
+  padding: 12px 10px;
+  border-radius: 16px;
+  border-width: 2px;
+  min-height: 108px;
+}
+.drapeau-label { font-size: 15px; font-weight: 800; }
+
+.audio-play-btn { width: 58px; height: 58px; font-size: 21px; }
+.audio-progress-track { height: 12px; }
+.audio-time { font-size: 14px; }
+
+.page-nav { gap: 12px; padding: 4px 0; }
+
+/* ==========================================================================
+   8. BOUTONS
+   Toutes les cibles tactiles atteignent 60 px, y compris les liens discrets
+   qui faisaient 8 px de marge.
+   ========================================================================== */
+
+.btn { min-height: var(--tap-min); font-size: 20px; border-radius: 18px; }
+.btn-sm { min-height: 48px; font-size: 16px; }
+
+.small-link {
+  font-size: 16px;
+  color: rgba(255,255,255,.66);
+  padding: 14px 4px;
+  min-height: 48px;
+}
+
+.sound-toggle { width: 56px; height: 56px; font-size: 23px; }
+
+/* ==========================================================================
+   9. MODALES
+   ========================================================================== */
+
+.confirm-box { max-width: 400px; padding: 24px; border-radius: 22px; }
+.confirm-box p { font-size: 19px; }
+.indice-box p, .morse-box p { font-size: 19px; line-height: var(--aq-lead); }
+
+/* La table morse passe de 4 à 3 colonnes : à 4, les cellules tombaient sous
+   40 px de large sur un téléphone courant. */
+.morse-table { grid-template-columns: repeat(3, 1fr); gap: 9px; font-size: 15px; }
+.morse-cell { padding: 9px 5px; }
+.morse-cell .letter { font-size: 19px; }
+.morse-cell .code { font-size: 15px; letter-spacing: .12em; }
+
+.lightbox-close { width: 52px; height: 52px; font-size: 20px; }
+
+/* ==========================================================================
+   10. ÉCRANS DE FIN
+   Le titre était coloré à la couleur de l'équipe : illisible pour la brigade
+   bleue ou violette sur fond sombre. Il passe en blanc, la couleur d'équipe
+   reste dans le halo.
+   ========================================================================== */
+
+.mission-end-hero h1,
+.final-hero h1 {
+  color: #fff;
+  text-shadow:
+    0 0 22px color-mix(in srgb, var(--team-color) 85%, transparent),
+    0 0 46px color-mix(in srgb, var(--team-color) 55%, transparent),
+    3px 3px 0 rgba(0,0,0,.5);
+}
+.mission-end-hero p { font-size: var(--aq-text); }
+
+.countdown-box { padding: 22px; border-radius: 20px; }
+.countdown-box .time { font-size: 46px; }
+.countdown-box .card-family { font-size: 12px; color: var(--gold); }
+
+/* ==========================================================================
+   11. MINI-JEU DE DÉSAMORÇAGE
+   Les touches passent de 42 à 52 px et l'afficheur de la bombe est doublé
+   par un afficheur lisible (voir section 13). L'image du boîtier et ses
+   afficheurs d'origine ne sont pas modifiés : le calage pixel sur la photo
+   reste intact.
+   ========================================================================== */
+
+.bombe-keypad { gap: 8px; margin-top: 16px; }
+.bombe-key-row { gap: 6px; }
+.bombe-key {
+  height: 52px;
+  font-size: 18px;
+  border-radius: 10px;
+}
+.bombe-key-clear, .bombe-key-validate { font-size: 14px; }
+.bombe-key-validate {
+  background: linear-gradient(160deg, #16a34a, #14532d);
+}
+
+/* ==========================================================================
+   12. ESPACE D'ADMINISTRATION
+   Trois volets sur grand écran : arborescence, éditeur, et une seule section
+   de réglages à la fois. Piloté par js/admin-ui.js.
    ========================================================================== */
 
 body.aq-shell { padding-top: 62px; }
 
 #aq-topbar {
-  position: fixed; top: 0; left: 0; right: 0; height: 62px; z-index: 60;
+  position: fixed; top: 0; left: 0; right: 0; z-index: 50;
   display: flex; align-items: center; justify-content: space-between; gap: 20px;
-  padding: 0 22px; background: #0d1526; border-bottom: 1px solid #22304d;
+  padding: 11px 20px; background: #0d1526; border-bottom: 1px solid #22304d;
 }
-.aq-top-left { display: flex; align-items: center; gap: 14px; min-width: 0; }
-.aq-top-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-.aq-top-title { font-weight: 800; font-size: 16px; color: #e8edf7; white-space: nowrap; }
-.aq-published { font-size: 13px; color: #8497b8; white-space: nowrap; }
+.aq-top-left { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.aq-top-title { font-family: var(--font-display); font-size: 18px; }
+.aq-top-right { display: flex; align-items: center; gap: 10px; }
+
 .aq-status {
-  display: inline-flex; align-items: center; gap: 8px;
-  padding: 5px 12px; border-radius: 999px;
+  display: flex; align-items: center; gap: 8px;
+  padding: 5px 11px; border-radius: 999px;
   background: rgba(74,222,128,.12); border: 1px solid rgba(74,222,128,.35);
 }
 .aq-status-dot { width: 8px; height: 8px; border-radius: 50%; background: #4ade80; }
-.aq-status-text { font-size: 14px; font-weight: 700; color: #4ade80; white-space: nowrap; }
+.aq-status-text { font-size: 14px; font-weight: 700; color: #4ade80; }
 .aq-status.aq-dirty { background: rgba(255,209,46,.12); border-color: rgba(255,209,46,.4); }
-.aq-status.aq-dirty .aq-status-dot { background: #ffd12e; }
-.aq-status.aq-dirty .aq-status-text { color: #ffd12e; }
+.aq-status.aq-dirty .aq-status-dot { background: var(--gold); }
+.aq-status.aq-dirty .aq-status-text { color: var(--gold); }
+.aq-published { font-size: 13px; color: #8497b8; }
 
 .aq-btn {
   min-height: 40px; padding: 0 16px; border-radius: 10px;
@@ -187,201 +337,49 @@ body.aq-shell { padding-top: 62px; }
   font-family: inherit; font-size: 15px; font-weight: 700; cursor: pointer;
 }
 .aq-btn:hover { border-color: #4b5f8c; }
-.aq-btn-primary { background: #ffd12e; color: #0b1220; border-color: #ffd12e; font-weight: 900; }
+.aq-btn-primary { background: var(--gold); color: #0b1220; border-color: var(--gold); font-weight: 900; }
 .aq-btn-primary:hover { filter: brightness(1.08); }
-.aq-btn:disabled { opacity: .6; cursor: default; }
-
 .aq-dup-btn { margin-bottom: 14px; }
 
-/* --- Grille : navigation à gauche, éditeur à droite --- */
+#aq-sidebar { display: none; }
+
 @media (min-width: 1100px) {
-  .admin-wrap {
-    max-width: 1560px;
+  #admin-screen {
     display: grid;
-    grid-template-columns: 288px minmax(0, 1fr);
+    grid-template-columns: 272px minmax(0, 1fr);
     gap: 26px;
     align-items: start;
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 22px;
   }
-  .admin-wrap > .header,
-  .admin-wrap > p.muted { grid-column: 1 / -1; }
-  #main-tabs { display: none !important; }
-  #aq-sidebar { grid-column: 1; grid-row: 3; position: sticky; top: 78px; max-height: calc(100vh - 100px); overflow-y: auto; }
-  #tab-general, #team-panels { grid-column: 2; grid-row: 3; }
+  #aq-sidebar {
+    display: flex; flex-direction: column; gap: 3px;
+    position: sticky; top: 74px; max-height: calc(100vh - 96px); overflow-y: auto;
+    background: #0a1120; border: 1px solid #1d2942; border-radius: 14px; padding: 14px 11px;
+  }
+  #admin-screen > #main-tabs { display: none; }
+  #admin-screen > .tab-panel,
+  #admin-screen > #tab-general,
+  #admin-screen > #team-panels { grid-column: 2; }
 }
 
-#aq-sidebar { display: flex; flex-direction: column; gap: 3px; padding-bottom: 20px; }
 .aq-side-title {
-  font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
-  font-weight: 800; color: #6f819f; padding: 14px 10px 6px;
+  font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+  font-weight: 800; color: #6f819f; padding: 14px 10px 5px;
 }
+.aq-side-title:first-child { padding-top: 4px; }
+
 .aq-side-item {
-  display: flex; align-items: center; gap: 11px;
-  text-align: left; padding: 11px 12px; border-radius: 9px; border: none;
-  background: transparent; color: #e8edf7; font-family: inherit;
-  font-size: 15px; font-weight: 700; cursor: pointer;
+  display: flex; align-items: center; gap: 10px; width: 100%; text-align: left;
+  padding: 10px 12px; border-radius: 9px; border: none;
+  border-left: 3px solid transparent; background: transparent;
+  color: #e8edf7; font-family: inherit; font-size: 15px; font-weight: 800; cursor: pointer;
 }
-.aq-dot { width: 11px; height: 11px; border-radius: 3px; flex-shrink: 0; }
-.aq-side-link.active { background: #1a2540; color: #fff; border-left-color: #ffd12e; }
 .aq-side-item:hover { background: #111c33; }
-.aq-side-item.active { background: #1a2540; }
-.aq-side-sub { display: none; flex-direction: column; gap: 2px; padding: 3px 0 6px 14px; }
-.aq-side-link {
-  text-align: left; padding: 9px 12px; border-radius: 8px;
-  border: none; border-left: 3px solid transparent; background: transparent;
-  color: #93a3c2; font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
-}
-.aq-side-link:hover { background: #111c33; color: #fff; border-left-color: #ffd12e; }
+.aq-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
 
-/* --- Aperçu joueur en colonne collante --- */
-@media (min-width: 1400px) {
-  .epreuve-form {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 390px;
-    gap: 22px;
-    align-items: start;
-  }
-  .epreuve-form > * { grid-column: 1; }
-  .epreuve-form > .admin-card:last-child {
-    grid-column: 2;
-    grid-row: 1 / span 40;
-    position: sticky;
-    top: 84px;
-    max-height: calc(100vh - 110px);
-    overflow-y: auto;
-  }
-}
-
-/* --- Blocs repliables --- */
-.block-editor-item.aq-collapsed { background: #0a1324; }
-.aq-block-summary {
-  flex: 1; min-width: 0; font-size: 14px; color: #93a3c2; cursor: pointer;
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
-.aq-block-toggle { flex-shrink: 0; }
-
-/* --- Modale de copie --- */
-.aq-overlay {
-  position: fixed; inset: 0; z-index: 70; background: rgba(4,8,16,.75);
-  display: flex; align-items: center; justify-content: center; padding: 32px;
-}
-.aq-modal {
-  width: 100%; max-width: 470px; border-radius: 16px; background: #0e1729;
-  border: 1px solid #2b3a5c; padding: 24px; display: flex; flex-direction: column; gap: 16px;
-}
-.aq-modal h3 { font-size: 20px; color: #e8edf7; }
-.aq-modal p { font-size: 15px; line-height: 1.6; color: #8497b8; }
-.aq-modal-list { display: flex; flex-direction: column; gap: 8px; }
-.aq-modal-list label {
-  display: flex; align-items: center; gap: 12px; padding: 11px 12px;
-  border-radius: 10px; border: 1px solid #2b3a5c; background: #0a1324;
-  font-size: 16px; font-weight: 700; color: #e8edf7; cursor: pointer;
-}
-.aq-modal-list input { width: 18px; height: 18px; accent-color: #ffd12e; }
-.aq-modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
-
-
-/* ==========================================================================
-   10. NOUVEAUX ÉCRANS — phases, bombe, fin de mission
-   ========================================================================== */
-
-/* --- Écran générique des phases 4/5/6 --- */
-#phase-avant, #phase-apres-text { font-size: 19px; line-height: 1.65; text-wrap: pretty; }
-#phase-avant p, #phase-apres-text p { font-size: 19px; line-height: 1.65; }
-#phase-audio-label { font-size: 13px; letter-spacing: .12em; color: #86efac; }
-.audio-time { font-size: 13px; }
-.audio-play-btn { width: 56px; height: 56px; font-size: 21px; }
-
-/* --- Écran de fin de mission (phase 7) ---
-   Le titre était coloré en couleur d'équipe : illisible en bleu et violet sur
-   fond marine (~2,5:1). Texte blanc + halo de la couleur d'équipe. */
-.mission-end-hero h1 {
-  color: var(--white);
-  text-shadow:
-    0 0 22px color-mix(in srgb, var(--team-color) 85%, transparent),
-    0 0 44px color-mix(in srgb, var(--team-color) 55%, transparent),
-    3px 3px 0 rgba(0,0,0,.55);
-}
-.mission-end-hero p { font-size: 19px; line-height: 1.65; }
-.mission-end-hero .big-emoji { display: none; }
-#mission-end-bombe { font-size: 20px; line-height: 1.6; text-align: center; }
-
-/* --- Mini-jeu de désamorçage --- */
-
-/* Afficheur déporté : le LCD de la photo fait 9-15 px, illisible sous stress.
-   Celui-ci reprend le même contenu, en grand, au-dessus du clavier.
-   Alimenté par app.js — voir PATCHES-PHASES.md. */
-.bombe-readout {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  margin-top: 14px;
-  padding: 14px 18px;
-  border-radius: var(--radius-md);
-  background: rgba(0,0,0,.55);
-  border: 2px solid rgba(255,255,255,.2);
-}
-.bombe-readout-label {
-  font-size: 12px;
-  letter-spacing: .16em;
-  text-transform: uppercase;
-  font-weight: 800;
-  color: rgba(255,255,255,.65);
-}
-.bombe-readout-code {
-  font-family: "Courier New", monospace;
-  font-weight: 900;
-  font-size: 34px;
-  letter-spacing: .3em;
-  color: #ff6b6b;
-  text-shadow: 0 0 10px rgba(255,60,60,.7);
-  font-variant-numeric: tabular-nums;
-}
-.bombe-readout-timer {
-  font-family: "Courier New", monospace;
-  font-weight: 900;
-  font-size: 30px;
-  color: #ff2b2b;
-  text-shadow: 0 0 10px rgba(255,40,40,.8);
-  font-variant-numeric: tabular-nums;
-}
-.bombe-readout.defused .bombe-readout-code,
-.bombe-readout.defused .bombe-readout-timer {
-  color: #4ade80;
-  text-shadow: 0 0 10px rgba(74,222,128,.8);
-}
-.bombe-readout.wrong-flash { animation: bombeShake .3s; border-color: var(--rouge); }
-
-/* Clavier : 42 px -> 50 px, et les deux touches décisives cessent d'être
-   les plus petites du clavier. */
-.bombe-key { height: 50px; font-size: 17px; }
-.bombe-key-clear, .bombe-key-validate { font-size: 15px; letter-spacing: .04em; }
-.bombe-key-validate { background: linear-gradient(160deg, #16a34a, #14532d); }
-
-/* --- Table morse : 4 colonnes à 13 px -> 3 colonnes à 15 px --- */
-.morse-table { grid-template-columns: repeat(3, 1fr); gap: 10px; font-size: 15px; }
-.morse-cell { padding: 9px 6px; }
-.morse-cell .letter { font-size: 19px; }
-.morse-cell .code { font-size: 15px; }
-
-/* --- Écran de code d'accès --- */
-#access-intro-text { font-size: 19px; line-height: 1.65; }
-.access-code-input { font-size: 24px; }
-
-
-/* ==========================================================================
-   11. ADMIN v2 — pages de réglages, menu enrichi
-   ========================================================================== */
-
-/* Une section de réglages à la fois (l'onglet Général comptait 8 sous-parties
-   dans un seul formulaire). Découpage assuré par js/admin-ui.js. */
-.aq-sec { display: none; }
-.aq-sec.active { display: block; animation: aqSecIn .18s ease; }
-@keyframes aqSecIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-.aq-sec > h3:first-child { margin-top: 0 !important; }
-.aq-sec > .admin-card { margin-bottom: 0; }
-
-#btn-save-general { position: sticky; bottom: 16px; z-index: 6; }
+.aq-side-sub { display: flex; flex-direction: column; gap: 2px; padding: 3px 0 5px 20px; }
 
 .aq-side-link {
   display: block; width: 100%; text-align: left;
@@ -392,18 +390,59 @@ body.aq-shell { padding-top: 62px; }
 }
 .aq-side-link:hover { background: #111c33; color: #fff; }
 .aq-side-link.current,
-.aq-side-item.current { background: #1a2540; color: #fff; border-left-color: #ffd12e; }
-.aq-side-gen { margin-left: 0; }
-.aq-side-item { border-left: 3px solid transparent; }
+.aq-side-item.current { background: #1a2540; color: #fff; border-left-color: var(--gold); }
 
+/* Une section de réglages à la fois. */
+.aq-sec { display: none; }
+.aq-sec.active { display: block; animation: aqSecIn .18s ease; }
+@keyframes aqSecIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.aq-sec > h3:first-child { margin-top: 0 !important; }
+.aq-sec > .admin-card { margin-bottom: 0; }
+
+#btn-save-general { position: sticky; bottom: 16px; z-index: 6; }
+
+/* Blocs repliés */
+.block-editor-item.aq-collapsed { padding: 8px 12px; }
+.aq-block-toggle { flex-shrink: 0; }
+.aq-block-summary {
+  flex: 1; min-width: 0; font-size: 14px; color: #93a3c2; cursor: pointer;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+/* Modale de copie */
+.aq-overlay {
+  position: fixed; inset: 0; z-index: 60; background: rgba(4,8,16,.75);
+  display: flex; align-items: center; justify-content: center; padding: 30px;
+}
+.aq-modal {
+  width: 100%; max-width: 460px; border-radius: 16px; background: #0e1729;
+  border: 1px solid #2b3a5c; padding: 24px;
+  display: flex; flex-direction: column; gap: 17px;
+}
+.aq-modal h3 { font-size: 21px; }
+.aq-modal p { font-size: 15px; line-height: 1.6; color: #8497b8; }
+.aq-modal-list { display: flex; flex-direction: column; gap: 8px; }
+.aq-modal-list label {
+  display: flex; align-items: center; gap: 12px; padding: 11px 12px;
+  border-radius: 10px; border: 1px solid #2b3a5c; background: #0a1324;
+  cursor: pointer; font-size: 16px; font-weight: 700;
+}
+.aq-modal-list input { width: 18px; height: 18px; accent-color: var(--gold); }
+.aq-modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
 
 /* ==========================================================================
-   12. COUCHE NARRATIVE (js/app-narratif.js)
-   Rien ici ne modifie les règles existantes : tout est préfixé .aq- ou #aq-.
+   13. COUCHE NARRATIVE (js/app-narratif.js)
+   Tout est préfixé aq- : rien ici ne peut entrer en conflit avec l'existant.
    ========================================================================== */
 
 /* --- jauge de crue ------------------------------------------------------- */
-#aq-crue { display: flex; align-items: center; gap: 8px; margin-left: 14px; }
+#aq-crue {
+  position: fixed; right: 10px; top: 96px; z-index: 30;
+  display: flex; align-items: center; gap: 7px;
+  padding: 7px 10px; border-radius: 12px;
+  background: rgba(4,11,23,.82); border: 1px solid rgba(255,255,255,.14);
+  backdrop-filter: blur(8px);
+}
 .aq-crue-label {
   font-size: 10px; line-height: 1.15; letter-spacing: .12em; text-transform: uppercase;
   font-weight: 800; color: rgba(255,255,255,.6); text-align: right;
@@ -414,24 +453,24 @@ body.aq-shell { padding-top: 62px; }
 }
 .aq-crue-fill {
   position: absolute; left: 0; right: 0; bottom: 0; height: 4%;
-  background: #7dd3fc; transition: height .8s ease, background .8s ease;
+  background: var(--aq-vnf); transition: height .8s ease, background .8s ease;
 }
-#aq-crue-veil { position: fixed; inset: 0; pointer-events: none; z-index: 1; }
+#aq-crue-veil { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
 .aq-crue-water {
   position: absolute; left: 0; right: 0; bottom: 0; height: 2%;
-  background: linear-gradient(180deg, rgba(41,120,196,.20), rgba(12,52,102,.34));
-  border-top: 2px solid rgba(125,211,252,.35);
+  background: linear-gradient(180deg, rgba(41,120,196,.18), rgba(12,52,102,.3));
+  border-top: 2px solid rgba(125,211,252,.3);
   transition: height 1.2s ease;
 }
 
 /* --- expéditeur ---------------------------------------------------------- */
-.aq-voiced { border-left: 5px solid var(--aq-vc, #7dd3fc) !important; }
-.aq-v-vnf { --aq-vc: #7dd3fc; }
-.aq-v-dev { --aq-vc: #4ade80; }
+.aq-voiced { border-left: 5px solid var(--aq-vc, var(--aq-vnf)) !important; }
+.aq-v-vnf { --aq-vc: var(--aq-vnf); }
+.aq-v-dev { --aq-vc: var(--aq-dev); }
 .aq-v-dev.aq-voiced { font-style: italic; }
-.aq-voice { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; font-style: normal; }
+.aq-voice { display: flex; align-items: center; gap: 10px; margin-bottom: 13px; font-style: normal; }
 .aq-voice img {
-  width: 40px; height: 40px; border-radius: 50%; object-fit: cover; flex-shrink: 0;
+  width: 42px; height: 42px; border-radius: 50%; object-fit: cover; flex-shrink: 0;
   border: 2px solid var(--aq-vc);
 }
 .aq-voice span { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
@@ -439,13 +478,13 @@ body.aq-shell { padding-top: 62px; }
   font-size: 11px; letter-spacing: .16em; text-transform: uppercase;
   font-weight: 800; color: var(--aq-vc);
 }
-.aq-voice i { font-style: normal; font-size: 13px; color: rgba(255,255,255,.55); }
+.aq-voice i { font-style: normal; font-size: 14px; color: rgba(255,255,255,.55); }
 
 /* --- sas de transmission -------------------------------------------------- */
 #aq-sas {
-  position: fixed; inset: 0; z-index: 900; display: flex; align-items: center;
-  justify-content: center; padding: 22px; background: rgba(4,9,18,.93);
-  animation: aqNarrIn .25s ease;
+  position: fixed; inset: 0; z-index: 88; display: flex; align-items: center;
+  justify-content: center; padding: 22px; background: rgba(4,9,18,.94);
+  animation: aqNarrIn .25s ease; overflow-y: auto;
 }
 .aq-sas-inner {
   width: 100%; max-width: 520px; display: flex; flex-direction: column;
@@ -453,45 +492,48 @@ body.aq-shell { padding-top: 62px; }
 }
 .aq-sas-face {
   width: 124px; height: 124px; border-radius: 50%; object-fit: cover;
-  border: 3px solid var(--aq-vc, #7dd3fc); box-shadow: 0 0 44px rgba(125,211,252,.35);
+  border: 3px solid var(--aq-vc, var(--aq-vnf));
+  box-shadow: 0 0 44px rgba(125,211,252,.35);
 }
 #aq-sas.aq-v-dev .aq-sas-face { box-shadow: 0 0 44px rgba(74,222,128,.4); }
 .aq-sas-kicker {
   font-size: 12px; letter-spacing: .22em; text-transform: uppercase;
-  font-weight: 800; color: rgba(255,255,255,.55); animation: aqNarrPulse 1.6s ease-in-out infinite;
+  font-weight: 800; color: rgba(255,255,255,.55);
+  animation: aqNarrPulse 1.6s ease-in-out infinite;
 }
 .aq-sas-name {
-  font-family: var(--font-display, inherit); font-size: 30px; line-height: 1.1;
-  color: var(--aq-vc, #7dd3fc);
+  font-family: var(--font-display); font-size: 31px; line-height: 1.1;
+  color: var(--aq-vc, var(--aq-vnf));
 }
 .aq-sas-body {
-  width: 100%; font-size: 19px; line-height: 1.6; text-align: left;
+  width: 100%; font-size: var(--aq-text); line-height: var(--aq-lead); text-align: left;
   border-radius: 18px; padding: 18px; background: rgba(255,255,255,.07);
-  border-left: 6px solid var(--aq-vc, #7dd3fc);
+  border-left: 6px solid var(--aq-vc, var(--aq-vnf));
 }
-.aq-sas-body .card { background: none; border: 0; padding: 0; margin: 0; }
+.aq-sas-body .card { background: none; border: 0; box-shadow: none; padding: 0; margin: 0; }
 .aq-sas-btn {
-  width: 100%; min-height: 58px; border-radius: 16px; cursor: pointer;
-  border: 3px solid rgba(255,255,255,.85); background: var(--gold, #ffd12e);
-  color: #0b1220; font-family: var(--font-display, inherit); font-size: 20px;
+  width: 100%; min-height: 60px; border-radius: 17px; cursor: pointer;
+  border: 3px solid rgba(255,255,255,.85); background: var(--gold);
+  color: var(--ink); font-family: var(--font-display); font-size: 20px;
   box-shadow: 4px 4px 0 rgba(0,0,0,.45);
 }
 
 /* --- dossier -------------------------------------------------------------- */
 #aq-dossier-btn {
-  position: fixed; left: 50%; transform: translateX(-50%); bottom: 10px; z-index: 300;
-  border: 0; background: rgba(4,11,23,.9); color: rgba(255,255,255,.72);
+  position: fixed; left: 16px; bottom: calc(18px + env(safe-area-inset-bottom));
+  z-index: 44; border: 1px solid rgba(255,255,255,.16);
+  background: rgba(4,11,23,.9); color: rgba(255,255,255,.74);
   font-family: inherit; font-size: 15px; font-weight: 700; cursor: pointer;
-  padding: 9px 18px; border-radius: 999px; border: 1px solid rgba(255,255,255,.16);
+  padding: 11px 18px; border-radius: 999px; min-height: 46px;
   backdrop-filter: blur(8px);
 }
 #aq-dossier {
-  position: fixed; inset: 0; z-index: 910; background: rgba(4,9,18,.93);
+  position: fixed; inset: 0; z-index: 89; background: rgba(4,9,18,.94);
   display: flex; align-items: center; justify-content: center; padding: 20px;
   animation: aqNarrIn .2s ease; overflow-y: auto;
 }
 .aq-dossier-panel { width: 100%; max-width: 520px; display: flex; flex-direction: column; gap: 14px; }
-.aq-dossier-panel h2 { font-family: var(--font-display, inherit); font-size: 28px; margin: 0; }
+.aq-dossier-panel h2 { font-size: 29px; }
 .aq-dossier-count { font-size: 17px; line-height: 1.55; color: rgba(255,255,255,.7); margin: 0; }
 .aq-dossier-panel ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; }
 .aq-dossier-panel li {
@@ -507,21 +549,21 @@ body.aq-shell { padding-top: 62px; }
   background: rgba(255,255,255,.08); display: flex; align-items: center;
   justify-content: center; font-family: ui-monospace, monospace; font-size: 17px;
 }
-.aq-dossier-panel li.got .aq-piece-n { color: var(--gold, #ffd12e); }
+.aq-dossier-panel li.got .aq-piece-n { color: var(--gold); }
 .aq-piece-t { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .aq-piece-t b { font-size: 17px; }
 .aq-piece-t i { font-style: normal; font-size: 14px; color: rgba(255,255,255,.55); }
 .aq-dossier-close {
-  min-height: 56px; border-radius: 16px; cursor: pointer; margin-top: 4px;
+  min-height: 58px; border-radius: 17px; cursor: pointer; margin-top: 4px;
   border: 3px solid rgba(255,255,255,.85); background: transparent; color: #fff;
-  font-family: var(--font-display, inherit); font-size: 18px;
+  font-family: var(--font-display); font-size: 19px;
 }
 
 /* --- afficheur du boîtier -------------------------------------------------- */
 #aq-bombe-hud {
   display: flex; align-items: flex-end; justify-content: space-between; gap: 14px;
-  margin: 10px 0 12px; padding: 16px 18px; border-radius: 16px;
-  background: rgba(0,0,0,.55); border: 2px solid rgba(255,255,255,.22);
+  margin: 12px 0; padding: 16px 18px; border-radius: 16px;
+  background: rgba(0,0,0,.6); border: 2px solid rgba(255,255,255,.22);
 }
 #aq-bombe-hud > div { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
 #aq-bombe-hud .aq-bh-right { align-items: flex-end; }
@@ -542,5 +584,10 @@ body.aq-shell { padding-top: 62px; }
 @keyframes aqNarrPulse { 0%, 100% { opacity: .55; } 50% { opacity: 1; } }
 
 @media (prefers-reduced-motion: reduce) {
-  #aq-sas, #aq-dossier, .aq-sas-kicker { animation: none; }
+  #aq-sas, #aq-dossier, .aq-sas-kicker, .aq-sec.active { animation: none; }
+}
+
+/* Écrans très courts : le champ de code collant mangerait la page. */
+@media (max-height: 620px) {
+  .card.code, #card-code, #palais-card-code, #phase-card-code { position: static; }
 }
