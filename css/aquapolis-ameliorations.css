@@ -37,10 +37,9 @@
   --tap-min: 60px;
 }
 
-body {
-  font-family: "Nunito Sans", -apple-system, "Segoe UI", Roboto, system-ui, sans-serif;
-  font-size: var(--aq-text);
-}
+/* Police système : l'application doit rester lisible hors-ligne, on ne charge
+   aucune police distante. Sketcomic (--font-display) reste sur les titres. */
+body { font-size: var(--aq-text); }
 
 /* Le fond est assombri davantage : les illustrations restent présentes mais
    ne concurrencent plus le texte. */
