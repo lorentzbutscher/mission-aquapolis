@@ -4,7 +4,7 @@
 // appels Firebase/Firestore ne sont JAMAIS interceptés (on laisse le réseau
 // natif gérer, sync.js gère déjà les échecs proprement).
 
-const CACHE_VERSION = "aquapolis-v30";
+const CACHE_VERSION = "aquapolis-v26";
 
 const APP_SHELL = [
   "./",
@@ -12,9 +12,8 @@ const APP_SHELL = [
   "./manifest.json",
   "./content.json",
   "./css/style.css",
-  "./css/aquapolis-ameliorations.css",
+  "./css/mascot.css",
   "./js/app.js",
-  "./js/app-narratif.js",
   "./js/content.js",
   "./js/state.js",
   "./js/sync.js",
@@ -22,6 +21,7 @@ const APP_SHELL = [
   "./js/utils.js",
   "./js/firebase-config.js",
   "./js/background.js",
+  "./js/mascot.js",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
   "./icons/icon-maskable-512.png",
@@ -40,6 +40,7 @@ const APP_SHELL = [
   "./assets/flags/flag_allemagne.png",
   "./assets/flags/flag_pays_bas.png",
   "./assets/villain.png",
+  "./assets/mascotte-whisper.png",
   "./assets/bombe-epreuve-finale.jpg",
   "./assets/audio/bombe/tick_tock_loop.mp3",
   "./assets/audio/bombe/urgent_beep_loop.mp3",

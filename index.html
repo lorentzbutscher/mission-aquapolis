@@ -13,7 +13,9 @@
 <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
 <link rel="icon" href="./icons/icon-192.png" />
 <link rel="stylesheet" href="./css/style.css" />
-<link rel="stylesheet" href="./css/aquapolis-ameliorations.css" />
+<!-- Popup mascotte humoristique — module autonome, retirer cette ligne (et
+     l'appel startMascotPopups() dans js/app.js) pour tout désactiver. -->
+<link rel="stylesheet" href="./css/mascot.css" />
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <!-- Préchargement des 4 fonds d'écran (tirés au hasard à chaque écran, voir js/background.js)
      pour éviter tout flash lors du changement de fond. -->
@@ -304,6 +306,5 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script type="module" src="./js/app.js"></script>
-<script type="module" src="./js/app-narratif.js"></script>
 </body>
 </html>
