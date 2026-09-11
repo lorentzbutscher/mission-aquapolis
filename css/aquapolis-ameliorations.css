@@ -524,7 +524,7 @@ body.aq-shell { padding-top: 62px; }
   background: rgba(4,11,23,.9); color: rgba(255,255,255,.74);
   font-family: inherit; font-size: 15px; font-weight: 700; cursor: pointer;
   padding: 11px 18px; border-radius: 999px; min-height: 46px;
-  backdrop-filter: blur(8px);
+  white-space: nowrap; backdrop-filter: blur(8px);
 }
 #aq-dossier {
   position: fixed; inset: 0; z-index: 89; background: rgba(4,9,18,.94);
