@@ -94,8 +94,10 @@ function updateCrue() {
   const color = pct > 75 ? "#f87171" : pct > 50 ? "#ffd12e" : "#7dd3fc";
   const fill = $(".aq-crue-fill");
   const water = $(".aq-crue-water");
-  if (fill) { fill.style.height = pct + "%"; fill.style.background = color; }
-  if (water) water.style.height = Math.round(pct * 0.42) + "%";
+  const h = pct + "%";
+  if (fill && fill.style.height !== h) { fill.style.height = h; fill.style.background = color; }
+  const wh = Math.round(pct * 0.42) + "%";
+  if (water && water.style.height !== wh) water.style.height = wh;
 }
 
 // ========================================================== 2. l'expéditeur
@@ -195,10 +197,12 @@ function updateDossierBtn() {
   const btn = $("#aq-dossier-btn");
   if (!btn) return;
   const n = Math.min(7, phaseIndex());
-  btn.textContent = "Dossier — " + n + "/7 pièces";
+  const label = "Dossier — " + n + "/7 pièces";
+  if (btn.textContent !== label) btn.textContent = label;
   const playing = ["view-phase", "view-epreuve", "view-palais", "view-bombe", "view-mission-end"]
     .some((id) => { const v = document.getElementById(id); return v && v.classList.contains("active"); });
-  btn.style.display = playing ? "" : "none";
+  const disp = playing ? "" : "none";
+  if (btn.style.display !== disp) btn.style.display = disp;
 }
 
 function openDossier() {
@@ -244,9 +248,11 @@ function buildBombe() {
     '<div class="aq-bh-right"><span class="aq-bh-label">Restant</span><span class="aq-bh-time"></span></div>';
   keypad.parentNode.insertBefore(hud, keypad);
 
+  const cEl = hud.querySelector(".aq-bh-code");
+  const tEl = hud.querySelector(".aq-bh-time");
   const sync = () => {
-    hud.querySelector(".aq-bh-code").textContent = lcd.textContent;
-    hud.querySelector(".aq-bh-time").textContent = led.textContent;
+    if (cEl.textContent !== lcd.textContent) cEl.textContent = lcd.textContent;
+    if (tEl.textContent !== led.textContent) tEl.textContent = led.textContent;
   };
   sync();
   new MutationObserver(sync).observe(lcd, { childList: true, characterData: true, subtree: true });
@@ -255,7 +261,17 @@ function buildBombe() {
 
 // ---------------------------------------------------------------- boucle
 
+// tick() modifie le DOM. L'observateur est donc débranché pendant son exécution
+// et les appels sont temporisés : sans cela, chaque modification relancerait
+// tick(), qui modifierait à nouveau le DOM — boucle infinie, page figée.
+let observer = null;
+let running = false;
+let pending = null;
+
 function tick() {
+  if (running) return;
+  running = true;
+  if (observer) observer.disconnect();
   try {
     buildCrue();
     updateCrue();
@@ -266,17 +282,25 @@ function tick() {
     maybeSas();
   } catch (err) {
     console.error("[narratif]", err);
+  } finally {
+    if (observer) {
+      observer.observe(document.body, { childList: true, subtree: true });
+    }
+    running = false;
   }
+}
+
+function scheduleTick() {
+  if (running || pending) return;
+  pending = setTimeout(() => { pending = null; tick(); }, 250);
 }
 
 function start() {
   console.log("[narratif] couche narrative active");
   document.body.dataset.aqNarr = "on";
+  observer = new MutationObserver(scheduleTick);
   tick();
-  setInterval(tick, 700);
-  new MutationObserver(() => tick()).observe(document.body, {
-    childList: true, subtree: true, attributes: true, attributeFilter: ["class"],
-  });
+  setInterval(tick, 900);
 }
 
 if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
