@@ -52,15 +52,6 @@ const PAYS_META = {
   paysbas: { img: "./assets/flags/flag_pays_bas.png", emoji: "🇳🇱", label: "Pays-Bas" },
 };
 
-const MORSE_MAP = {
-  A: ".-", B: "-...", C: "-.-.", D: "-..", E: ".", F: "..-.", G: "--.", H: "....",
-  I: "..", J: ".---", K: "-.-", L: ".-..", M: "--", N: "-.", O: "---", P: ".--.",
-  Q: "--.-", R: ".-.", S: "...", T: "-", U: "..-", V: "...-", W: ".--", X: "-..-",
-  Y: "-.--", Z: "--..",
-  0: "-----", 1: ".----", 2: "..---", 3: "...--", 4: "....-", 5: ".....",
-  6: "-....", 7: "--...", 8: "---..", 9: "----.",
-};
-
 let CONTENT = null;
 let TEAM = null;
 let STATE = null;
@@ -421,12 +412,6 @@ function renderBlock(block, revealedIds, opts) {
         p.textContent = "(fichier audio à venir)";
         el.appendChild(p);
       }
-      const morseBtn = document.createElement("button");
-      morseBtn.type = "button";
-      morseBtn.className = "btn btn-ghost btn-sm audio-morse-link";
-      morseBtn.textContent = "📡 Voir l'alphabet morse";
-      morseBtn.addEventListener("click", openMorseModal);
-      el.appendChild(morseBtn);
       break;
     }
     case "drapeaux": {
@@ -581,33 +566,6 @@ function closeLightbox() {
   $("#lightbox-img").src = "";
 }
 
-// ---- Table morse --------------------------------------------------------------------
-
-function renderMorseTableOnce() {
-  const el = $("#morse-table");
-  if (el.children.length) return;
-  Object.entries(MORSE_MAP).forEach(([letter, code]) => {
-    const cell = document.createElement("div");
-    cell.className = "morse-cell";
-    const l = document.createElement("span");
-    l.className = "letter";
-    l.textContent = letter;
-    const c = document.createElement("span");
-    c.className = "code";
-    c.textContent = code;
-    cell.appendChild(l);
-    cell.appendChild(c);
-    el.appendChild(cell);
-  });
-}
-function openMorseModal() {
-  renderMorseTableOnce();
-  $("#morse-modal").style.display = "flex";
-}
-function closeMorseModal() {
-  $("#morse-modal").style.display = "none";
-}
-
 // ---- Validation code / révélation ----------------------------------------------------
 
 function onCodeCorrect(ep) {
@@ -738,10 +696,10 @@ function renderPhaseFlow() {
     return;
   }
   if (pi === 5) {
-    // Phase 6 validée (ZIX) → mini-jeu de désamorçage (inchangé).
-    const b = bombeState();
-    if (b.armedAt || b.gameOver || b.defused) enterBombeScreen();
-    else armBombeAndEnter();
+    // Phase 6 validée (ZIX) → mini-jeu de désamorçage. La caisse scellée
+    // s'affiche d'abord ; le minuteur ne démarre qu'à l'ouverture (appui
+    // maintenu sur #btn-bombe-arm, voir wireBombeArmHold/armBombeAndEnter).
+    enterBombeScreen();
     return;
   }
   // Phases 4 / 5 / 6 → écran générique piloté par les données.
@@ -810,7 +768,7 @@ function onPhaseCodeCorrect() {
   $("#phase-card-code").style.display = "none";
   $("#phase-apres-text").innerHTML = cfg.apres || "";
   $("#phase-apres").style.display = "";
-  $("#btn-phase-continue").textContent = key === "phase6" ? "🧨 Armer la bombe" : "Continuer ➜";
+  $("#btn-phase-continue").textContent = key === "phase6" ? "🧨 Lancer le désamorçage de la bombe" : "Continuer ➜";
 }
 
 function onPhaseCodeWrong() {
@@ -920,11 +878,19 @@ function armBombeAndEnter() {
 }
 
 function enterBombeScreen() {
-  bombeInput = "";
-  buildBombeKeypad();
   show("view-bombe");
   const b = bombeState();
-  if (!b.defused && !b.gameOver && b.armedAt) {
+  const armed = !!b.armedAt;
+  $("#card-bombe-launch").style.display = armed ? "none" : "";
+  $("#bombe-stage").style.display = armed ? "" : "none";
+  $("#bombe-keypad").style.display = armed ? "" : "none";
+  if (!armed) {
+    clearInterval(bombeTickTimer);
+    return; // la caisse n'est pas encore ouverte : rien d'autre à préparer.
+  }
+  bombeInput = "";
+  buildBombeKeypad();
+  if (!b.defused && !b.gameOver) {
     duckBackgroundMusic(true);
     startBombeTimerLoop();
   } else {
@@ -967,6 +933,8 @@ function renderBombeView() {
     led.textContent = "00:00";
   }
   $("#bombe-gameover").style.display = b.gameOver ? "flex" : "none";
+  $("#bombe-win").style.display = b.defused ? "flex" : "none";
+  if (b.defused) $("#bombe-win-time").textContent = formatMinSec(b.frozenRemainMs ?? 0);
   $("#bombe-keypad").classList.toggle("disabled", b.gameOver || b.defused);
   $("#btn-bombe-continue").style.display = b.defused ? "" : "none";
   renderBombeLcd();
@@ -1065,7 +1033,6 @@ function defuseBombe() {
   playBombeSuccess();
   vibrate([150, 80, 150]);
   renderBombeView();
-  setTimeout(finalizeBombeSuccess, 1800);
 }
 
 function finalizeBombeSuccess() {
@@ -1085,6 +1052,46 @@ function triggerBombeGameOver() {
   playBombeFail();
   vibrate([300, 100, 300, 100, 300]);
   renderBombeView();
+}
+
+// Ouverture de la caisse : appui maintenu ~0,9 s (évite l'ouverture accidentelle
+// et donne le geste "on descelle la caisse"). La jauge est le <span class="hold-fill">.
+const BOMBE_HOLD_MS = 900;
+
+function wireBombeArmHold() {
+  const btn = $("#btn-bombe-arm");
+  if (!btn) return;
+  const fill = btn.querySelector(".hold-fill");
+  let raf = null;
+  let t0 = 0;
+
+  const reset = () => {
+    if (raf) cancelAnimationFrame(raf);
+    raf = null;
+    if (fill) fill.style.width = "0%";
+  };
+
+  const step = () => {
+    const p = Math.min(1, (Date.now() - t0) / BOMBE_HOLD_MS);
+    if (fill) fill.style.width = p * 100 + "%";
+    if (p >= 1) {
+      reset();
+      vibrate(120);
+      armBombeAndEnter();
+      return;
+    }
+    raf = requestAnimationFrame(step);
+  };
+
+  btn.addEventListener("pointerdown", (e) => {
+    e.preventDefault();
+    reset();
+    t0 = Date.now();
+    raf = requestAnimationFrame(step);
+  });
+  ["pointerup", "pointerleave", "pointercancel"].forEach((ev) =>
+    btn.addEventListener(ev, reset)
+  );
 }
 
 function retryBombe() {
@@ -1346,8 +1353,6 @@ function initListeners() {
     renderPhaseFlow();
   });
 
-  $("#btn-phase-morse").addEventListener("click", openMorseModal);
-
   $("#btn-mission-end-reveal").addEventListener("click", () => {
     $("#mission-end-hero").style.display = "";
     $("#btn-mission-end-reveal").style.display = "none";
@@ -1452,15 +1457,10 @@ function initListeners() {
     if (e.target.id === "lightbox-modal") closeLightbox();
   });
 
-  $("#btn-close-morse").addEventListener("click", closeMorseModal);
-  $("#morse-modal").addEventListener("click", (e) => {
-    if (e.target.id === "morse-modal") closeMorseModal();
-  });
-
   $("#btn-final-map").addEventListener("click", openMap);
   $("#btn-close-map").addEventListener("click", closeMap);
 
-  $("#btn-bombe-arm").addEventListener("click", armBombeAndEnter);
+  wireBombeArmHold();
   $("#btn-bombe-retry").addEventListener("click", retryBombe);
   $("#btn-bombe-continue").addEventListener("click", finalizeBombeSuccess);
 
