@@ -264,24 +264,37 @@ function buildBombe() {
   const keypad = $("#bombe-keypad");
   const lcd = $("#bombe-lcd");
   const led = $("#bombe-led");
-  if (!keypad || !lcd || !led || $("#aq-bombe-hud")) return;
+  if (!keypad || !lcd || !led) return;
 
-  const hud = document.createElement("div");
-  hud.id = "aq-bombe-hud";
-  hud.innerHTML =
-    '<div><span class="aq-bh-label">Code saisi</span><span class="aq-bh-code"></span></div>' +
-    '<div class="aq-bh-right"><span class="aq-bh-label">Restant</span><span class="aq-bh-time"></span></div>';
-  keypad.parentNode.insertBefore(hud, keypad);
+  // La caisse n'est pas encore ouverte (#bombe-keypad masqué par js/app.js tant
+  // que #bombe-armedAt n'est pas défini) : pas de HUD tant qu'il n'y a rien à
+  // refléter, sinon "Code saisi"/"Restant" apparaît sous le bouton de la caisse.
+  const armed = getComputedStyle(keypad).display !== "none";
+  let hud = $("#aq-bombe-hud");
+  if (!armed) {
+    if (hud) hud.style.display = "none";
+    return;
+  }
 
-  const cEl = hud.querySelector(".aq-bh-code");
-  const tEl = hud.querySelector(".aq-bh-time");
-  const sync = () => {
-    if (cEl.textContent !== lcd.textContent) cEl.textContent = lcd.textContent;
-    if (tEl.textContent !== led.textContent) tEl.textContent = led.textContent;
-  };
-  sync();
-  new MutationObserver(sync).observe(lcd, { childList: true, characterData: true, subtree: true });
-  new MutationObserver(sync).observe(led, { childList: true, characterData: true, subtree: true });
+  if (!hud) {
+    hud = document.createElement("div");
+    hud.id = "aq-bombe-hud";
+    hud.innerHTML =
+      '<div><span class="aq-bh-label">Code saisi</span><span class="aq-bh-code"></span></div>' +
+      '<div class="aq-bh-right"><span class="aq-bh-label">Restant</span><span class="aq-bh-time"></span></div>';
+    keypad.parentNode.insertBefore(hud, keypad);
+
+    const cEl = hud.querySelector(".aq-bh-code");
+    const tEl = hud.querySelector(".aq-bh-time");
+    const sync = () => {
+      if (cEl.textContent !== lcd.textContent) cEl.textContent = lcd.textContent;
+      if (tEl.textContent !== led.textContent) tEl.textContent = led.textContent;
+    };
+    sync();
+    new MutationObserver(sync).observe(lcd, { childList: true, characterData: true, subtree: true });
+    new MutationObserver(sync).observe(led, { childList: true, characterData: true, subtree: true });
+  }
+  hud.style.display = "";
 }
 
 // ---------------------------------------------------------------- boucle
