@@ -279,14 +279,24 @@ function friendlyAuthError(err) {
 
 $("#btn-logout").addEventListener("click", () => adminLogout());
 
+// Firebase peut réémettre l'état "connecté" pour le même utilisateur (retour
+// d'arrière-plan, rafraîchissement de jeton, reprise d'onglet — fréquent sur
+// mobile, typiquement en allant choisir un fichier dans les photos). Sans ce
+// garde-fou, chaque réémission relance loadAllData()+renderGeneral(), qui
+// écrase silencieusement tout ce qui n'a pas encore été enregistré.
+let adminScreenLoaded = false;
+
 onAdminAuthChange(async (user) => {
   if (user) {
     $("#login-screen").style.display = "none";
     $("#admin-screen").style.display = "block";
+    if (adminScreenLoaded) return; // déjà chargé pour cette session : ne pas écraser les modifications en cours
+    adminScreenLoaded = true;
     await loadAllData();
     renderGeneral();
     renderTeamPanels();
   } else {
+    adminScreenLoaded = false;
     $("#login-screen").style.display = "block";
     $("#admin-screen").style.display = "none";
   }
