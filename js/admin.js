@@ -295,6 +295,11 @@ onAdminAuthChange(async (user) => {
     await loadAllData();
     renderGeneral();
     renderTeamPanels();
+    // Passerelle attendue par js/admin-ui.js (fonction "copier une étape vers
+    // d'autres brigades"). TEAMS_DATA n'est plus jamais réassigné en bloc après
+    // ce point (loadAllData() ne tourne qu'une fois par session), la référence
+    // reste donc valide.
+    window.__aqAdmin = { TEAM_LABELS, TEAM_COLORS, TEAMS_DATA, renderTeamPanels };
   } else {
     adminScreenLoaded = false;
     $("#login-screen").style.display = "block";
