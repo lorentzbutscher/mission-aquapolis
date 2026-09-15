@@ -574,6 +574,13 @@ function renderFinalPanelHtml() {
   const team = TEAMS_DATA[FINAL_KEY];
   const bombeActive = team.epreuves[0].bombeActive !== false;
   return `
+    <div class="admin-card" style="border-color:#8a6d3b; background:#2a2416;">
+      <p class="muted" style="font-size:13px; margin:0;">
+        ⚠️ <strong>Seul le champ Code ci-dessous est utilisé par le jeu</strong> (c'est le code de désamorçage de la bombe, SEMEH). Les pages/blocs (texte, vidéo, photo) de cette épreuve <strong>ne sont affichés à aucune équipe</strong> — le jeu réel passe directement de la phase 6 au mini-jeu bombe, sans repasser par cet écran.
+        Pour éditer ce qui s'affiche vraiment <strong>après</strong> la bombe (vidéo/texte/photo), va dans l'onglet <strong>⚙️ Général → Écran de fin (phase 7)</strong>, pas ici.
+      </p>
+      <button type="button" class="btn btn-outline btn-sm" id="btn-copy-final-to-missionend" style="margin-top:10px;">📋 Copier les blocs ci-dessous vers l'Écran de fin (phase 7)</button>
+    </div>
     <div class="admin-card">
       <h3>⭐ Épreuve finale</h3>
       <p class="muted" style="font-size:13px;">Cette épreuve est strictement identique pour les 5 équipes : elle arrive automatiquement après leurs épreuves habituelles et mène toutes les équipes vers le rassemblement final.</p>
@@ -1181,6 +1188,25 @@ function wireTeamPanel(color, panel) {
   const saveBtn = panel.querySelector(".save-team");
   if (color === FINAL_KEY) {
     saveBtn.addEventListener("click", () => saveFinalPanel(panel));
+    panel.querySelector("#btn-copy-final-to-missionend")?.addEventListener("click", () => {
+      const finalPages = TEAMS_DATA[FINAL_KEY].epreuves[0].pages || [];
+      const blocks = finalPages.flatMap((p) => (p.blocks || []).map((b) => ({ ...b, id: newBlockId() })));
+      if (!blocks.length) {
+        flash("Aucun bloc à copier dans l'Épreuve finale.", true);
+        return;
+      }
+      if (
+        !confirm(
+          `Copier ${blocks.length} bloc(s) vers l'Écran de fin (phase 7) ? Le contenu actuel de cette section sera remplacé (rien n'est envoyé tant que tu ne cliques pas ensuite sur Enregistrer/Publier).`
+        )
+      )
+        return;
+      const me = getEpreuve("__config__", "missionEnd");
+      me.pages[0].blocks = blocks;
+      const meContainer = $("#missionend-blocks-editor");
+      if (meContainer) renderBlocksList("__config__", "missionEnd", meContainer);
+      flash(`${blocks.length} bloc(s) copié(s) — va dans "⚙️ Général → Écran de fin", vérifie (notamment la case "Visible" de chaque bloc), puis enregistre.`);
+    });
   } else {
     saveBtn.addEventListener("click", () => saveTeamPanel(color, panel));
     panel.querySelector(".reset-team")?.addEventListener("click", async () => {
