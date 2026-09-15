@@ -2,9 +2,9 @@ const BASE = "https://raw.githubusercontent.com/lorentzbutscher/mission-aquapoli
 
 const checks = [
   { file: "manifest.json", markers: ['"display": "fullscreen"', '"display_override"'] },
-  { file: "index.html", markers: ["view-access-code", "apple-mobile-web-app-status-bar-style", "page-nav", "result-map-wrap", "lightbox-modal", "morse-modal"] },
-  { file: "css/style.css", markers: ["safe-area-inset-top", "audio-player", ".page-tabs", "lightbox", "morse-table"] },
-  { file: "js/app.js", markers: ["ACCESS_CODE", "totalEpreuvesForTeam", "MORSE_MAP", "openLightbox", "renderResultMap"] },
+  { file: "index.html", markers: ["view-access-code", "apple-mobile-web-app-status-bar-style", "page-nav", "result-map-wrap", "lightbox-modal", "caisse-wrap"] },
+  { file: "css/style.css", markers: ["safe-area-inset-top", "audio-player", ".page-tabs", "lightbox", "caisse-body"] },
+  { file: "js/app.js", markers: ["ACCESS_CODE", "totalEpreuvesForTeam", "wireBombeArmHold", "openLightbox", "renderResultMap"] },
   { file: "js/admin.js", markers: ["FINAL_KEY", "renderPageTabs", "saveFinalPanel", 'case "audio"', "audio-file-input"] },
   { file: "js/sync.js", markers: ["saveFinalEpreuve", "getFinalEpreuveOnce"] },
   { file: "js/content.js", markers: ["finalEpreuve"] },
