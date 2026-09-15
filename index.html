@@ -116,14 +116,12 @@
     <div class="progress-dots" id="phase-dots"></div>
     <h2 id="phase-title">Phase</h2>
 
-    <div class="card block-texte" id="phase-avant"></div>
+    <div id="phase-blocks-container"></div>
 
-    <div class="card block-audio" id="phase-audio" style="display:none;">
-      <div class="card-head">
-        <div class="card-pict">🎧</div>
-        <div class="card-family" id="phase-audio-label">Message codé</div>
-      </div>
-      <div id="phase-audio-player"></div>
+    <div class="page-nav" id="phase-page-nav" style="display:none;">
+      <button class="btn btn-ghost btn-sm" id="btn-phase-back" type="button">← Page précédente</button>
+      <span class="page-indicator" id="phase-page-indicator">Page 1/1</span>
+      <button class="btn btn-ghost btn-sm" id="btn-phase-next-page" type="button">Suite →</button>
     </div>
 
     <div class="card code" id="phase-card-code">
@@ -138,14 +136,7 @@
       <div class="code-feedback" id="phase-code-feedback"></div>
     </div>
 
-    <div class="card revelation" id="phase-apres" style="display:none;">
-      <div class="card-head">
-        <div class="card-pict">⭐</div>
-        <div class="card-family">Révélation</div>
-      </div>
-      <div id="phase-apres-text"></div>
-      <button class="btn btn-gold btn-block" id="btn-phase-continue" style="margin-top:12px;">Continuer ➜</button>
-    </div>
+    <button class="btn btn-gold btn-block" id="btn-phase-continue" style="display:none; margin-top:12px;">Continuer ➜</button>
   </section>
 
   <section class="view" id="view-epreuve">
@@ -258,7 +249,7 @@
     <div class="mission-end-hero" id="mission-end-hero" style="display:none;">
       <div class="big-emoji">🦸</div>
       <h1 id="mission-end-title">MISSION ACCOMPLIE</h1>
-      <p id="mission-end-text"></p>
+      <div id="mission-end-blocks"></div>
     </div>
 
     <button class="btn btn-gold btn-block" id="btn-mission-end-reveal" style="margin-top:8px;">Continuer ➜</button>
