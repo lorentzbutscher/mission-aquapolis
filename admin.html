@@ -91,15 +91,11 @@
       </div>
 
       <h3 style="margin-top:18px;">🏁 Écran de fin (phase 7)</h3>
-      <div class="field"><label>Texte "3…2…1… Ouf" (juste après le désamorçage)</label><textarea id="cfg-missionend-bombe"></textarea></div>
-      <div class="field">
-        <label>Vidéo Déversoir</label>
-        <input id="cfg-missionend-videourl" placeholder="Lien YouTube, ou envoie un fichier ci-dessous" />
-        <input type="file" accept="video/*" id="cfg-missionend-videofile" style="margin-top:6px;">
-        <div class="muted" id="cfg-missionend-videostatus" style="font-size:12px;"></div>
-      </div>
-      <div class="field"><label>Titre de l'écran de fin</label><input id="cfg-missionend-titre" /></div>
-      <div class="field"><label>Libellé du bouton</label><input id="cfg-missionend-buttonlabel" placeholder="Continuer ➜" /></div>
+      <p class="muted" style="font-size:12px;">Cet écran s'affiche en <strong>deux temps</strong> : d'abord le texte "3…2…1… Ouf" ci-dessous, tout seul ; puis, seulement après que le joueur ait appuyé sur le bouton de révélation, le titre + le contenu (vidéo / texte / photo) plus bas.</p>
+      <div class="field"><label>① Texte "3…2…1… Ouf" — affiché en premier, seul (juste après le désamorçage)</label><textarea id="cfg-missionend-bombe"></textarea></div>
+      <div class="field"><label>Titre de la révélation (affiché après le clic sur le bouton)</label><input id="cfg-missionend-titre" /></div>
+      <div class="field"><label>Libellé du bouton de révélation</label><input id="cfg-missionend-buttonlabel" placeholder="Continuer ➜" /></div>
+      <p class="muted" style="font-size:12px; margin:14px 0 4px;"><strong>② Contenu de la révélation</strong> — ajoute ici tes blocs vidéo / texte / photo ci-dessous. C'est cette section qui s'affiche après le clic sur le bouton, sous le titre.</p>
       <div id="missionend-blocks-editor"></div>
 
       <h3 style="margin-top:18px;">Point de rassemblement final</h3>
@@ -121,6 +117,5 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script type="module" src="./js/admin.js"></script>
-<script type="module" src="./js/admin-ui.js"></script>
 </body>
 </html>
