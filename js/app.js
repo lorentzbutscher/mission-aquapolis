@@ -707,12 +707,49 @@ function renderPhaseFlow() {
   show("view-phase");
 }
 
+// Migration à la volée de l'ancien format à plat ({code, avant, apres,
+// audioUrl, audioLabel}) vers le format pages/blocs (mêmes blocs que le
+// Palais du Rhin). N'écrit rien : la migration réelle a lieu quand l'admin
+// enregistre depuis le nouvel éditeur. Reste donc compatible avec du contenu
+// jamais réouvert dans l'admin.
+function normalizePhaseCfg(raw) {
+  if (raw.pages) return raw; // déjà au nouveau format
+  const introBlocks = [{ id: "blk_avant", type: "texte", visible: true, html: raw.avant || "" }];
+  if ((raw.audioUrl || "").trim() || (raw.audioLabel || "").trim()) {
+    introBlocks.push({
+      id: "blk_audio",
+      type: "audio",
+      visible: true,
+      url: raw.audioUrl || "",
+      label: raw.audioLabel || "Message codé",
+    });
+  }
+  const revealBlocks = [{ id: "blk_apres", type: "texte", visible: true, html: raw.apres || "" }];
+  return {
+    code: raw.code || "",
+    pages: [{ blocks: introBlocks }, { blocks: revealBlocks }],
+    buttonLabel: "",
+  };
+}
+
 function phaseCfg(key) {
-  return { ...PHASE_DEFAULTS[key], ...(CONTENT.config?.phases?.[key] || {}) };
+  const raw = { ...PHASE_DEFAULTS[key], ...(CONTENT.config?.phases?.[key] || {}) };
+  return normalizePhaseCfg(raw);
 }
 
 function currentPhaseKey() {
   return PHASE_KEYS[(STATE.phaseIndex || 0) - 2];
+}
+
+// Sous-état de pagination d'une phase (comme STATE.palais, mais partagé par
+// phase4/5/6 puisqu'une seule est active à la fois). Réinitialisé dès qu'on
+// change de phase.
+function currentPhaseSub() {
+  const key = currentPhaseKey();
+  if (!STATE.phaseSub || STATE.phaseSub.key !== key) {
+    STATE.phaseSub = { key, pageIndex: 0, codeOk: false };
+  }
+  return STATE.phaseSub;
 }
 
 function renderPhaseDots() {
@@ -732,43 +769,55 @@ function renderGenericPhase(key) {
   const num = 4 + PHASE_KEYS.indexOf(key); // phase4/5/6 → n° 4/5/6
   $("#phase-title").textContent = "Phase " + num;
   renderPhaseDots();
-  $("#phase-avant").innerHTML = cfg.avant || "";
 
-  // Lecteur audio optionnel (ex. message morse « ZIX » sur la phase 6).
-  const audioCard = $("#phase-audio");
-  const audioUrl = (cfg.audioUrl || "").trim();
-  if (audioUrl) {
-    $("#phase-audio-label").textContent = cfg.audioLabel || "Message codé";
-    const pw = $("#phase-audio-player");
-    pw.innerHTML = "";
-    pw.appendChild(buildAudioPlayer(audioUrl));
-    audioCard.style.display = "";
-  } else {
-    $("#phase-audio-player").innerHTML = "";
-    audioCard.style.display = "none";
-  }
+  const sub = currentPhaseSub();
+  const pages = cfg.pages.length ? cfg.pages : [{ blocks: [] }];
+  let idx = sub.pageIndex;
+  if (idx >= pages.length) idx = pages.length - 1;
+  if (idx < 0) idx = 0;
+  sub.pageIndex = idx;
+  const page = pages[idx];
+  const isFirstPage = idx === 0;
+  const isLastPage = idx === pages.length - 1;
+  // Le code ne se saisit que sur la 1ère page, tant qu'il n'est pas validé
+  // (identique au Palais du Rhin).
+  const codeGateActive = isFirstPage && !sub.codeOk;
 
-  $("#phase-card-code").style.display = "";
-  $("#phase-code-form").style.display = "";
+  const container = $("#phase-blocks-container");
+  container.innerHTML = "";
+  container.classList.toggle("page-video-only", page.layout === "video-only");
+  (page.blocks || []).filter((b) => b.visible).forEach((block) => container.appendChild(renderBlock(block, [], {})));
+
+  $("#phase-card-code").style.display = codeGateActive ? "" : "none";
   $("#phase-code-input").value = "";
   $("#phase-code-feedback").textContent = "";
-  $("#phase-apres").style.display = "none";
-  $("#phase-apres-text").innerHTML = cfg.apres || "";
-  setTimeout(() => $("#phase-code-input")?.focus(), 50);
+  if (codeGateActive) setTimeout(() => $("#phase-code-input")?.focus(), 50);
+
+  const showPageNav = pages.length > 1 && !codeGateActive;
+  $("#phase-page-nav").style.display = showPageNav ? "flex" : "none";
+  if (showPageNav) {
+    $("#phase-page-indicator").textContent = `Page ${idx + 1}/${pages.length}`;
+    $("#btn-phase-back").style.visibility = idx === 0 ? "hidden" : "visible";
+    $("#btn-phase-next-page").style.display = isLastPage ? "none" : "";
+    $("#btn-phase-next-page").textContent = page.nextLabel || "Suite →";
+  }
+
+  $("#btn-phase-continue").style.display = isLastPage && !codeGateActive ? "" : "none";
+  $("#btn-phase-continue").textContent =
+    cfg.buttonLabel || (key === "phase6" ? "🧨 Lancer le désamorçage de la bombe" : "Continuer ➜");
 }
 
 function onPhaseCodeCorrect() {
   const key = currentPhaseKey();
   const cfg = phaseCfg(key);
   STATE.lastCode = normalizeCode(cfg.code || "");
+  const sub = currentPhaseSub();
+  sub.codeOk = true;
+  if (cfg.pages.length > 1) sub.pageIndex = Math.max(sub.pageIndex, 1);
   persist();
   playSuccessSound();
   vibrate(120);
-  $("#phase-code-feedback").textContent = "";
-  $("#phase-card-code").style.display = "none";
-  $("#phase-apres-text").innerHTML = cfg.apres || "";
-  $("#phase-apres").style.display = "";
-  $("#btn-phase-continue").textContent = key === "phase6" ? "🧨 Lancer le désamorçage de la bombe" : "Continuer ➜";
+  renderGenericPhase(key);
 }
 
 function onPhaseCodeWrong() {
@@ -801,13 +850,31 @@ function parseYouTubeId(url) {
   return "";
 }
 
+// Migration à la volée de l'ancien champ "texte" (texte brut, non formaté)
+// vers un bloc "texte" riche, comme pour les phases.
+function textToHtmlBlock(text) {
+  const div = document.createElement("div");
+  div.textContent = text || "";
+  return div.innerHTML.replace(/\n/g, "<br>");
+}
+
+function normalizeMissionEnd(raw) {
+  if (!raw) raw = {};
+  if (raw.blocks) return raw;
+  const blocks = [];
+  if ((raw.texte || "").trim()) {
+    blocks.push({ id: "blk_me_texte", type: "texte", visible: true, html: textToHtmlBlock(raw.texte) });
+  }
+  return { ...raw, blocks };
+}
+
 function renderMissionEnd() {
   STATE.status = "finished";
   STATE.finishedAt = STATE.finishedAt || Date.now();
   STATE.phaseIndex = 6;
   persist();
 
-  const cfg = CONTENT.config?.missionEnd || {};
+  const cfg = normalizeMissionEnd(CONTENT.config?.missionEnd || {});
   $("#mission-end-bombe").innerHTML = cfg.texteBombe || "";
 
   const vwrap = $("#mission-end-video-wrap");
@@ -837,9 +904,12 @@ function renderMissionEnd() {
   }
 
   $("#mission-end-title").textContent = cfg.titre || "MISSION ACCOMPLIE";
-  $("#mission-end-text").textContent = cfg.texte || "";
+  const blocksContainer = $("#mission-end-blocks");
+  blocksContainer.innerHTML = "";
+  (cfg.blocks || []).filter((b) => b.visible).forEach((block) => blocksContainer.appendChild(renderBlock(block, [], {})));
   $("#mission-end-hero").style.display = "none";
   $("#btn-mission-end-reveal").style.display = "";
+  $("#btn-mission-end-reveal").textContent = cfg.buttonLabel || "Continuer ➜";
 }
 
 // ---- Bombe : mini-jeu de désamorçage (Épreuve finale uniquement) --------------------
@@ -1351,6 +1421,25 @@ function initListeners() {
     STATE.phaseIndex = (STATE.phaseIndex || 0) + 1;
     persist();
     renderPhaseFlow();
+  });
+
+  $("#btn-phase-back").addEventListener("click", () => {
+    const sub = currentPhaseSub();
+    if (sub.pageIndex > 0) {
+      sub.pageIndex -= 1;
+      persist();
+      renderGenericPhase(currentPhaseKey());
+    }
+  });
+
+  $("#btn-phase-next-page").addEventListener("click", () => {
+    const sub = currentPhaseSub();
+    const cfg = phaseCfg(currentPhaseKey());
+    if (sub.pageIndex < cfg.pages.length - 1) {
+      sub.pageIndex += 1;
+      persist();
+      renderGenericPhase(currentPhaseKey());
+    }
   });
 
   $("#btn-mission-end-reveal").addEventListener("click", () => {

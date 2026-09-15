@@ -14,6 +14,9 @@ export function defaultState() {
     // verrouillée tant que la précédente n'est pas validée.
     phaseIndex: 0,
     lastCode: "", // dernier code validé (info ; pas de re-vérification au rechargement)
+    // Pagination interne de la phase en cours (comme `palais` ci-dessous, mais
+    // partagé par phase4/5/6 puisqu'une seule est active à la fois).
+    phaseSub: null,
     // Anciens champs du moteur "épreuves numérotées" — conservés pour
     // compatibilité de lecture d'anciens états, mais le flow ne les utilise plus.
     currentEpreuveIndex: 0,

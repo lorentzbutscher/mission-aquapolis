@@ -325,21 +325,40 @@ function renderGeneral() {
   $("#cfg-briefing-texte").value = briefing.texte || "";
   $("#cfg-briefing-consignes").value = briefing.consignes || "";
 
-  const ph = CONFIG_DATA.phases || {};
+  const PHASE_BUTTON_DEFAULTS = { phase4: "Continuer ➜", phase5: "Continuer ➜", phase6: "🧨 Lancer le désamorçage de la bombe" };
   for (const k of ["phase4", "phase5", "phase6"]) {
-    $(`#cfg-${k}-code`).value = (ph[k] && ph[k].code) || "";
-    $(`#cfg-${k}-avant`).value = (ph[k] && ph[k].avant) || "";
-    $(`#cfg-${k}-apres`).value = (ph[k] && ph[k].apres) || "";
-    $(`#cfg-${k}-audiolabel`).value = (ph[k] && ph[k].audioLabel) || "";
-    $(`#cfg-${k}-audiourl`).value = (ph[k] && ph[k].audioUrl) || "";
-    $(`#cfg-${k}-audiostatus`).textContent = ph[k] && ph[k].audioUrl ? "✅ Son enregistré" : "";
+    const ep = getEpreuve("__config__", k); // normalise à la volée avant/apres/audio → pages/blocs
+    $(`#cfg-${k}-code`).value = ep.code || "";
+    $(`#cfg-${k}-buttonlabel`).value = ep.buttonLabel || "";
+    $(`#cfg-${k}-buttonlabel`).placeholder = PHASE_BUTTON_DEFAULTS[k];
+    const container = $(`#${k}-pages-editor`);
+    container.innerHTML = renderEpreuveForm(ep, k, {
+      hideTitre: true,
+      hideLieu: true,
+      hideCode: true,
+      hideRevelation: true,
+      alwaysVisible: true,
+      pagesHelp: "Le code ci-dessus n'apparaît côté joueur que sur la 1ère page. Les pages suivantes se lisent après validation, jusqu'au bouton final ci-dessus.",
+    });
+    wireConfigPagesEditor(k, container);
   }
-  const me = CONFIG_DATA.missionEnd || {};
+
+  const me = getEpreuve("__config__", "missionEnd"); // normalise texte → blocs
   $("#cfg-missionend-bombe").value = me.texteBombe || "";
   $("#cfg-missionend-videourl").value = me.videoUrl || "";
   $("#cfg-missionend-titre").value = me.titre || "";
-  $("#cfg-missionend-texte").value = me.texte || "";
+  $("#cfg-missionend-buttonlabel").value = me.buttonLabel || "";
   $("#cfg-missionend-videostatus").textContent = me.videoUrl ? "✅ Vidéo enregistrée" : "";
+  const meContainer = $("#missionend-blocks-editor");
+  meContainer.innerHTML = renderEpreuveForm(me, "missionEnd", {
+    hideTitre: true,
+    hideLieu: true,
+    hideCode: true,
+    hideRevelation: true,
+    alwaysVisible: true,
+    singlePage: true,
+  });
+  wireConfigPagesEditor("missionEnd", meContainer);
 
   const conv = CONFIG_DATA.convergence || {};
   $("#cfg-conv-name").value = conv.name || "";
@@ -427,6 +446,16 @@ $("#btn-reload-appli-content").addEventListener("click", async () => {
   }
 });
 
+function readPhaseConfigFromForm(key) {
+  return {
+    code: $(`#cfg-${key}-code`).value.trim(),
+    buttonLabel: $(`#cfg-${key}-buttonlabel`).value.trim(),
+    pages: (CONFIG_DATA.phases?.[key]?.pages || []).map((p) => ({
+      blocks: (p.blocks || []).map((b) => ({ ...b })),
+    })),
+  };
+}
+
 $("#btn-save-general").addEventListener("click", async () => {
   CONFIG_DATA = {
     eventName: $("#cfg-eventName").value.trim(),
@@ -442,33 +471,16 @@ $("#btn-save-general").addEventListener("click", async () => {
       consignes: $("#cfg-briefing-consignes").value.trim(),
     },
     phases: {
-      phase4: {
-        code: $("#cfg-phase4-code").value.trim(),
-        avant: $("#cfg-phase4-avant").value.trim(),
-        apres: $("#cfg-phase4-apres").value.trim(),
-        audioLabel: $("#cfg-phase4-audiolabel").value.trim(),
-        audioUrl: $("#cfg-phase4-audiourl").value.trim(),
-      },
-      phase5: {
-        code: $("#cfg-phase5-code").value.trim(),
-        avant: $("#cfg-phase5-avant").value.trim(),
-        apres: $("#cfg-phase5-apres").value.trim(),
-        audioLabel: $("#cfg-phase5-audiolabel").value.trim(),
-        audioUrl: $("#cfg-phase5-audiourl").value.trim(),
-      },
-      phase6: {
-        code: $("#cfg-phase6-code").value.trim(),
-        avant: $("#cfg-phase6-avant").value.trim(),
-        apres: $("#cfg-phase6-apres").value.trim(),
-        audioLabel: $("#cfg-phase6-audiolabel").value.trim(),
-        audioUrl: $("#cfg-phase6-audiourl").value.trim(),
-      },
+      phase4: readPhaseConfigFromForm("phase4"),
+      phase5: readPhaseConfigFromForm("phase5"),
+      phase6: readPhaseConfigFromForm("phase6"),
     },
     missionEnd: {
       texteBombe: $("#cfg-missionend-bombe").value.trim(),
       videoUrl: $("#cfg-missionend-videourl").value.trim(),
       titre: $("#cfg-missionend-titre").value.trim(),
-      texte: $("#cfg-missionend-texte").value.trim(),
+      buttonLabel: $("#cfg-missionend-buttonlabel").value.trim(),
+      blocks: (CONFIG_DATA.missionEnd?.pages?.[0]?.blocks || []).map((b) => ({ ...b })),
     },
     convergence: {
       name: $("#cfg-conv-name").value.trim(),
@@ -505,9 +517,6 @@ function wireMediaUpload(fileInputId, urlInputId, statusId, okLabel) {
   });
 }
 wireMediaUpload("cfg-missionend-videofile", "cfg-missionend-videourl", "cfg-missionend-videostatus", "✅ Vidéo envoyée");
-wireMediaUpload("cfg-phase4-audiofile", "cfg-phase4-audiourl", "cfg-phase4-audiostatus", "✅ Son envoyé");
-wireMediaUpload("cfg-phase5-audiofile", "cfg-phase5-audiourl", "cfg-phase5-audiostatus", "✅ Son envoyé");
-wireMediaUpload("cfg-phase6-audiofile", "cfg-phase6-audiourl", "cfg-phase6-audiostatus", "✅ Son envoyé");
 
 // ---- Onglets équipe (+ onglet "Épreuve finale") --------------------------------------
 
@@ -612,13 +621,17 @@ function renderEpreuveForm(ep, i, opts) {
       <p class="muted" style="font-size:12px;margin-top:6px;">Clique sur la carte pour placer le lieu précis.</p>
     </div>`
     }
-    <div class="admin-card">
+    ${
+      opts.hideCode
+        ? ""
+        : `<div class="admin-card">
       <h3>🔑 Code</h3>
       <div class="grid-2">
         <div class="field"><label>Code à saisir</label><input class="ep-code-valeur" value="${escapeHtml(ep.code?.valeur || "")}" /></div>
       </div>
       ${opts.codeHelp ? `<p class="muted" style="font-size:12px;margin-top:6px;">${opts.codeHelp}</p>` : ""}
-    </div>
+    </div>`
+    }
     ${
       opts.hideRevelation
         ? ""
@@ -631,26 +644,26 @@ function renderEpreuveForm(ep, i, opts) {
     <div class="admin-card">
       <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; flex-wrap:wrap; gap:10px;">
         <h3 style="margin:0;">📄 Pages${opts.hideTitre ? " du Palais du Rhin" : " de l'épreuve"}</h3>
-        <button type="button" class="btn btn-gold btn-sm add-page-btn">+ Ajouter une page</button>
+        <button type="button" class="btn btn-gold btn-sm add-page-btn" style="${opts.singlePage ? "display:none;" : ""}">+ Ajouter une page</button>
       </div>
-      <p class="muted" style="font-size:12px; margin-bottom:10px;">${
+      <p class="muted" style="font-size:12px; margin-bottom:10px; ${opts.singlePage ? "display:none;" : ""}">${
         opts.pagesHelp || "Le code de validation n'apparaît côté joueur qu'après la dernière page."
       }</p>
-      <div class="page-tabs"></div>
+      <div class="page-tabs" style="${opts.singlePage ? "display:none;" : ""}"></div>
 
       <div style="display:flex; align-items:center; justify-content:space-between; margin:16px 0 12px;">
-        <h3 style="margin:0;">🧩 Blocs de cette page</h3>
+        <h3 style="margin:0;">🧩 Blocs${opts.singlePage ? "" : " de cette page"}</h3>
         <div style="position:relative;">
           <button type="button" class="btn btn-gold btn-sm add-block-btn">+ Ajouter un bloc</button>
           <div class="add-block-menu" style="display:none;"></div>
         </div>
       </div>
       <div class="blocks-list"></div>
-      <button type="button" class="btn btn-danger btn-sm delete-page-btn" style="margin-top:12px;">🗑️ Supprimer cette page</button>
+      <button type="button" class="btn btn-danger btn-sm delete-page-btn" style="margin-top:12px; ${opts.singlePage ? "display:none;" : ""}">🗑️ Supprimer cette page</button>
     </div>
 
     <div class="admin-card">
-      <h3>👁️ Aperçu joueur (page affichée ci-dessus)</h3>
+      <h3>👁️ Aperçu joueur${opts.singlePage ? "" : " (page affichée ci-dessus)"}</h3>
       <div class="player-preview preview-frame"></div>
     </div>
   </div>`;
@@ -659,8 +672,72 @@ function renderEpreuveForm(ep, i, opts) {
 // ---- Pages ------------------------------------------------------------------------
 
 function getEpreuve(color, epIdx) {
+  if (color === "__config__") return configEpreuve(epIdx);
   if (epIdx === "palais") return TEAMS_DATA[color].palaisDuRhin;
   return TEAMS_DATA[color].epreuves[epIdx];
+}
+
+// ---- Éditeur de contenu des phases 4/5/6 et de l'écran de fin ---------------------
+// Réutilise exactement le même éditeur pages/blocs que le Palais du Rhin (voir
+// getEpreuve ci-dessus, sentinel color "__config__"). Migration à la volée de
+// l'ancien format à plat (avant/apres/texte) vers pages/blocs, identique à la
+// logique de js/app.js (normalizePhaseCfg/normalizeMissionEnd) mais avec de
+// vrais identifiants de bloc (newBlockId) pour l'édition.
+
+function textToHtmlBlockAdmin(text) {
+  const div = document.createElement("div");
+  div.textContent = text || "";
+  return div.innerHTML.replace(/\n/g, "<br>");
+}
+
+function adminNormalizePhase(raw) {
+  if (raw.pages) return raw;
+  const introBlocks = [{ id: newBlockId(), type: "texte", visible: true, html: raw.avant || "" }];
+  if ((raw.audioUrl || "").trim() || (raw.audioLabel || "").trim()) {
+    introBlocks.push({
+      id: newBlockId(),
+      type: "audio",
+      visible: true,
+      url: raw.audioUrl || "",
+      label: raw.audioLabel || "Message codé",
+    });
+  }
+  const revealBlocks = [{ id: newBlockId(), type: "texte", visible: true, html: raw.apres || "" }];
+  raw.pages = [{ blocks: introBlocks }, { blocks: revealBlocks }];
+  return raw;
+}
+
+// missionEnd n'a qu'une seule "page" (pas de pagination pour l'écran de fin) :
+// on réutilise quand même la forme pages[].blocks[] en interne pour profiter
+// des mêmes fonctions d'édition, et on l'aplatit en un simple `blocks` au moment
+// de l'enregistrement (voir #btn-save-general).
+function adminNormalizeMissionEnd(raw) {
+  if (raw.pages) return raw;
+  const blocks = Array.isArray(raw.blocks) ? [...raw.blocks] : [];
+  if (!blocks.length && (raw.texte || "").trim()) {
+    blocks.push({ id: newBlockId(), type: "texte", visible: true, html: textToHtmlBlockAdmin(raw.texte) });
+  }
+  raw.pages = [{ blocks }];
+  return raw;
+}
+
+function configEpreuve(key) {
+  if (key === "missionEnd") {
+    if (!CONFIG_DATA.missionEnd) CONFIG_DATA.missionEnd = {};
+    return adminNormalizeMissionEnd(CONFIG_DATA.missionEnd);
+  }
+  if (!CONFIG_DATA.phases) CONFIG_DATA.phases = {};
+  if (!CONFIG_DATA.phases[key]) CONFIG_DATA.phases[key] = {};
+  return adminNormalizePhase(CONFIG_DATA.phases[key]);
+}
+
+function wireConfigPagesEditor(key, container) {
+  const color = "__config__";
+  renderPageTabs(color, key, container);
+  renderBlocksList(color, key, container);
+  const form = container.querySelector(`.epreuve-form[data-idx="${key}"]`);
+  wireAddBlockMenu(color, key, container, form);
+  if (key !== "missionEnd") wirePageControls(color, key, container);
 }
 
 function activePageIndex(ep) {
