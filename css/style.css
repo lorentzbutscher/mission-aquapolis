@@ -263,6 +263,17 @@ p { line-height: 1.5; margin: 0; }
 .page-nav { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .page-indicator { font-size: 13px; font-weight: 700; color: rgba(255,255,255,.7); font-variant-numeric: tabular-nums; }
 
+/* Page "vidéo seule" : la vidéo occupe tout l'espace, sans les cartes autour */
+.page-video-only { display: flex; }
+.page-video-only .block-video { flex: 1; }
+.page-video-only .block-video .video-embed { border-radius: var(--radius-lg, var(--radius-md)); }
+
+/* Photo de l'écran de fin : cadre héroïque cohérent avec l'identité visuelle */
+#mission-end-blocks .block-photo img {
+  border: 3px solid var(--gold);
+  box-shadow: 0 0 0 6px rgba(0,0,0,.35), 0 14px 30px rgba(0,0,0,.5);
+}
+
 /* Sélecteur de drapeaux (bloc "drapeaux") */
 .drapeaux-grid {
   display: grid;
