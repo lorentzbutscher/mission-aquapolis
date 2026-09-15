@@ -343,12 +343,10 @@ function renderGeneral() {
     wireConfigPagesEditor(k, container);
   }
 
-  const me = getEpreuve("__config__", "missionEnd"); // normalise texte → blocs
+  const me = getEpreuve("__config__", "missionEnd"); // normalise texte/videoUrl → blocs
   $("#cfg-missionend-bombe").value = me.texteBombe || "";
-  $("#cfg-missionend-videourl").value = me.videoUrl || "";
   $("#cfg-missionend-titre").value = me.titre || "";
   $("#cfg-missionend-buttonlabel").value = me.buttonLabel || "";
-  $("#cfg-missionend-videostatus").textContent = me.videoUrl ? "✅ Vidéo enregistrée" : "";
   const meContainer = $("#missionend-blocks-editor");
   meContainer.innerHTML = renderEpreuveForm(me, "missionEnd", {
     hideTitre: true,
@@ -477,7 +475,6 @@ $("#btn-save-general").addEventListener("click", async () => {
     },
     missionEnd: {
       texteBombe: $("#cfg-missionend-bombe").value.trim(),
-      videoUrl: $("#cfg-missionend-videourl").value.trim(),
       titre: $("#cfg-missionend-titre").value.trim(),
       buttonLabel: $("#cfg-missionend-buttonlabel").value.trim(),
       blocks: (CONFIG_DATA.missionEnd?.pages?.[0]?.blocks || []).map((b) => ({ ...b })),
@@ -497,26 +494,6 @@ $("#btn-save-general").addEventListener("click", async () => {
     flash("Erreur : " + err.message, true);
   }
 });
-
-// Envoi de fichiers média (vidéo de fin, sons des phases) vers Firebase Storage.
-function wireMediaUpload(fileInputId, urlInputId, statusId, okLabel) {
-  $("#" + fileInputId).addEventListener("change", async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const status = $("#" + statusId);
-    status.textContent = "Envoi en cours…";
-    try {
-      const url = await uploadBlockImage(file, (p) => {
-        status.textContent = `Envoi en cours… ${Math.round(p * 100)}%`;
-      });
-      $("#" + urlInputId).value = url;
-      status.textContent = okLabel + " — n'oubliez pas d'enregistrer.";
-    } catch (err) {
-      status.textContent = "❌ Échec de l'envoi : " + (err.message || "erreur inconnue");
-    }
-  });
-}
-wireMediaUpload("cfg-missionend-videofile", "cfg-missionend-videourl", "cfg-missionend-videostatus", "✅ Vidéo envoyée");
 
 // ---- Onglets équipe (+ onglet "Épreuve finale") --------------------------------------
 
@@ -942,9 +919,13 @@ function renderBlockBody(color, epIdx, block, panel) {
       renderPreview(color, epIdx, panel);
     });
   } else if (block.type === "video") {
+    const hasUploadedFile = !block.youtubeId && (block.url || "").trim();
     wrap.innerHTML = `
-      <div class="field"><label>Lien YouTube</label><input class="video-url" value="${escapeHtml(block.url || "")}" placeholder="https://youtube.com/watch?v=..."></div>
+      <div class="field"><label>Lien YouTube</label><input class="video-url" value="${block.youtubeId ? escapeHtml(block.url || "") : ""}" placeholder="https://youtube.com/watch?v=..."></div>
       <div class="video-status muted" style="font-size:13px;">${block.youtubeId ? "✅ Vidéo reconnue" : ""}</div>
+      <p class="muted" style="font-size:12px;margin:10px 0 4px;">— ou —</p>
+      <div class="field"><label>Fichier vidéo (upload direct, lu nativement dans l'app)</label><input type="file" accept="video/*" class="video-file-input"></div>
+      <div class="video-upload-status muted" style="font-size:13px;">${hasUploadedFile ? "✅ Fichier vidéo envoyé" : ""}</div>
     `;
     const input = wrap.querySelector(".video-url");
     const status = wrap.querySelector(".video-status");
@@ -954,6 +935,26 @@ function renderBlockBody(color, epIdx, block, panel) {
       block.youtubeId = id;
       status.textContent = block.url ? (id ? "✅ Vidéo reconnue" : "⚠️ Lien YouTube non reconnu") : "";
       renderPreview(color, epIdx, panel);
+    });
+    const fileInput = wrap.querySelector(".video-file-input");
+    const uploadStatus = wrap.querySelector(".video-upload-status");
+    fileInput.addEventListener("change", async () => {
+      const file = fileInput.files[0];
+      if (!file) return;
+      uploadStatus.textContent = "Envoi en cours…";
+      try {
+        const url = await uploadBlockImage(file, (p) => {
+          uploadStatus.textContent = `Envoi en cours… ${Math.round(p * 100)}%`;
+        });
+        block.url = url;
+        block.youtubeId = ""; // un fichier uploadé prime sur un éventuel lien YouTube précédent
+        input.value = "";
+        status.textContent = "";
+        uploadStatus.textContent = "✅ Fichier vidéo envoyé";
+        renderPreview(color, epIdx, panel);
+      } catch (err) {
+        uploadStatus.textContent = "❌ Échec de l'envoi : " + (err.message || "erreur inconnue");
+      }
     });
   } else if (block.type === "carte") {
     wrap.innerHTML = `
@@ -1056,9 +1057,19 @@ function renderPreviewBlock(block) {
     }
   } else if (block.type === "video") {
     el.className = "card block-video";
-    el.innerHTML = block.youtubeId
-      ? `<div class="video-embed"><iframe src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(block.youtubeId)}" allowfullscreen loading="lazy"></iframe></div>`
-      : `<p class="muted" style="font-size:13px;">(lien vidéo non reconnu)</p>`;
+    if (block.youtubeId) {
+      el.innerHTML = `<div class="video-embed"><iframe src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(block.youtubeId)}" allowfullscreen loading="lazy"></iframe></div>`;
+    } else if ((block.url || "").trim()) {
+      const v = document.createElement("video");
+      v.src = block.url;
+      v.controls = true;
+      v.preload = "metadata";
+      v.style.width = "100%";
+      v.style.borderRadius = "var(--radius-md)";
+      el.appendChild(v);
+    } else {
+      el.innerHTML = `<p class="muted" style="font-size:13px;">(aucune vidéo)</p>`;
+    }
   } else if (block.type === "carte") {
     el.className = "card block-carte";
     const a = document.createElement("a");

@@ -377,6 +377,17 @@ function renderBlock(block, revealedIds, opts) {
         iframe.loading = "lazy";
         wrap.appendChild(iframe);
         el.appendChild(wrap);
+      } else if ((block.url || "").trim()) {
+        // Fichier vidéo uploadé (Firebase Storage) : lecture native, pas de
+        // redirection hors de l'app. preload="metadata" pour ne pas
+        // télécharger le fichier tant que le joueur n'a pas appuyé sur lecture.
+        const video = document.createElement("video");
+        video.src = block.url;
+        video.controls = true;
+        video.preload = "metadata";
+        video.setAttribute("playsinline", "");
+        video.className = "block-video-native";
+        el.appendChild(video);
       }
       break;
     }
@@ -858,12 +869,20 @@ function textToHtmlBlock(text) {
   return div.innerHTML.replace(/\n/g, "<br>");
 }
 
+// Migration à la volée : ancien texte brut ("texte") et ancien lien vidéo
+// séparé ("videoUrl") deviennent des blocs (texte, video), unifiés avec les
+// blocs déjà en place (photo…). Ne migre qu'une fois (tant qu'aucun bloc n'a
+// encore été enregistré), pour ne jamais écraser un contenu déjà édité dans
+// le nouvel éditeur.
 function normalizeMissionEnd(raw) {
   if (!raw) raw = {};
-  if (raw.blocks) return raw;
-  const blocks = [];
+  if (Array.isArray(raw.blocks) && raw.blocks.length) return raw;
+  const blocks = Array.isArray(raw.blocks) ? [...raw.blocks] : [];
   if ((raw.texte || "").trim()) {
     blocks.push({ id: "blk_me_texte", type: "texte", visible: true, html: textToHtmlBlock(raw.texte) });
+  }
+  if ((raw.videoUrl || "").trim()) {
+    blocks.push({ id: "blk_me_video", type: "video", visible: true, url: raw.videoUrl, youtubeId: parseYouTubeId(raw.videoUrl) });
   }
   return { ...raw, blocks };
 }
@@ -876,32 +895,6 @@ function renderMissionEnd() {
 
   const cfg = normalizeMissionEnd(CONTENT.config?.missionEnd || {});
   $("#mission-end-bombe").innerHTML = cfg.texteBombe || "";
-
-  const vwrap = $("#mission-end-video-wrap");
-  vwrap.innerHTML = "";
-  vwrap.style.display = "none";
-  const url = (cfg.videoUrl || "").trim();
-  if (url) {
-    const box = document.createElement("div");
-    box.className = "mission-end-video";
-    const ytId = parseYouTubeId(url);
-    if (ytId) {
-      const iframe = document.createElement("iframe");
-      iframe.src = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(ytId)}?rel=0`;
-      iframe.title = "Vidéo Déversoir";
-      iframe.allow = "autoplay; encrypted-media; picture-in-picture";
-      iframe.allowFullscreen = true;
-      box.appendChild(iframe);
-    } else {
-      const v = document.createElement("video");
-      v.src = url;
-      v.controls = true;
-      v.setAttribute("playsinline", "");
-      box.appendChild(v);
-    }
-    vwrap.appendChild(box);
-    vwrap.style.display = "";
-  }
 
   $("#mission-end-title").textContent = cfg.titre || "MISSION ACCOMPLIE";
   const blocksContainer = $("#mission-end-blocks");
