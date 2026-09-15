@@ -1550,8 +1550,16 @@ function initListeners() {
   window.addEventListener("offline", updateSyncBadge);
 
   window.addEventListener("aquapolis:content-updated", (e) => {
+    // Toujours rafraîchir les données : sinon, une équipe qui a déjà démarré sa
+    // mission (status "in_progress"/"finished") ne reçoit plus jamais les
+    // mises à jour de l'admin pour le reste de sa partie (écran de fin inclus),
+    // même après un rechargement de page. On ne force en revanche le
+    // re-rendu immédiat que sur les écrans pré-partie, pour ne pas perturber
+    // visuellement un écran de phase déjà affiché ; les écrans suivants (dont
+    // l'écran de fin) utiliseront de toute façon ces données à jour au moment
+    // de leur prochain rendu.
+    CONTENT = e.detail;
     if (!STATE || STATE.status === "not_started") {
-      CONTENT = e.detail;
       renderTeamGrid();
       if (document.querySelector(".view.active")?.id === "view-access-code") initAccessCodeScreen();
     }
