@@ -12,6 +12,23 @@
 // Pour désactiver : retirer la balise <script> dans admin.html.
 // ============================================================================
 
+// --- auto-chargement de la feuille -----------------------------------------
+// La balise <link> dans index.html / admin.html a sauté trois fois lors de
+// réécritures. Le script la pose lui-même : il n'y a plus qu'UNE ligne à
+// préserver par page, celle de ce script.
+(function () {
+  var href = "./css/aquapolis-ameliorations.css";
+  if ([].some.call(document.styleSheets, function (s) {
+    return s.href && s.href.indexOf("aquapolis-ameliorations") > -1;
+  })) return;
+  if (document.querySelector('link[href*="aquapolis-ameliorations"]')) return;
+  var l = document.createElement("link");
+  l.rel = "stylesheet";
+  l.href = href;
+  document.head.appendChild(l);
+})();
+
+
 const A = () => window.__aqAdmin;
 
 const DOT = {
