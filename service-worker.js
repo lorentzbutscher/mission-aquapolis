@@ -1,10 +1,24 @@
 // Service worker — mode hors-ligne pour Mission Aquapolis.
-// Stratégie : app shell en cache-first (mise à jour silencieuse en tâche de
-// fond), tuiles de carte en cache-first avec mise en cache à la volée, et les
-// appels Firebase/Firestore ne sont JAMAIS interceptés (on laisse le réseau
-// natif gérer, sync.js gère déjà les échecs proprement).
+// Stratégie :
+//   - app shell (HTML/JS/CSS/JSON, même origine) en RÉSEAU D'ABORD : le
+//     téléphone récupère systématiquement la dernière version tant qu'il a du
+//     réseau, la copie en cache n'étant utilisée que si la requête échoue
+//     (vraiment hors-ligne). Avant ce changement, l'app shell était en
+//     cache-first : un téléphone déjà installé pouvait rester bloqué sur une
+//     ancienne version (contenu admin périmé, correctifs jamais reçus) tant
+//     qu'aucune mise à jour de service worker n'avait fini de se propager —
+//     ce qui, sur PWA installée, peut prendre bien plus qu'un simple
+//     rechargement. Le réseau d'abord supprime ce risque : toute publication
+//     admin est visible dès la requête suivante, sans dépendre du cycle de
+//     vie du service worker.
+//   - tuiles de carte et gros médias (images/audio/police) restent en
+//     cache-first / stale-while-revalidate : ils ne changent quasiment
+//     jamais, et privilégier le cache économise de la donnée mobile sur le
+//     terrain.
+//   - les appels Firebase/Firestore ne sont JAMAIS interceptés (on laisse le
+//     réseau natif gérer, sync.js gère déjà les échecs proprement).
 
-const CACHE_VERSION = "aquapolis-v36";
+const CACHE_VERSION = "aquapolis-v37";
 
 const APP_SHELL = [
   "./",
@@ -101,6 +115,17 @@ const BYPASS_HOSTS = [
   "firebaseio.com",
 ];
 
+// Extensions/chemins de l'app shell : toujours tentés en réseau d'abord. Tout
+// le reste (assets lourds, tuiles) passe par les stratégies cache-first /
+// stale-while-revalidate ci-dessous, inchangées.
+const NETWORK_FIRST_EXT = [".html", ".js", ".css", ".json"];
+
+function isAppShellRequest(url) {
+  if (url.origin !== self.location.origin) return false;
+  if (url.pathname === "/" || url.pathname.endsWith("/")) return true;
+  return NETWORK_FIRST_EXT.some((ext) => url.pathname.endsWith(ext));
+}
+
 self.addEventListener("fetch", (event) => {
   const req = event.request;
   if (req.method !== "GET") return;
@@ -114,6 +139,11 @@ self.addEventListener("fetch", (event) => {
 
   if (BYPASS_HOSTS.some((h) => url.hostname.endsWith(h))) return; // laisser passer nativement
 
+  if (isAppShellRequest(url)) {
+    event.respondWith(networkFirst(req));
+    return;
+  }
+
   if (TILE_HOSTS.some((h) => url.hostname.endsWith(h))) {
     event.respondWith(cacheFirst(req));
     return;
@@ -124,6 +154,21 @@ self.addEventListener("fetch", (event) => {
 
 function isCacheable(res) {
   return res && (res.status === 200 || res.type === "opaque");
+}
+
+// Réseau d'abord : la version la plus récente gagne toujours tant qu'il y a
+// du réseau. Le cache ne sert que de secours hors-ligne, et est rafraîchi à
+// chaque succès réseau pour rester utile quand la connexion coupe.
+async function networkFirst(req) {
+  const cache = await caches.open(CACHE_VERSION);
+  try {
+    const res = await fetch(req, { cache: "no-store" });
+    if (isCacheable(res)) cache.put(req, res.clone());
+    return res;
+  } catch {
+    const cached = await cache.match(req);
+    return cached || new Response("Hors-ligne", { status: 503 });
+  }
 }
 
 async function cacheFirst(req) {
