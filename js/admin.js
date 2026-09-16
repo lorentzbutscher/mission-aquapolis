@@ -576,10 +576,10 @@ function renderFinalPanelHtml() {
   return `
     <div class="admin-card" style="border-color:#8a6d3b; background:#2a2416;">
       <p class="muted" style="font-size:13px; margin:0;">
-        ⚠️ <strong>Seul le champ Code ci-dessous est utilisé par le jeu</strong> (c'est le code de désamorçage de la bombe, SEMEH). Les pages/blocs (texte, vidéo, photo) de cette épreuve <strong>ne sont affichés à aucune équipe</strong> — le jeu réel passe directement de la phase 6 au mini-jeu bombe, sans repasser par cet écran.
-        Pour éditer ce qui s'affiche vraiment <strong>après</strong> la bombe (vidéo/texte/photo), va dans l'onglet <strong>⚙️ Général → Écran de fin (phase 7)</strong>, pas ici.
+        ⚠️ <strong>Seul le champ Code ci-dessous est utilisé par le jeu</strong> (c'est le code de désamorçage de la bombe, SEMEH). Cette épreuve avait aussi un éditeur de pages/blocs (texte, vidéo, photo), volontairement masqué ci-dessous : il <strong>ne s'affichait à aucune équipe</strong>, le jeu réel passe directement de la phase 6 au mini-jeu bombe sans repasser par cet écran.
+        Pour éditer ce qui s'affiche vraiment <strong>après</strong> la bombe (vidéo/texte/photo), c'est dans l'onglet <strong>⚙️ Général → Écran de fin (phase 7)</strong>.
       </p>
-      <button type="button" class="btn btn-outline btn-sm" id="btn-copy-final-to-missionend" style="margin-top:10px;">📋 Copier les blocs ci-dessous vers l'Écran de fin (phase 7)</button>
+      <button type="button" class="btn btn-outline btn-sm" id="btn-copy-final-to-missionend" style="margin-top:10px;">📋 Récupérer l'ancien contenu masqué → l'envoyer vers l'Écran de fin (phase 7)</button>
     </div>
     <div class="admin-card">
       <h3>⭐ Épreuve finale</h3>
@@ -590,7 +590,13 @@ function renderFinalPanelHtml() {
       </label>
     </div>
     <div class="epreuve-forms">
-      ${renderEpreuveForm(team.epreuves[0], 0)}
+      ${renderEpreuveForm(team.epreuves[0], 0, {
+        hideTitre: true,
+        hideLieu: true,
+        hideRevelation: true,
+        hidePagesUI: true,
+        codeHelp: "C'est le seul champ de cette épreuve qui compte pour le jeu (code de désamorçage SEMEH).",
+      })}
     </div>
     <button class="btn btn-gold save-team" style="width:100%; margin-top:10px;">💾 Enregistrer l'épreuve finale</button>
   `;
@@ -640,6 +646,7 @@ function renderEpreuveForm(ep, i, opts) {
     </div>`
     }
 
+    <div ${opts.hidePagesUI ? 'style="display:none;"' : ""}>
     <div class="admin-card">
       <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; flex-wrap:wrap; gap:10px;">
         <h3 style="margin:0;">📄 Pages${opts.hideTitre ? " du Palais du Rhin" : " de l'épreuve"}</h3>
@@ -664,6 +671,7 @@ function renderEpreuveForm(ep, i, opts) {
     <div class="admin-card">
       <h3>👁️ Aperçu joueur${opts.singlePage ? "" : " (page affichée ci-dessus)"}</h3>
       <div class="player-preview preview-frame"></div>
+    </div>
     </div>
   </div>`;
 }
@@ -1229,15 +1237,16 @@ function wireTeamPanel(color, panel) {
 function ensureEpMap(color, idx, panel) {
   const form = panel.querySelector(`.epreuve-form[data-idx="${idx}"]`);
   if (!form) return;
+  const latInput = form.querySelector(".ep-lieu-lat");
+  const lngInput = form.querySelector(".ep-lieu-lng");
+  const mapEl = form.querySelector(".ep-map");
+  if (!latInput || !lngInput || !mapEl) return; // formulaire sans section GPS (ex. hideLieu)
   if (epMaps[color][idx]) {
     setTimeout(() => epMaps[color][idx].invalidateSize(), 50);
     return;
   }
-  const latInput = form.querySelector(".ep-lieu-lat");
-  const lngInput = form.querySelector(".ep-lieu-lng");
   const lat = Number(latInput.value) || 48.5836;
   const lng = Number(lngInput.value) || 7.7458;
-  const mapEl = form.querySelector(".ep-map");
   const m = createMap(mapEl, [lat, lng], 15);
   let marker = addCustomMarker(m, lat, lng, { color: "#2563eb", emoji: "📍" });
   m.on("click", (e) => {
@@ -1252,22 +1261,32 @@ function ensureEpMap(color, idx, panel) {
 
 function readEpreuvesFromForms(color, panel) {
   const epreuveForms = panel.querySelectorAll('.epreuve-form:not([data-idx="palais"])');
-  return Array.from(epreuveForms).map((f, i) => ({
-    titre: f.querySelector(".ep-titre").value.trim(),
+  return Array.from(epreuveForms).map((f, i) => {
+    const existing = TEAMS_DATA[color]?.epreuves?.[i] || {};
+    const titreEl = f.querySelector(".ep-titre");
+    const latEl = f.querySelector(".ep-lieu-lat");
+    const lngEl = f.querySelector(".ep-lieu-lng");
+    const revEl = f.querySelector(".ep-revelation");
+    return {
+    // Champs masqués selon les opts (hideTitre/hideLieu/hideRevelation, ex.
+    // panneau "Épreuve finale") : on conserve la valeur déjà enregistrée
+    // plutôt que de l'écraser avec une valeur vide.
+    titre: titreEl ? titreEl.value.trim() : existing.titre || "",
     lieu: {
-      lat: Number(f.querySelector(".ep-lieu-lat").value) || 0,
-      lng: Number(f.querySelector(".ep-lieu-lng").value) || 0,
+      lat: latEl ? Number(latEl.value) || 0 : existing.lieu?.lat || 0,
+      lng: lngEl ? Number(lngEl.value) || 0 : existing.lieu?.lng || 0,
     },
     code: {
       valeur: f.querySelector(".ep-code-valeur").value.trim(),
     },
     revelation: {
-      texte: f.querySelector(".ep-revelation").value.trim(),
+      texte: revEl ? revEl.value.trim() : existing.revelation?.texte || "",
     },
-    pages: (TEAMS_DATA[color].epreuves[i]?.pages || [{ blocks: [] }]).map((p) => ({
+    pages: (existing.pages || [{ blocks: [] }]).map((p) => ({
       blocks: (p.blocks || []).map((b) => ({ ...b })),
     })),
-  }));
+    };
+  });
 }
 
 function readPalaisFromForm(color, panel) {
