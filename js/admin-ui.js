@@ -54,6 +54,12 @@ function buildTopbar() {
   if (document.getElementById("aq-topbar")) return;
   const bar = document.createElement("div");
   bar.id = "aq-topbar";
+  // Le bouton "Annuler les modifications" (rechargement complet de la page)
+  // a été retiré : placé juste à côté de "Publier", un simple clic au mauvais
+  // endroit effaçait silencieusement tout contenu non encore enregistré —
+  // cause la plus probable des pertes de contenu répétées sur l'écran de fin.
+  // Pour revenir en arrière volontairement, il suffit de recharger la page
+  // soi-même (le navigateur demande confirmation, voir plus bas).
   bar.innerHTML = `
     <div class="aq-top-left">
       <span class="aq-top-title">Mission Aquapolis — administration</span>
@@ -61,7 +67,6 @@ function buildTopbar() {
       <span class="aq-published"></span>
     </div>
     <div class="aq-top-right">
-      <button type="button" class="aq-btn" id="aq-discard">Annuler les modifications</button>
       <button type="button" class="aq-btn aq-btn-primary" id="aq-publish">Publier</button>
     </div>`;
   document.body.appendChild(bar);
@@ -71,12 +76,18 @@ function buildTopbar() {
   statusWrap = bar.querySelector(".aq-status");
   publishedEl = bar.querySelector(".aq-published");
 
-  bar.querySelector("#aq-discard").addEventListener("click", () => {
-    if (!dirty) return;
-    if (confirm("Annuler toutes les modifications non publiées et recharger la dernière version enregistrée ?")) location.reload();
-  });
   bar.querySelector("#aq-publish").addEventListener("click", publishAll);
   renderStatus();
+
+  // Filet de sécurité : si l'admin quitte ou recharge la page (fermeture
+  // d'onglet, bouton retour, reprise du téléphone qui redémarre la page...)
+  // alors qu'il reste des modifications non publiées, le navigateur demande
+  // confirmation avant de les perdre.
+  window.addEventListener("beforeunload", (e) => {
+    if (!dirty) return;
+    e.preventDefault();
+    e.returnValue = "";
+  });
 }
 
 function renderStatus() {
