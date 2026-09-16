@@ -1,0 +1,1640 @@
+import { loadContent } from "./content.js";
+import * as gameStore from "./state.js";
+import { pushGameState, TEAM_COLORS } from "./sync.js";
+import { createMap, addCustomMarker, fitToMarkers, locateUser } from "./map.js";
+import {
+  formatHMS,
+  formatMinSec,
+  normalizeCode,
+  showToast,
+  vibrate,
+  playEndChime,
+  beep,
+} from "./utils.js";
+import {
+  playSuccessSound,
+  playVictorySound,
+  initSoundToggle,
+  startBackgroundMusic,
+  setBombeLoop,
+  stopBombeLoops,
+  playBombeSuccess,
+  playBombeFail,
+  duckBackgroundMusic,
+} from "./sound.js";
+import { applyRandomBackground } from "./background.js";
+import { startMascotPopups } from "./mascot.js";
+
+const $ = (sel) => document.querySelector(sel);
+
+const ACCESS_CODE = "ETIENNE";
+const ACCESS_INTRO_DEFAULT =
+  "⚡ Alerte rouge sur les canaux de Strasbourg : le super-vilain Déversoir sème la panique parmi les écluses. Un renfort inattendu vient d'arriver en ville — un héros dont le nom seul suffit à redonner espoir aux agents VNF. Saisissez son nom pour débloquer la mission et rejoindre le combat.";
+const BRIEFING_TEXTE_DEFAULT =
+  "Votre équipe va progresser dans les rues de Strasbourg au fil de <strong>7 phases</strong>. Chaque phase se débloque en saisissant le bon code — trouvé sur le terrain, par SMS, ou auprès des animateurs.";
+const BRIEFING_CONSIGNES_DEFAULT = "Durée cible : 2h00 — maximum 2h30. Restez groupés et prudents dans la circulation.";
+const CODE_ERROR_MSG = "Code invalide. Déversoir a peut-être intercepté vos communications… réessayez !";
+
+// Déroulé verrouillé — l'écran affiché dépend de STATE.phaseIndex (0-6).
+const PHASE_TOTAL = 7;
+const PHASE_KEYS = ["phase4", "phase5", "phase6"]; // phaseIndex 2/3/4 -> config.phases.*
+const PHASE_DEFAULTS = {
+  phase4: { code: "1796", avant: "<p>Entrez le code de la phase 4.</p>", apres: "" },
+  phase5: { code: "CARING", avant: "<p>Entrez le code de la phase 5.</p>", apres: "" },
+  phase6: { code: "ZIX", avant: "<p>Entrez le code de la phase 6.</p>", apres: "" },
+};
+
+// Contenu de secours de l'écran de fin (voir normalizeMissionEnd plus bas) :
+// toujours affiché tant que l'admin n'a pas publié avec succès son propre
+// contenu (config.missionEnd.blocks non vide côté Firestore). Fourni
+// directement par l'organisateur le 16/09/2026, verbatim, pour garantir
+// l'affichage indépendamment de tout souci d'admin/Firestore. Si l'admin
+// parvient un jour à enregistrer ses propres blocs, ceux-ci prennent le
+// dessus automatiquement (voir normalizeMissionEnd).
+const MISSION_END_FALLBACK_BLOCKS = [
+  {
+    id: "fb_texte",
+    type: "texte",
+    visible: true,
+    html:
+      "<p><strong>🏆 MISSION ACCOMPLIE, HÉROS ! 🏆</strong></p>" +
+      "<p>Vous l’avez fait.</p>" +
+      "<p>La bombe a été désamorcée, Strasbourg est sauvée et le plan machiavélique de Déversoir a échoué.</p>" +
+      "<p><strong>Au nom du CARING, du SEMEH et de toute la DTS : BRAVO et surtout MERCI !</strong> 🦸‍♀️🦸‍♂️</p>" +
+      "<p>Merci d’avoir participé à cette aventure, mais aussi à cette journée de cohésion. Nous espérons que cette mission vous a plu, que vous avez pris autant de plaisir à résoudre les énigmes qu’à parcourir Strasbourg, et surtout que vous avez passé un excellent moment tous ensemble !</p>" +
+      "<p>Grâce à votre esprit d’équipe, votre ingéniosité et votre sang-froid, vous avez prouvé que les meilleures équipes de super-héros ne sont pas celles qui travaillent seules, mais celles qui savent unir leurs forces. 🤝</p>" +
+      "<p>Mais... il reste un problème.</p>" +
+      "<p><strong>❌ Déversoir n’a pas été capturé.</strong></p>" +
+      "<p>Lorsque vous êtes arrivés à sa planque, il avait déjà disparu. Il a pris la fuite.<br>Et quelque chose nous inquiète particulièrement...</p>" +
+      "<p>Déversoir n’a pas pu organiser tout cela seul.<br>Le convoi. Les communications piratées. La bombe. Les fausses pistes. Les informations qu’il semblait connaître avant même le CARING...</p>" +
+      "<p>Quelqu’un, quelque part, lui transmettait des informations.</p>" +
+      "<p>Sur le sol de sa planque, nos agents viennent de découvrir un dernier indice : un morceau de papier griffonné à la hâte. 📜</p>" +
+      "<p>Quelques mots seulement :</p>" +
+      "<p>« Merci de m’avoir prévenu, Hydra Louise. »</p>" +
+      "<p>...</p>" +
+      "<p><strong>🐍 HYDRA LOUISE ?!</strong></p>" +
+      "<p>Attendez une minute...<br>Louise...<br>Hydra Louise...</p>" +
+      "<p>Serait-elle l’agent double ?! 😱</p>" +
+      "<p>Le CARING vient de perdre la trace de Louise.<br>Quant à Déversoir, il est toujours dans la nature. 🌊</p>" +
+      "<p>Une chose est désormais certaine :</p>" +
+      "<p><strong>⚠️ CE N’ÉTAIT PAS LA FIN.</strong></p>" +
+      "<p><strong>🌊 DÉVERSOIR EST EN FUITE.<br>🐍 HYDRA LOUISE A DISPARU.<br>🦸‍♀️🦸‍♂️ MAIS LES HÉROS VNF RESTENT EN ALERTE.</strong></p>" +
+      "<p><strong>🏁 FIN DE LA MISSION.</strong></p>" +
+      "<p>... du moins, pour aujourd’hui.</p>",
+  },
+];
+
+const PAYS_META = {
+  suisse: { img: "./assets/flags/flag_suisse.png", emoji: "🇨🇭", label: "Suisse" },
+  france: { img: "./assets/flags/flag_france.png", emoji: "🇫🇷", label: "France" },
+  belgique: { img: "./assets/flags/flag_belgique.png", emoji: "🇧🇪", label: "Belgique" },
+  allemagne: { img: "./assets/flags/flag_allemagne.png", emoji: "🇩🇪", label: "Allemagne" },
+  paysbas: { img: "./assets/flags/flag_pays_bas.png", emoji: "🇳🇱", label: "Pays-Bas" },
+};
+
+let CONTENT = null;
+let TEAM = null;
+let STATE = null;
+let chronoTimer = null;
+let convergenceTimer = null;
+let map = null;
+let resultMap = null;
+let alertedDuration = false;
+let alertedMax = false;
+
+function labelFor(color) {
+  return CONTENT?.teams?.[color]?.label || `Équipe ${color[0].toUpperCase()}${color.slice(1)}`;
+}
+
+function show(viewId) {
+  document.querySelectorAll(".view").forEach((v) => v.classList.remove("active"));
+  document.getElementById(viewId).classList.add("active");
+  applyRandomBackground();
+  renderChronoTick();
+  $("#btn-stop-game").style.display = STATE && STATE.status !== "not_started" ? "flex" : "none";
+  document.body.classList.toggle("on-landing", viewId === "view-team-select");
+}
+
+function persist() {
+  gameStore.saveState(TEAM, STATE);
+  pushGameState(TEAM, {
+    status: STATE.status,
+    currentEpreuveIndex: STATE.currentEpreuveIndex,
+    startedAt: STATE.startedAt,
+    finishedAt: STATE.finishedAt,
+  });
+}
+
+// ---- Modèle des épreuves (gère l'épreuve finale partagée + migration pages) --------
+
+function normalizeEpreuve(ep) {
+  if (!ep) return ep;
+  if (ep.pages) return ep;
+  return { ...ep, pages: [{ blocks: ep.blocks || [] }] };
+}
+
+function totalEpreuvesForTeam(color) {
+  return (CONTENT.teams[color]?.epreuves.length || 0) + 1; // +1 pour l'épreuve finale commune
+}
+
+function epreuveAt(color, index) {
+  const teamEpreuves = CONTENT.teams[color].epreuves;
+  if (index < teamEpreuves.length) return normalizeEpreuve(teamEpreuves[index]);
+  return normalizeEpreuve(CONTENT.finalEpreuve || { titre: "Épreuve finale", pages: [{ blocks: [] }] });
+}
+
+function currentEpreuve() {
+  return epreuveAt(TEAM, STATE.currentEpreuveIndex);
+}
+
+function currentPages() {
+  return currentEpreuve().pages || [{ blocks: [] }];
+}
+
+function isFinalEpreuve() {
+  return STATE.currentEpreuveIndex >= (CONTENT.teams[TEAM]?.epreuves.length || 0);
+}
+
+// ---- Palais du Rhin (prologue, avant la première épreuve) -----------------------
+
+function palaisData() {
+  const p = CONTENT.teams[TEAM]?.palaisDuRhin;
+  return p && p.pages ? p : { code: { valeur: "" }, pages: [{ blocks: [] }] };
+}
+
+function palaisPages() {
+  return palaisData().pages || [{ blocks: [] }];
+}
+
+// ---- Écran de code d'accès --------------------------------------------------------
+
+function initAccessCodeScreen() {
+  const cfg = CONTENT?.config?.accessCode || {};
+  $("#access-intro-text").textContent = cfg.texte || ACCESS_INTRO_DEFAULT;
+}
+
+function proceedAfterAccess() {
+  renderTeamGrid();
+  const saved = gameStore.getSelectedTeam();
+  if (saved && CONTENT.teams?.[saved]) {
+    selectTeam(saved);
+  } else {
+    show("view-team-select");
+  }
+}
+
+// ---- Sélection équipe -----------------------------------------------------
+
+function renderTeamGrid() {
+  const grid = $("#team-grid");
+  grid.innerHTML = "";
+  for (const color of TEAM_COLORS) {
+    const btn = document.createElement("button");
+    btn.className = "team-btn-img";
+    btn.type = "button";
+    btn.setAttribute("aria-label", labelFor(color));
+    const img = document.createElement("img");
+    img.src = `./assets/team-buttons/${color}.webp`;
+    img.alt = labelFor(color);
+    img.onerror = () => {
+      btn.classList.add("team-btn-fallback", color);
+      btn.textContent = labelFor(color);
+    };
+    btn.appendChild(img);
+    btn.addEventListener("click", () => selectTeam(color));
+    grid.appendChild(btn);
+  }
+}
+
+function selectTeam(color) {
+  TEAM = color;
+  gameStore.setSelectedTeam(color);
+  STATE = gameStore.getState(color);
+  document.body.dataset.team = color;
+  alertedDuration = false;
+  alertedMax = false;
+
+  if (!CONTENT?.teams?.[color]) {
+    showToast("Contenu introuvable pour cette équipe.");
+    show("view-team-select");
+    return;
+  }
+
+  if (STATE.status === "finished" || STATE.phaseIndex >= 6) {
+    renderMissionEnd();
+    show("view-mission-end");
+  } else if (STATE.status === "not_started") {
+    renderStartView();
+    show("view-start");
+  } else {
+    renderPhaseFlow();
+  }
+  startChrono();
+}
+
+// ---- Écran de démarrage -----------------------------------------------------
+
+function renderStartView() {
+  const team = CONTENT.teams[TEAM];
+  $("#start-team-name").textContent = team.label;
+  $("#start-hero-name").textContent = team.heroName || "";
+  const badge = $("#start-badge");
+  badge.src = `./assets/badges/${TEAM}.png`;
+  badge.onerror = () => (badge.style.visibility = "hidden");
+  badge.style.visibility = "visible";
+
+  const briefing = CONTENT.config?.briefing || {};
+  const count = totalEpreuvesForTeam(TEAM);
+  $("#briefing-text").innerHTML = (briefing.texte || BRIEFING_TEXTE_DEFAULT).replace(/\{\{count\}\}/g, count);
+  $("#briefing-consignes").textContent = briefing.consignes || BRIEFING_CONSIGNES_DEFAULT;
+
+  const startBtn = $("#btn-start-mission");
+  startBtn.textContent = STATE.status === "not_started" ? "🚀 Démarrer la mission" : "↩️ Reprendre la mission en cours";
+}
+
+// ---- Chronomètre général ----------------------------------------------------
+
+function startChrono() {
+  clearInterval(chronoTimer);
+  renderChronoTick();
+  chronoTimer = setInterval(renderChronoTick, 1000);
+  // Point d'intégration unique des popups mascotte (voir js/mascot.js) : se
+  // déclenche une fois le chrono global de la mission lancé, module 100%
+  // indépendant du reste (pas de lecture/écriture de STATE ici).
+  startMascotPopups();
+}
+
+function renderChronoTick() {
+  const wrap = $("#chrono-wrap");
+  const activeView = document.querySelector(".view.active")?.id;
+  const visible =
+    STATE &&
+    STATE.status !== "not_started" &&
+    activeView !== "view-team-select" &&
+    activeView !== "view-loading" &&
+    activeView !== "view-access-code" &&
+    activeView !== "view-mission-end";
+  if (!visible || !STATE.startedAt) {
+    wrap.innerHTML = "";
+    return;
+  }
+  const elapsed = Date.now() - STATE.startedAt;
+  const durationMs = (CONTENT.config.durationMinutes || 120) * 60000;
+  const maxMs = (CONTENT.config.maxDurationMinutes || 150) * 60000;
+  let cls = "";
+  if (elapsed >= durationMs - 15 * 60000) cls = "warn";
+  if (elapsed >= durationMs) cls = "danger";
+  wrap.innerHTML = `<div class="chrono ${cls}">
+    <div><div class="chrono-label">Temps écoulé</div><div class="chrono-time">${formatHMS(elapsed)}</div></div>
+    <div style="text-align:right"><div class="chrono-label">Objectif</div><div class="chrono-time" style="font-size:16px;">${
+      CONTENT.config.durationMinutes || 120
+    } min</div></div>
+  </div>`;
+  handleChronoAlerts(elapsed, durationMs, maxMs);
+}
+
+function handleChronoAlerts(elapsed, durationMs, maxMs) {
+  if (!alertedDuration && elapsed >= durationMs) {
+    alertedDuration = true;
+    playEndChime();
+    vibrate([200, 100, 200]);
+    showToast("⏰ 2h00 atteintes, pensez à rejoindre le point de rassemblement.");
+  }
+  if (!alertedMax && elapsed >= maxMs) {
+    alertedMax = true;
+    playEndChime();
+    vibrate([300, 100, 300, 100, 300]);
+    showToast("🚨 Temps maximum (2h30) atteint !");
+  }
+}
+
+// ---- Épreuve -----------------------------------------------------------------
+
+function renderProgressDots() {
+  const total = totalEpreuvesForTeam(TEAM);
+  const dots = $("#progress-dots");
+  dots.innerHTML = "";
+  for (let i = 0; i < total; i++) {
+    const d = document.createElement("div");
+    d.className =
+      "dot" +
+      (i < STATE.currentEpreuveIndex ? " done" : "") +
+      (i === STATE.currentEpreuveIndex ? " current" : "");
+    dots.appendChild(d);
+  }
+}
+
+function renderEpreuveView() {
+  const ep = currentEpreuve();
+  $("#epreuve-title").textContent = ep.titre || `Épreuve ${STATE.currentEpreuveIndex + 1}`;
+  renderProgressDots();
+  renderPage();
+}
+
+
+function renderPage() {
+  const pages = currentPages();
+  if (STATE.currentPageIndex == null || STATE.currentPageIndex >= pages.length) {
+    STATE.currentPageIndex = pages.length - 1;
+  }
+  if (STATE.currentPageIndex < 0) STATE.currentPageIndex = 0;
+  const page = pages[STATE.currentPageIndex];
+  const isLastPage = STATE.currentPageIndex === pages.length - 1;
+
+  renderBlocks(page);
+
+  const nav = $("#page-nav");
+  if (pages.length > 1) {
+    nav.style.display = "flex";
+    $("#page-indicator").textContent = `Page ${STATE.currentPageIndex + 1}/${pages.length}`;
+    $("#btn-prev-page").style.visibility = STATE.currentPageIndex === 0 ? "hidden" : "visible";
+    $("#btn-next-page").style.display = isLastPage ? "none" : "";
+  } else {
+    nav.style.display = "none";
+  }
+
+  // Épreuve finale uniquement : sa dernière page remplace le code générique par
+  // le mini-jeu de désamorçage (voir section "Bombe" plus bas). Les autres
+  // épreuves gardent #card-code strictement inchangé.
+  const isBombePage = isLastPage && isFinalEpreuve() && CONTENT.finalEpreuve?.bombeActive !== false;
+  $("#card-bombe-launch").style.display = isBombePage ? "" : "none";
+  $("#card-code").style.display = isLastPage && !isBombePage ? "" : "none";
+  $("#card-revelation").style.display = "none";
+  $("#code-form").style.display = "";
+  $("#code-input").value = "";
+  $("#code-feedback").textContent = "";
+  if (isLastPage && !isBombePage) setTimeout(() => $("#code-input")?.focus(), 50);
+}
+
+function renderBlocks(page) {
+  const container = $("#blocks-container");
+  container.innerHTML = "";
+  const idx = STATE.currentEpreuveIndex;
+  if (!STATE.revealedBlocks[idx]) STATE.revealedBlocks[idx] = [];
+  const revealedIds = STATE.revealedBlocks[idx];
+  (page.blocks || [])
+    .filter((b) => b.visible)
+    .forEach((block) => container.appendChild(renderBlock(block, revealedIds)));
+}
+
+function renderBlock(block, revealedIds, opts) {
+  const el = document.createElement("div");
+  switch (block.type) {
+    case "texte": {
+      el.className = "card block-texte";
+      el.innerHTML = block.html || "";
+      break;
+    }
+    case "photo": {
+      el.className = "card block-photo";
+      if (block.url) {
+        const img = document.createElement("img");
+        img.src = block.url;
+        img.alt = block.caption || "";
+        img.loading = "lazy";
+        img.addEventListener("click", () => openLightbox(block.url, block.caption || ""));
+        el.appendChild(img);
+      }
+      if (block.caption) {
+        const p = document.createElement("p");
+        p.className = "muted";
+        p.style.marginTop = "8px";
+        p.textContent = block.caption;
+        el.appendChild(p);
+      }
+      break;
+    }
+    case "video": {
+      el.className = "card block-video";
+      if (block.youtubeId) {
+        const wrap = document.createElement("div");
+        wrap.className = "video-embed";
+        const iframe = document.createElement("iframe");
+        iframe.src = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(block.youtubeId)}`;
+        iframe.title = "Vidéo";
+        iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
+        iframe.allowFullscreen = true;
+        iframe.loading = "lazy";
+        wrap.appendChild(iframe);
+        el.appendChild(wrap);
+      } else if ((block.url || "").trim()) {
+        // Fichier vidéo uploadé (Firebase Storage) : lecture native, pas de
+        // redirection hors de l'app. preload="metadata" pour ne pas
+        // télécharger le fichier tant que le joueur n'a pas appuyé sur lecture.
+        const video = document.createElement("video");
+        video.src = block.url;
+        video.controls = true;
+        video.preload = "metadata";
+        video.setAttribute("playsinline", "");
+        video.className = "block-video-native";
+        el.appendChild(video);
+      }
+      break;
+    }
+    case "carte": {
+      el.className = "card block-carte";
+      const a = document.createElement("a");
+      a.href = block.url || "#";
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      a.className = "btn btn-outline btn-block";
+      a.textContent = "🗺️ " + (block.label || "Voir l'itinéraire");
+      el.appendChild(a);
+      break;
+    }
+    case "audio": {
+      el.className = "card block-audio";
+      const head = document.createElement("div");
+      head.className = "card-head";
+      const pict = document.createElement("div");
+      pict.className = "card-pict";
+      pict.textContent = "🎧";
+      const fam = document.createElement("div");
+      fam.className = "card-family";
+      fam.textContent = block.label || "Message audio";
+      head.appendChild(pict);
+      head.appendChild(fam);
+      el.appendChild(head);
+      if (block.url) {
+        el.appendChild(buildAudioPlayer(block.url));
+      } else {
+        const p = document.createElement("p");
+        p.className = "muted";
+        p.textContent = "(fichier audio à venir)";
+        el.appendChild(p);
+      }
+      break;
+    }
+    case "drapeaux": {
+      el.className = "card block-drapeaux";
+      const grid = document.createElement("div");
+      grid.className = "drapeaux-grid";
+      let solved = false;
+      Object.entries(PAYS_META).forEach(([key, meta]) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "drapeau-btn";
+        const wrap = document.createElement("span");
+        wrap.className = "drapeau-flag-wrap";
+        const img = document.createElement("img");
+        img.className = "drapeau-flag-img";
+        img.src = meta.img;
+        img.alt = meta.label;
+        img.onerror = () => {
+          const fallback = document.createElement("span");
+          fallback.className = "drapeau-flag-emoji";
+          fallback.textContent = meta.emoji;
+          img.replaceWith(fallback);
+        };
+        wrap.appendChild(img);
+        const label = document.createElement("span");
+        label.className = "drapeau-label";
+        label.textContent = meta.label;
+        btn.appendChild(wrap);
+        btn.appendChild(label);
+        btn.addEventListener("click", () => {
+          if (solved) return;
+          if (key === block.paysCorrect) {
+            solved = true;
+            grid.querySelectorAll(".drapeau-btn").forEach((b) => (b.disabled = true));
+            btn.classList.add("correct");
+            playSuccessSound();
+            vibrate(120);
+            if (opts?.onDrapeauCorrect) opts.onDrapeauCorrect();
+          } else {
+            btn.classList.remove("wrong");
+            void btn.offsetWidth;
+            btn.classList.add("wrong");
+            vibrate([80, 60, 80]);
+            setTimeout(() => btn.classList.remove("wrong"), 350);
+            showVillainMockery();
+          }
+        });
+        grid.appendChild(btn);
+      });
+      el.appendChild(grid);
+      break;
+    }
+    case "indice": {
+      el.className = "card block-indice";
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "btn btn-ghost btn-block";
+      const already = revealedIds.includes(block.id);
+      btn.textContent = already ? "💡 Revoir l'indice" : "💡 Voir l'indice";
+      btn.addEventListener("click", () => {
+        const modalOpen = $("#indice-modal").style.display === "flex";
+        if (modalOpen) {
+          closeIndiceModal();
+          return;
+        }
+        if (!revealedIds.includes(block.id)) {
+          revealedIds.push(block.id);
+          persist();
+          btn.textContent = "💡 Revoir l'indice";
+        }
+        openIndiceModal(block.texte || "");
+      });
+      el.appendChild(btn);
+      break;
+    }
+  }
+  return el;
+}
+
+// ---- Lecteur audio (bloc "audio") --------------------------------------------------
+
+function buildAudioPlayer(url) {
+  const wrap = document.createElement("div");
+  wrap.className = "audio-player";
+
+  const audio = new Audio(url);
+  audio.preload = "metadata";
+
+  const playBtn = document.createElement("button");
+  playBtn.type = "button";
+  playBtn.className = "audio-play-btn";
+  playBtn.textContent = "▶";
+  playBtn.setAttribute("aria-label", "Lecture");
+
+  const track = document.createElement("div");
+  track.className = "audio-progress-track";
+  const fill = document.createElement("div");
+  fill.className = "audio-progress-fill";
+  track.appendChild(fill);
+
+  const time = document.createElement("span");
+  time.className = "audio-time";
+  time.textContent = "0:00";
+
+  playBtn.addEventListener("click", () => {
+    if (audio.paused) {
+      audio.play().catch(() => showToast("Lecture audio impossible."));
+    } else {
+      audio.pause();
+    }
+  });
+  audio.addEventListener("play", () => (playBtn.textContent = "⏸"));
+  audio.addEventListener("pause", () => (playBtn.textContent = "▶"));
+  audio.addEventListener("ended", () => (playBtn.textContent = "▶"));
+  audio.addEventListener("timeupdate", () => {
+    const pct = audio.duration ? (audio.currentTime / audio.duration) * 100 : 0;
+    fill.style.width = pct + "%";
+    time.textContent = formatMinSec(audio.currentTime * 1000);
+  });
+  track.addEventListener("click", (e) => {
+    if (!audio.duration) return;
+    const rect = track.getBoundingClientRect();
+    const ratio = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
+    audio.currentTime = ratio * audio.duration;
+  });
+
+  wrap.appendChild(playBtn);
+  wrap.appendChild(track);
+  wrap.appendChild(time);
+  return wrap;
+}
+
+// ---- Modale indice ------------------------------------------------------------------
+
+function openIndiceModal(text) {
+  $("#indice-modal-text").textContent = text;
+  $("#indice-modal").style.display = "flex";
+}
+function closeIndiceModal() {
+  $("#indice-modal").style.display = "none";
+}
+
+// ---- Lightbox image -----------------------------------------------------------------
+
+function openLightbox(url, alt) {
+  $("#lightbox-img").src = url;
+  $("#lightbox-img").alt = alt || "";
+  $("#lightbox-modal").style.display = "flex";
+}
+function closeLightbox() {
+  $("#lightbox-modal").style.display = "none";
+  $("#lightbox-img").src = "";
+}
+
+// ---- Validation code / révélation ----------------------------------------------------
+
+function onCodeCorrect(ep) {
+  playSuccessSound();
+  vibrate(120);
+  $("#code-feedback").textContent = "";
+  $("#code-form").style.display = "none";
+  $("#page-nav").style.display = "none";
+  $("#card-revelation").style.display = "";
+  $("#revelation-text").textContent = ep.revelation?.texte || "Bravo, épreuve réussie !";
+  renderResultMap();
+  persist();
+}
+
+function onCodeWrong() {
+  const input = $("#code-input");
+  input.classList.remove("shake");
+  void input.offsetWidth;
+  input.classList.add("shake");
+  vibrate([80, 60, 80]);
+  const feedback = $("#code-feedback");
+  feedback.textContent = "Code incorrect, réessayez.";
+  feedback.className = "code-feedback error";
+  showVillainMockery();
+}
+
+// ---- Moquerie de Déversoir sur mauvais code (visuelle uniquement, sans pénalité) ----
+
+function showVillainMockery() {
+  const el = $("#villain-mockery");
+  if (!el) return;
+  el.classList.remove("show");
+  void el.offsetWidth;
+  el.classList.add("show");
+}
+
+// ---- Palais du Rhin (prologue) -----------------------------------------------------
+
+function renderPalaisView() {
+  $("#palais-title").textContent = palaisData().titre || "🏛️ Palais du Rhin";
+  const pages = palaisPages();
+  if (!STATE.palais) STATE.palais = { pageIndex: 0, codeOk: false, flagOk: false, done: false };
+  let idx = STATE.palais.pageIndex || 0;
+  if (idx >= pages.length) idx = pages.length - 1;
+  if (idx < 0) idx = 0;
+  STATE.palais.pageIndex = idx;
+  const page = pages[idx];
+  const isFirstPage = idx === 0;
+  const isLastPage = idx === pages.length - 1;
+
+  $("#palais-page-indicator").textContent = `Page ${idx + 1}/${pages.length}`;
+  $("#btn-palais-back").style.display = idx > 0 ? "" : "none";
+
+  const container = $("#palais-blocks-container");
+  container.innerHTML = "";
+  (page.blocks || [])
+    .filter((b) => b.visible)
+    .forEach((block) =>
+      container.appendChild(
+        renderBlock(block, [], {
+          onDrapeauCorrect: () => {
+            STATE.palais.flagOk = true;
+            STATE.palais.pageIndex = idx + 1;
+            persist();
+            showToast("✅ Bonne réponse !");
+            setTimeout(renderPalaisView, 500);
+          },
+        })
+      )
+    );
+
+  // Le code ne se saisit que sur la 1ère page, tant qu'il n'est pas validé.
+  $("#palais-card-code").style.display = isFirstPage && !STATE.palais.codeOk ? "" : "none";
+  $("#palais-code-input").value = "";
+  $("#palais-code-feedback").textContent = "";
+  if (isFirstPage && !STATE.palais.codeOk) setTimeout(() => $("#palais-code-input")?.focus(), 50);
+
+  // Le bouton "Continuer" n'apparaît que sur la dernière page.
+  $("#btn-palais-continue").style.display = isLastPage ? "" : "none";
+}
+
+function onPalaisCodeWrong() {
+  const input = $("#palais-code-input");
+  input.classList.remove("shake");
+  void input.offsetWidth;
+  input.classList.add("shake");
+  vibrate([80, 60, 80]);
+  const feedback = $("#palais-code-feedback");
+  feedback.textContent = CODE_ERROR_MSG;
+  feedback.className = "code-feedback error";
+  showVillainMockery();
+}
+
+function finishPalais() {
+  STATE.palais.done = true;
+  STATE.phaseIndex = Math.max(STATE.phaseIndex || 0, 2);
+  persist();
+  renderPhaseFlow();
+}
+
+// ---- Déroulé verrouillé : routeur central + écran générique de phase --------------
+
+// Aiguille vers le bon écran selon STATE.phaseIndex (0-6). Aucune phase en avance
+// n'est accessible : on ne rend jamais que l'écran de la phase courante.
+function renderPhaseFlow() {
+  let pi = STATE.phaseIndex || 0;
+  if (pi < 0) pi = 0;
+  if (pi > 6) pi = 6;
+  STATE.phaseIndex = pi;
+
+  if (pi >= 6) {
+    renderMissionEnd();
+    show("view-mission-end");
+    return;
+  }
+  if (pi <= 1) {
+    // Phases 2-3 : Palais du Rhin (sa propre sous-navigation de pages).
+    if (pi === 0) {
+      STATE.palais.pageIndex = 0;
+      STATE.palais.codeOk = false;
+      STATE.palais.flagOk = false;
+    } else if (!STATE.palais.codeOk) {
+      STATE.palais.codeOk = true;
+      STATE.palais.pageIndex = Math.max(STATE.palais.pageIndex || 0, 1);
+    }
+    renderPalaisView();
+    show("view-palais");
+    return;
+  }
+  if (pi === 5) {
+    // Phase 6 validée (ZIX) → mini-jeu de désamorçage. La caisse scellée
+    // s'affiche d'abord ; le minuteur ne démarre qu'à l'ouverture (appui
+    // maintenu sur #btn-bombe-arm, voir wireBombeArmHold/armBombeAndEnter).
+    enterBombeScreen();
+    return;
+  }
+  // Phases 4 / 5 / 6 → écran générique piloté par les données.
+  renderGenericPhase(PHASE_KEYS[pi - 2]);
+  show("view-phase");
+}
+
+// Migration à la volée de l'ancien format à plat ({code, avant, apres,
+// audioUrl, audioLabel}) vers le format pages/blocs (mêmes blocs que le
+// Palais du Rhin). N'écrit rien : la migration réelle a lieu quand l'admin
+// enregistre depuis le nouvel éditeur. Reste donc compatible avec du contenu
+// jamais réouvert dans l'admin.
+function normalizePhaseCfg(raw) {
+  if (raw.pages) return raw; // déjà au nouveau format
+  const introBlocks = [{ id: "blk_avant", type: "texte", visible: true, html: raw.avant || "" }];
+  if ((raw.audioUrl || "").trim() || (raw.audioLabel || "").trim()) {
+    introBlocks.push({
+      id: "blk_audio",
+      type: "audio",
+      visible: true,
+      url: raw.audioUrl || "",
+      label: raw.audioLabel || "Message codé",
+    });
+  }
+  const revealBlocks = [{ id: "blk_apres", type: "texte", visible: true, html: raw.apres || "" }];
+  return {
+    code: raw.code || "",
+    pages: [{ blocks: introBlocks }, { blocks: revealBlocks }],
+    buttonLabel: "",
+  };
+}
+
+function phaseCfg(key) {
+  const raw = { ...PHASE_DEFAULTS[key], ...(CONTENT.config?.phases?.[key] || {}) };
+  return normalizePhaseCfg(raw);
+}
+
+function currentPhaseKey() {
+  return PHASE_KEYS[(STATE.phaseIndex || 0) - 2];
+}
+
+// Sous-état de pagination d'une phase (comme STATE.palais, mais partagé par
+// phase4/5/6 puisqu'une seule est active à la fois). Réinitialisé dès qu'on
+// change de phase.
+function currentPhaseSub() {
+  const key = currentPhaseKey();
+  if (!STATE.phaseSub || STATE.phaseSub.key !== key) {
+    STATE.phaseSub = { key, pageIndex: 0, codeOk: false };
+  }
+  return STATE.phaseSub;
+}
+
+function renderPhaseDots() {
+  const dots = $("#phase-dots");
+  if (!dots) return;
+  dots.innerHTML = "";
+  const cur = STATE.phaseIndex || 0;
+  for (let i = 0; i < PHASE_TOTAL; i++) {
+    const d = document.createElement("div");
+    d.className = "dot" + (i < cur ? " done" : "") + (i === cur ? " current" : "");
+    dots.appendChild(d);
+  }
+}
+
+function renderGenericPhase(key) {
+  const cfg = phaseCfg(key);
+  const num = 4 + PHASE_KEYS.indexOf(key); // phase4/5/6 → n° 4/5/6
+  $("#phase-title").textContent = "Phase " + num;
+  renderPhaseDots();
+
+  const sub = currentPhaseSub();
+  const pages = cfg.pages.length ? cfg.pages : [{ blocks: [] }];
+  let idx = sub.pageIndex;
+  if (idx >= pages.length) idx = pages.length - 1;
+  if (idx < 0) idx = 0;
+  sub.pageIndex = idx;
+  const page = pages[idx];
+  const isFirstPage = idx === 0;
+  const isLastPage = idx === pages.length - 1;
+  // Le code ne se saisit que sur la 1ère page, tant qu'il n'est pas validé
+  // (identique au Palais du Rhin).
+  const codeGateActive = isFirstPage && !sub.codeOk;
+
+  const container = $("#phase-blocks-container");
+  container.innerHTML = "";
+  container.classList.toggle("page-video-only", page.layout === "video-only");
+  (page.blocks || []).filter((b) => b.visible).forEach((block) => container.appendChild(renderBlock(block, [], {})));
+
+  $("#phase-card-code").style.display = codeGateActive ? "" : "none";
+  $("#phase-code-input").value = "";
+  $("#phase-code-feedback").textContent = "";
+  if (codeGateActive) setTimeout(() => $("#phase-code-input")?.focus(), 50);
+
+  const showPageNav = pages.length > 1 && !codeGateActive;
+  $("#phase-page-nav").style.display = showPageNav ? "flex" : "none";
+  if (showPageNav) {
+    $("#phase-page-indicator").textContent = `Page ${idx + 1}/${pages.length}`;
+    $("#btn-phase-back").style.visibility = idx === 0 ? "hidden" : "visible";
+    $("#btn-phase-next-page").style.display = isLastPage ? "none" : "";
+    $("#btn-phase-next-page").textContent = page.nextLabel || "Suite →";
+  }
+
+  $("#btn-phase-continue").style.display = isLastPage && !codeGateActive ? "" : "none";
+  $("#btn-phase-continue").textContent =
+    cfg.buttonLabel || (key === "phase6" ? "🧨 Lancer le désamorçage de la bombe" : "Continuer ➜");
+}
+
+function onPhaseCodeCorrect() {
+  const key = currentPhaseKey();
+  const cfg = phaseCfg(key);
+  STATE.lastCode = normalizeCode(cfg.code || "");
+  const sub = currentPhaseSub();
+  sub.codeOk = true;
+  if (cfg.pages.length > 1) sub.pageIndex = Math.max(sub.pageIndex, 1);
+  persist();
+  playSuccessSound();
+  vibrate(120);
+  renderGenericPhase(key);
+}
+
+function onPhaseCodeWrong() {
+  const input = $("#phase-code-input");
+  input.classList.remove("shake");
+  void input.offsetWidth;
+  input.classList.add("shake");
+  vibrate([80, 60, 80]);
+  const fb = $("#phase-code-feedback");
+  fb.textContent = CODE_ERROR_MSG;
+  fb.className = "code-feedback error";
+  showVillainMockery();
+}
+
+// ---- Phase 7 : séquence de fin (vidéo Déversoir + écran MISSION ACCOMPLIE) ---------
+
+function parseYouTubeId(url) {
+  if (!url) return "";
+  const pats = [
+    /youtu\.be\/([A-Za-z0-9_-]{6,})/,
+    /youtube\.com\/watch\?v=([A-Za-z0-9_-]{6,})/,
+    /youtube\.com\/embed\/([A-Za-z0-9_-]{6,})/,
+    /youtube-nocookie\.com\/embed\/([A-Za-z0-9_-]{6,})/,
+    /youtube\.com\/shorts\/([A-Za-z0-9_-]{6,})/,
+  ];
+  for (const re of pats) {
+    const m = url.match(re);
+    if (m) return m[1];
+  }
+  return "";
+}
+
+// Migration à la volée de l'ancien champ "texte" (texte brut, non formaté)
+// vers un bloc "texte" riche, comme pour les phases.
+function textToHtmlBlock(text) {
+  const div = document.createElement("div");
+  div.textContent = text || "";
+  return div.innerHTML.replace(/\n/g, "<br>");
+}
+
+// Migration à la volée : ancien texte brut ("texte") et ancien lien vidéo
+// séparé ("videoUrl") deviennent des blocs (texte, video), unifiés avec les
+// blocs déjà en place (photo…). Ne migre qu'une fois (tant qu'aucun bloc n'a
+// encore été enregistré), pour ne jamais écraser un contenu déjà édité dans
+// le nouvel éditeur.
+function normalizeMissionEnd(raw) {
+  if (!raw) raw = {};
+  if (Array.isArray(raw.blocks) && raw.blocks.length) return raw;
+  const blocks = Array.isArray(raw.blocks) ? [...raw.blocks] : [];
+  if ((raw.texte || "").trim()) {
+    blocks.push({ id: "blk_me_texte", type: "texte", visible: true, html: textToHtmlBlock(raw.texte) });
+  }
+  if ((raw.videoUrl || "").trim()) {
+    blocks.push({ id: "blk_me_video", type: "video", visible: true, url: raw.videoUrl, youtubeId: parseYouTubeId(raw.videoUrl) });
+  }
+  // Rien à afficher (admin vide/jamais publié avec succès) : contenu de
+  // secours fourni par l'organisateur, toujours prioritaire sur le vide mais
+  // jamais sur un vrai contenu admin (voir garde ci-dessus).
+  if (!blocks.length) return { ...raw, blocks: MISSION_END_FALLBACK_BLOCKS };
+  return { ...raw, blocks };
+}
+
+function renderMissionEnd() {
+  STATE.status = "finished";
+  STATE.finishedAt = STATE.finishedAt || Date.now();
+  STATE.phaseIndex = 6;
+  persist();
+
+  const cfg = normalizeMissionEnd(CONTENT.config?.missionEnd || {});
+  $("#mission-end-bombe").innerHTML = cfg.texteBombe || "";
+
+  $("#mission-end-title").textContent = cfg.titre || "MISSION ACCOMPLIE";
+  const blocksContainer = $("#mission-end-blocks");
+  blocksContainer.innerHTML = "";
+  (cfg.blocks || []).filter((b) => b.visible).forEach((block) => blocksContainer.appendChild(renderBlock(block, [], {})));
+  $("#mission-end-hero").style.display = "none";
+  $("#btn-mission-end-reveal").style.display = "";
+  $("#btn-mission-end-reveal").textContent = cfg.buttonLabel || "Continuer ➜";
+}
+
+// ---- Bombe : mini-jeu de désamorçage (Épreuve finale uniquement) --------------------
+
+const BOMBE_DURATION_MS = 10 * 60000;
+const AZERTY_ROWS = [
+  ["A", "Z", "E", "R", "T", "Y", "U", "I", "O", "P"],
+  ["Q", "S", "D", "F", "G", "H", "J", "K", "L", "M"],
+  ["W", "X", "C", "V", "B", "N"],
+];
+
+let bombeTickTimer = null;
+let bombeInput = "";
+let bombeKeypadBuilt = false;
+
+function bombeState() {
+  if (!STATE.bombe) {
+    STATE.bombe = { armedAt: null, endsAt: null, defused: false, gameOver: false, frozenRemainMs: null };
+  }
+  return STATE.bombe;
+}
+
+function finalBombeCode() {
+  return (CONTENT.finalEpreuve?.code?.valeur || "SEMEH").toUpperCase();
+}
+
+function armBombeAndEnter() {
+  const b = bombeState();
+  b.armedAt = Date.now();
+  b.endsAt = b.armedAt + BOMBE_DURATION_MS;
+  b.defused = false;
+  b.gameOver = false;
+  b.frozenRemainMs = null;
+  persist();
+  enterBombeScreen();
+}
+
+function enterBombeScreen() {
+  show("view-bombe");
+  const b = bombeState();
+  const armed = !!b.armedAt;
+  $("#card-bombe-launch").style.display = armed ? "none" : "";
+  $("#bombe-stage").style.display = armed ? "" : "none";
+  $("#bombe-keypad").style.display = armed ? "" : "none";
+  if (!armed) {
+    clearInterval(bombeTickTimer);
+    return; // la caisse n'est pas encore ouverte : rien d'autre à préparer.
+  }
+  bombeInput = "";
+  buildBombeKeypad();
+  if (!b.defused && !b.gameOver) {
+    duckBackgroundMusic(true);
+    startBombeTimerLoop();
+  } else {
+    clearInterval(bombeTickTimer);
+    if (b.gameOver) playBombeFail();
+  }
+  renderBombeView();
+}
+
+function startBombeTimerLoop() {
+  clearInterval(bombeTickTimer);
+  renderBombeTick();
+  bombeTickTimer = setInterval(renderBombeTick, 250);
+}
+
+function renderBombeTick() {
+  const b = bombeState();
+  if (b.defused) {
+    clearInterval(bombeTickTimer);
+    return;
+  }
+  const remain = b.endsAt - Date.now();
+  if (remain <= 0) {
+    triggerBombeGameOver();
+    return;
+  }
+  $("#bombe-led").textContent = formatMinSec(remain);
+  if (remain <= 10000) setBombeLoop("critical");
+  else if (remain <= 60000) setBombeLoop("urgent");
+  else setBombeLoop("tick");
+}
+
+function renderBombeView() {
+  const b = bombeState();
+  const led = $("#bombe-led");
+  led.classList.toggle("defused", b.defused);
+  if (b.defused) {
+    led.textContent = formatMinSec(b.frozenRemainMs ?? 0);
+  } else if (b.gameOver) {
+    led.textContent = "00:00";
+  }
+  $("#bombe-gameover").style.display = b.gameOver ? "flex" : "none";
+  $("#bombe-win").style.display = b.defused ? "flex" : "none";
+  if (b.defused) $("#bombe-win-time").textContent = formatMinSec(b.frozenRemainMs ?? 0);
+  $("#bombe-keypad").classList.toggle("disabled", b.gameOver || b.defused);
+  $("#btn-bombe-continue").style.display = b.defused ? "" : "none";
+  renderBombeLcd();
+}
+
+function renderBombeLcd() {
+  const len = finalBombeCode().length;
+  const shown = bombeInput.padEnd(len, "_").split("").join(" ");
+  $("#bombe-lcd").textContent = shown;
+}
+
+function buildBombeKeypad() {
+  if (bombeKeypadBuilt) return;
+  bombeKeypadBuilt = true;
+  const wrap = $("#bombe-keypad");
+  wrap.innerHTML = "";
+  AZERTY_ROWS.forEach((row) => {
+    const rowEl = document.createElement("div");
+    rowEl.className = "bombe-key-row";
+    row.forEach((letter) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "bombe-key";
+      btn.textContent = letter;
+      btn.addEventListener("click", () => bombeKeyPress(letter));
+      rowEl.appendChild(btn);
+    });
+    wrap.appendChild(rowEl);
+  });
+  const actionRow = document.createElement("div");
+  actionRow.className = "bombe-key-row";
+  const clearBtn = document.createElement("button");
+  clearBtn.type = "button";
+  clearBtn.className = "bombe-key bombe-key-clear";
+  clearBtn.textContent = "⌫ EFFACER";
+  clearBtn.addEventListener("click", bombeClearInput);
+  const validateBtn = document.createElement("button");
+  validateBtn.type = "button";
+  validateBtn.className = "bombe-key bombe-key-validate";
+  validateBtn.textContent = "✓ VALIDER";
+  validateBtn.addEventListener("click", bombeValidate);
+  actionRow.appendChild(clearBtn);
+  actionRow.appendChild(validateBtn);
+  wrap.appendChild(actionRow);
+}
+
+function bombeInputLocked() {
+  const b = bombeState();
+  return b.gameOver || b.defused;
+}
+
+function bombeKeyPress(letter) {
+  if (bombeInputLocked()) return;
+  if (bombeInput.length >= finalBombeCode().length) return;
+  bombeInput += letter;
+  renderBombeLcd();
+}
+
+function bombeClearInput() {
+  if (bombeInputLocked()) return;
+  bombeInput = "";
+  renderBombeLcd();
+}
+
+function bombeValidate() {
+  if (bombeInputLocked()) return;
+  if (normalizeCode(bombeInput) === normalizeCode(finalBombeCode())) {
+    defuseBombe();
+  } else {
+    wrongBombeCode();
+  }
+}
+
+function wrongBombeCode() {
+  beep(200, 200, 0.18);
+  vibrate([80, 60, 80]);
+  const wrap = $("#bombe-lcd-wrap");
+  wrap.classList.remove("wrong-flash");
+  void wrap.offsetWidth;
+  wrap.classList.add("wrong-flash");
+  bombeInput = "";
+  setTimeout(() => {
+    wrap.classList.remove("wrong-flash");
+    renderBombeLcd();
+  }, 350);
+}
+
+function defuseBombe() {
+  const b = bombeState();
+  b.defused = true;
+  b.frozenRemainMs = Math.max(0, b.endsAt - Date.now());
+  persist();
+  clearInterval(bombeTickTimer);
+  stopBombeLoops();
+  duckBackgroundMusic(false);
+  playBombeSuccess();
+  vibrate([150, 80, 150]);
+  renderBombeView();
+}
+
+function finalizeBombeSuccess() {
+  STATE.phaseIndex = 6;
+  persist();
+  renderMissionEnd();
+  show("view-mission-end");
+}
+
+function triggerBombeGameOver() {
+  const b = bombeState();
+  b.gameOver = true;
+  persist();
+  clearInterval(bombeTickTimer);
+  stopBombeLoops();
+  duckBackgroundMusic(false);
+  playBombeFail();
+  vibrate([300, 100, 300, 100, 300]);
+  renderBombeView();
+}
+
+// Ouverture de la caisse : appui maintenu ~0,9 s (évite l'ouverture accidentelle
+// et donne le geste "on descelle la caisse"). La jauge est le <span class="hold-fill">.
+const BOMBE_HOLD_MS = 900;
+
+function wireBombeArmHold() {
+  const btn = $("#btn-bombe-arm");
+  if (!btn) return;
+  const fill = btn.querySelector(".hold-fill");
+  let raf = null;
+  let t0 = 0;
+
+  const reset = () => {
+    if (raf) cancelAnimationFrame(raf);
+    raf = null;
+    if (fill) fill.style.width = "0%";
+  };
+
+  const step = () => {
+    const p = Math.min(1, (Date.now() - t0) / BOMBE_HOLD_MS);
+    if (fill) fill.style.width = p * 100 + "%";
+    if (p >= 1) {
+      reset();
+      vibrate(120);
+      armBombeAndEnter();
+      return;
+    }
+    raf = requestAnimationFrame(step);
+  };
+
+  btn.addEventListener("pointerdown", (e) => {
+    e.preventDefault();
+    reset();
+    t0 = Date.now();
+    raf = requestAnimationFrame(step);
+  });
+  ["pointerup", "pointerleave", "pointercancel"].forEach((ev) =>
+    btn.addEventListener(ev, reset)
+  );
+}
+
+function retryBombe() {
+  const b = bombeState();
+  b.armedAt = Date.now();
+  b.endsAt = b.armedAt + BOMBE_DURATION_MS;
+  b.defused = false;
+  b.gameOver = false;
+  b.frozenRemainMs = null;
+  bombeInput = "";
+  persist();
+  duckBackgroundMusic(true);
+  startBombeTimerLoop();
+  renderBombeView();
+}
+
+// ---- Carte sur l'écran résultat (point vers la prochaine épreuve) --------------------
+
+function renderResultMap() {
+  const wrap = $("#result-map-wrap");
+  const total = totalEpreuvesForTeam(TEAM);
+  const nextIndex = STATE.currentEpreuveIndex + 1;
+  let target = null;
+  let label = "";
+
+  if (nextIndex < total) {
+    const nextEp = epreuveAt(TEAM, nextIndex);
+    if (nextEp.lieu?.lat && nextEp.lieu?.lng) {
+      target = nextEp.lieu;
+      label = nextEp.titre || "Prochaine épreuve";
+    }
+  } else {
+    const conv = CONTENT.config.convergence;
+    if (conv) {
+      target = conv;
+      label = conv.name || "Rassemblement";
+    }
+  }
+
+  if (!target) {
+    wrap.style.display = "none";
+    return;
+  }
+
+  wrap.style.display = "block";
+  void document.getElementById("result-map").offsetHeight;
+  if (resultMap) {
+    resultMap.remove();
+    resultMap = null;
+  }
+  resultMap = createMap("result-map", [target.lat, target.lng], 15);
+  addCustomMarker(resultMap, target.lat, target.lng, {
+    color: getComputedStyle(document.body).getPropertyValue("--team-color").trim() || "#2563eb",
+    imgUrl: `./assets/badges/${TEAM}.png`,
+    emoji: "📍",
+    label,
+  });
+  setTimeout(() => resultMap && resultMap.invalidateSize(), 60);
+}
+
+// ---- Arrêter la partie ---------------------------------------------------------
+
+function openStopConfirm() {
+  $("#stop-confirm-overlay").style.display = "flex";
+}
+
+function closeStopConfirm() {
+  $("#stop-confirm-overlay").style.display = "none";
+}
+
+function abandonGame() {
+  clearInterval(chronoTimer);
+  clearInterval(convergenceTimer);
+  clearInterval(bombeTickTimer);
+  stopBombeLoops();
+  duckBackgroundMusic(false);
+  closeStopConfirm();
+
+  if (TEAM) {
+    gameStore.resetState(TEAM);
+    pushGameState(TEAM, {
+      status: "not_started",
+      currentEpreuveIndex: 0,
+      startedAt: null,
+      finishedAt: null,
+    });
+  }
+  gameStore.clearSelectedTeam();
+  TEAM = null;
+  STATE = null;
+  delete document.body.dataset.team;
+  $("#chrono-wrap").innerHTML = "";
+  renderTeamGrid();
+  show("view-team-select");
+  showToast("Partie arrêtée — retour à la sélection d'équipe.");
+}
+
+function finishGame() {
+  STATE.status = "finished";
+  STATE.finishedAt = Date.now();
+  persist();
+  renderFinalView();
+  show("view-final");
+  playVictorySound();
+  vibrate([150, 80, 150, 80, 300]);
+}
+
+// ---- Finale ---------------------------------------------------------------------
+
+function renderFinalView() {
+  const conv = CONTENT.config.convergence || {};
+  $("#final-lieu-name").textContent = conv.name || "Place Benjamin Zix";
+  $("#final-lieu-detail").textContent = conv.detail || "";
+  $("#final-time").textContent = conv.time || "—";
+  startConvergenceCountdown(conv);
+}
+
+function nextOccurrenceOfTime(hhmm) {
+  const [h, m] = hhmm.split(":").map(Number);
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m, 0, 0).getTime();
+}
+
+function startConvergenceCountdown(conv) {
+  clearInterval(convergenceTimer);
+  if (!conv.time) {
+    $("#final-countdown").textContent = "";
+    return;
+  }
+  const target = nextOccurrenceOfTime(conv.time);
+  const tick = () => {
+    const diff = target - Date.now();
+    $("#final-countdown").textContent =
+      diff > 0 ? `dans ${formatHMS(diff)}` : "C'est l'heure du rassemblement !";
+  };
+  tick();
+  convergenceTimer = setInterval(tick, 1000);
+}
+
+// ---- Carte (modale) — itinéraire final uniquement ------------------------------------
+
+function openMap() {
+  $("#map-modal").style.display = "flex";
+  $("#map-modal-title").textContent = "Itinéraire vers le rassemblement";
+  void document.getElementById("leaflet-map").offsetHeight;
+  if (map) {
+    map.remove();
+    map = null;
+  }
+  const conv = CONTENT.config.convergence;
+  if (!conv) return;
+  map = createMap("leaflet-map", [conv.lat, conv.lng], 16);
+  addCustomMarker(map, conv.lat, conv.lng, {
+    color: "#ffd12e",
+    imgUrl: "./assets/logo.png",
+    emoji: "🏁",
+    big: true,
+    label: conv.name,
+  });
+  addLocateButton();
+  setTimeout(() => map && map.invalidateSize(), 60);
+}
+
+function addLocateButton() {
+  const container = document.getElementById("leaflet-map");
+  const old = container.querySelector(".map-locate-btn");
+  if (old) old.remove();
+  const btn = document.createElement("button");
+  btn.className = "map-locate-btn";
+  btn.textContent = "📍";
+  btn.addEventListener("click", () => locateUser(map, (lat, lng) => map.setView([lat, lng], 16)));
+  container.appendChild(btn);
+}
+
+function closeMap() {
+  $("#map-modal").style.display = "none";
+  if (map) {
+    map.remove();
+    map = null;
+  }
+}
+
+// ---- Statut réseau ------------------------------------------------------------------
+
+function updateSyncBadge() {
+  const badge = $("#sync-badge");
+  const online = navigator.onLine;
+  badge.className = "sync-badge " + (online ? "online" : "offline");
+  $("#sync-label").textContent = online ? "En ligne" : "Hors-ligne";
+}
+
+// ---- Câblage des événements -----------------------------------------------------------
+
+function initListeners() {
+  $("#access-code-input").addEventListener("input", (e) => {
+    e.target.value = e.target.value.toUpperCase();
+  });
+
+  $("#access-code-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const input = $("#access-code-input");
+    const val = normalizeCode(input.value);
+    const expected = CONTENT?.config?.accessCode?.valeur || ACCESS_CODE;
+    if (val === normalizeCode(expected)) {
+      gameStore.setAccessUnlocked();
+      $("#access-code-feedback").textContent = "";
+      proceedAfterAccess();
+    } else {
+      $("#access-code-feedback").textContent = "Nom incorrect. Réessayez.";
+      input.classList.remove("shake");
+      void input.offsetWidth;
+      input.classList.add("shake");
+      vibrate([80, 60, 80]);
+      showVillainMockery();
+    }
+  });
+
+  $("#btn-start-mission").addEventListener("click", () => {
+    if (STATE.status === "not_started") {
+      STATE.status = "in_progress";
+      STATE.startedAt = Date.now();
+      persist();
+    }
+    renderPhaseFlow();
+    startChrono();
+  });
+
+  $("#palais-code-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const val = normalizeCode($("#palais-code-input").value);
+    const expected = normalizeCode(palaisData().code?.valeur);
+    if (!expected) return;
+    if (val === expected) {
+      STATE.palais.codeOk = true;
+      STATE.palais.pageIndex = 1;
+      STATE.phaseIndex = Math.max(STATE.phaseIndex || 0, 1);
+      STATE.lastCode = expected;
+      persist();
+      renderPalaisView();
+    } else {
+      onPalaisCodeWrong();
+    }
+  });
+
+  $("#phase-code-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const key = currentPhaseKey();
+    if (!key) return;
+    const val = normalizeCode($("#phase-code-input").value);
+    const expected = normalizeCode(phaseCfg(key).code || "");
+    if (!expected) return;
+    if (val === expected) onPhaseCodeCorrect();
+    else onPhaseCodeWrong();
+  });
+
+  $("#btn-phase-continue").addEventListener("click", () => {
+    STATE.phaseIndex = (STATE.phaseIndex || 0) + 1;
+    persist();
+    renderPhaseFlow();
+  });
+
+  $("#btn-phase-back").addEventListener("click", () => {
+    const sub = currentPhaseSub();
+    if (sub.pageIndex > 0) {
+      sub.pageIndex -= 1;
+      persist();
+      renderGenericPhase(currentPhaseKey());
+    }
+  });
+
+  $("#btn-phase-next-page").addEventListener("click", () => {
+    const sub = currentPhaseSub();
+    const cfg = phaseCfg(currentPhaseKey());
+    if (sub.pageIndex < cfg.pages.length - 1) {
+      sub.pageIndex += 1;
+      persist();
+      renderGenericPhase(currentPhaseKey());
+    }
+  });
+
+  $("#btn-mission-end-reveal").addEventListener("click", () => {
+    $("#mission-end-hero").style.display = "";
+    $("#btn-mission-end-reveal").style.display = "none";
+    playVictorySound();
+    vibrate([150, 80, 150, 80, 300]);
+  });
+
+  $("#btn-mission-end-back").addEventListener("click", () => {
+    if (!confirm("Retour animateur — revenir à la sélection d'équipe ?")) return;
+    gameStore.clearSelectedTeam();
+    TEAM = null;
+    STATE = null;
+    delete document.body.dataset.team;
+    clearInterval(chronoTimer);
+    renderTeamGrid();
+    show("view-team-select");
+  });
+
+  $("#btn-palais-back").addEventListener("click", () => {
+    if (STATE.palais.pageIndex > 0) {
+      STATE.palais.pageIndex -= 1;
+      persist();
+      renderPalaisView();
+    }
+  });
+
+  $("#btn-palais-continue").addEventListener("click", finishPalais);
+
+  $("#btn-back-to-start").addEventListener("click", () => {
+    renderStartView();
+    show("view-start");
+  });
+
+  $("#btn-stop-game").addEventListener("click", openStopConfirm);
+  $("#btn-stop-cancel").addEventListener("click", closeStopConfirm);
+  $("#btn-stop-confirm").addEventListener("click", abandonGame);
+
+  $("#btn-change-team").addEventListener("click", () => {
+    gameStore.clearSelectedTeam();
+    TEAM = null;
+    STATE = null;
+    delete document.body.dataset.team;
+    clearInterval(chronoTimer);
+    show("view-team-select");
+  });
+
+  $("#btn-reset-progress").addEventListener("click", () => {
+    if (confirm("Réinitialiser la progression de cette équipe ? (mode test uniquement)")) {
+      gameStore.resetState(TEAM);
+      STATE = gameStore.defaultState();
+      renderStartView();
+      showToast("Progression réinitialisée.");
+    }
+  });
+
+  $("#btn-prev-page").addEventListener("click", () => {
+    if (STATE.currentPageIndex > 0) {
+      STATE.currentPageIndex -= 1;
+      persist();
+      renderPage();
+    }
+  });
+
+  $("#btn-next-page").addEventListener("click", () => {
+    const pages = currentPages();
+    if (STATE.currentPageIndex < pages.length - 1) {
+      STATE.currentPageIndex += 1;
+      persist();
+      renderPage();
+    }
+  });
+
+  $("#code-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const ep = currentEpreuve();
+    const val = normalizeCode($("#code-input").value);
+    const expected = normalizeCode(ep.code?.valeur);
+    if (!expected) return;
+    if (val === expected) onCodeCorrect(ep);
+    else onCodeWrong();
+  });
+
+  $("#btn-next-epreuve").addEventListener("click", () => {
+    const total = totalEpreuvesForTeam(TEAM);
+    if (STATE.currentEpreuveIndex + 1 >= total) {
+      finishGame();
+    } else {
+      STATE.currentEpreuveIndex += 1;
+      STATE.currentPageIndex = 0;
+      persist();
+      renderEpreuveView();
+    }
+  });
+
+  $("#btn-close-indice").addEventListener("click", closeIndiceModal);
+  $("#indice-modal").addEventListener("click", (e) => {
+    if (e.target.id === "indice-modal") closeIndiceModal();
+  });
+
+  $("#btn-close-lightbox").addEventListener("click", closeLightbox);
+  $("#lightbox-modal").addEventListener("click", (e) => {
+    if (e.target.id === "lightbox-modal") closeLightbox();
+  });
+
+  $("#btn-final-map").addEventListener("click", openMap);
+  $("#btn-close-map").addEventListener("click", closeMap);
+
+  wireBombeArmHold();
+  $("#btn-bombe-retry").addEventListener("click", retryBombe);
+  $("#btn-bombe-continue").addEventListener("click", finalizeBombeSuccess);
+
+  window.addEventListener("online", updateSyncBadge);
+  window.addEventListener("offline", updateSyncBadge);
+
+  window.addEventListener("aquapolis:content-updated", (e) => {
+    // Toujours rafraîchir les données : sinon, une équipe qui a déjà démarré sa
+    // mission (status "in_progress"/"finished") ne reçoit plus jamais les
+    // mises à jour de l'admin pour le reste de sa partie (écran de fin inclus),
+    // même après un rechargement de page. On ne force en revanche le
+    // re-rendu immédiat que sur les écrans pré-partie, pour ne pas perturber
+    // visuellement un écran de phase déjà affiché ; les écrans suivants (dont
+    // l'écran de fin) utiliseront de toute façon ces données à jour au moment
+    // de leur prochain rendu.
+    CONTENT = e.detail;
+    if (!STATE || STATE.status === "not_started") {
+      renderTeamGrid();
+      if (document.querySelector(".view.active")?.id === "view-access-code") initAccessCodeScreen();
+    }
+  });
+}
+
+// ---- Démarrage -------------------------------------------------------------------------
+
+async function boot() {
+  initListeners();
+  initSoundToggle();
+  startBackgroundMusic();
+  updateSyncBadge();
+  CONTENT = await loadContent();
+  if (!CONTENT) {
+    $("#view-loading").innerHTML =
+      '<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:20px;"><div style="font-size:48px;">⚠️</div><h2>Chargement impossible</h2><p class="muted">Connectez-vous une première fois à Internet, puis rechargez la page.</p></div>';
+    return;
+  }
+  initAccessCodeScreen();
+  if (!gameStore.isAccessUnlocked()) {
+    show("view-access-code");
+    return;
+  }
+  proceedAfterAccess();
+}
+
+boot();
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./service-worker.js").catch(() => {});
+  });
+}
