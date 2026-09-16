@@ -53,7 +53,14 @@ const PHASE_DEFAULTS = {
 // dessus automatiquement (voir normalizeMissionEnd).
 const MISSION_END_FALLBACK_BLOCKS = [
   {
-    id: "fb_texte",
+    id: "fb_photo_banniere",
+    type: "photo",
+    visible: true,
+    url: "./assets/mission-end/semeh-2026-banniere.png",
+    caption: "",
+  },
+  {
+    id: "fb_texte_1",
     type: "texte",
     visible: true,
     html:
@@ -64,13 +71,39 @@ const MISSION_END_FALLBACK_BLOCKS = [
       "<p>Merci d’avoir participé à cette aventure, mais aussi à cette journée de cohésion. Nous espérons que cette mission vous a plu, que vous avez pris autant de plaisir à résoudre les énigmes qu’à parcourir Strasbourg, et surtout que vous avez passé un excellent moment tous ensemble !</p>" +
       "<p>Grâce à votre esprit d’équipe, votre ingéniosité et votre sang-froid, vous avez prouvé que les meilleures équipes de super-héros ne sont pas celles qui travaillent seules, mais celles qui savent unir leurs forces. 🤝</p>" +
       "<p>Mais... il reste un problème.</p>" +
-      "<p><strong>❌ Déversoir n’a pas été capturé.</strong></p>" +
+      "<p><strong>❌ Déversoir n’a pas été capturé.</strong></p>",
+  },
+  {
+    id: "fb_photo_deversoir",
+    type: "photo",
+    visible: true,
+    url: "./assets/mission-end/deversoir-fuite.png",
+    caption: "",
+  },
+  {
+    id: "fb_texte_2",
+    type: "texte",
+    visible: true,
+    html:
       "<p>Lorsque vous êtes arrivés à sa planque, il avait déjà disparu. Il a pris la fuite.<br>Et quelque chose nous inquiète particulièrement...</p>" +
       "<p>Déversoir n’a pas pu organiser tout cela seul.<br>Le convoi. Les communications piratées. La bombe. Les fausses pistes. Les informations qu’il semblait connaître avant même le CARING...</p>" +
       "<p>Quelqu’un, quelque part, lui transmettait des informations.</p>" +
       "<p>Sur le sol de sa planque, nos agents viennent de découvrir un dernier indice : un morceau de papier griffonné à la hâte. 📜</p>" +
       "<p>Quelques mots seulement :</p>" +
-      "<p>« Merci de m’avoir prévenu, Hydra Louise. »</p>" +
+      "<p>« Merci de m’avoir prévenu, Hydra Louise. »</p>",
+  },
+  {
+    id: "fb_photo_note",
+    type: "photo",
+    visible: true,
+    url: "./assets/mission-end/note-hydra-louise.png",
+    caption: "",
+  },
+  {
+    id: "fb_texte_3",
+    type: "texte",
+    visible: true,
+    html:
       "<p>...</p>" +
       "<p><strong>🐍 HYDRA LOUISE ?!</strong></p>" +
       "<p>Attendez une minute...<br>Louise...<br>Hydra Louise...</p>" +
